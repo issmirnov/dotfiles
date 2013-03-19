@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TrueCrypt>
+	<configuration>
+		<config key="BackgroundTaskEnabled">1</config>
+		<config key="BackgroundTaskMenuDismountItemsEnabled">1</config>
+		<config key="BackgroundTaskMenuMountItemsEnabled">1</config>
+		<config key="BackgroundTaskMenuOpenItemsEnabled">1</config>
+		<config key="BeepAfterHotkeyMountDismount">0</config>
+		<config key="CachePasswords">0</config>
+		<config key="CloseBackgroundTaskOnNoVolumes">1</config>
+		<config key="CloseExplorerWindowsOnDismount">1</config>
+		<config key="CloseSecurityTokenSessionsAfterMount">0</config>
+		<config key="DisableKernelEncryptionModeWarning">0</config>
+		<config key="DismountOnInactivity">0</config>
+		<config key="DismountOnLogOff">1</config>
+		<config key="DismountOnPowerSaving">0</config>
+		<config key="DismountOnScreenSaver">0</config>
+		<config key="DisplayMessageAfterHotkeyDismount">0</config>
+		<config key="BackgroundTaskEnabled">1</config>
+		<config key="ForceAutoDismount">1</config>
+		<config key="LastSelectedSlotNumber">1</config>
+		<config key="MaxVolumeIdleTime">60</config>
+		<config key="MountDevicesOnLogon">0</config>
+		<config key="MountFavoritesOnLogon">0</config>
+		<config key="MountVolumesReadOnly">0</config>
+		<config key="MountVolumesRemovable">0</config>
+		<config key="NoHardwareCrypto">0</config>
+		<config key="NoKernelCrypto">0</config>
+		<config key="OpenExplorerWindowAfterMount">1</config>
+		<config key="PreserveTimestamps">0</config>
+		<config key="SaveHistory">1</config>
+		<config key="StartOnLogon">0</config>
+		<config key="UseKeyfiles">0</config>
+		<config key="WipeCacheOnAutoDismount">1</config>
+		<config key="WipeCacheOnClose">0</config>
+	</configuration>
+</TrueCrypt>
