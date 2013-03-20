@@ -28,7 +28,7 @@ fi
 # helper function
 link_files () {
   ln -s $1 $2
-  success "linked $1 to $2"
+  echo "linked $1 to $2"
 }
 
 
