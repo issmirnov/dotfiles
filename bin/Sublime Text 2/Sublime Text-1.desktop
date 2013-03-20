@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Icon[en_US]=/home/vania/bin/Sublime Text 2/Icon/256x256/sublime_text.png
+Name[en_US]=Sublime Text
+Exec=/home/vania/bin/subt
+Name=Sublime Text
+Icon=/home/vania/bin/Sublime Text 2/Icon/256x256/sublime_text.png
