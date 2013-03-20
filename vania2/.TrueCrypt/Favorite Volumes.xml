@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<TrueCrypt>
-	<favorites>
-		<volume mountpoint="/media/truecrypt1" readonly="0" slotnumber="1" system="0">/media/Data/dropbox.tc</volume>
-	</favorites>
-</TrueCrypt>
