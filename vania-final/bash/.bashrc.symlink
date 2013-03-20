@@ -1,0 +1,33 @@
+## regular bashrc here
+
+
+
+
+## source dotfile stuffs
+
+## Add binaries into the path, avodiding duplicates
+new_entry="~/.dotfiles/bin"
+echo $PATH | grep $new_entry
+if [ $? = 1 ]
+then
+    PATH=$new_entry:$PATH
+    export PATH 
+    echo "adding path"
+fi
+
+
+## Source all files in ~/.dotfiles/bash/
+function src() {
+  local file
+  if [[ "$1" ]]; then
+    source "$HOME/.dotfiles/bash/$1.sh"
+  else
+    for file in ~/.dotfiles/bash/*; do
+      source "$file"
+    done
+  fi
+}
+
+
+# do the sourcing
+src
