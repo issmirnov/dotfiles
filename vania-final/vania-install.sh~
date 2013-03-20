@@ -30,7 +30,7 @@ then
 else 
     echo "$f is not a symlink"
     mv $f $f.backup
-    link_files $DOTFILES_ROOT/.oh-my-zsh ~/.oh-my-zsh
+    link_files $DOTFILES_ROOT/oh-my-zsh ~/.oh-my-zsh
 fi
 
 

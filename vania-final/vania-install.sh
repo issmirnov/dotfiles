@@ -22,14 +22,16 @@ link_files () {
   echo "linked $1 to $2"
 }
 
-# link in oh-my-zsh
+# link in oh-my-zsh - note, folder usually doesn't exist, so mv command fails
 f=~/.oh-my-zsh
 if test -h "$f"
 then
     echo "$f is a symlink, all is well"
-else 
-    echo "$f is not a symlink"
+elif test -d "$f"
     mv $f $f.backup
+else 
+    echo "$f DNE"
+    #mv $f $f.backup
     link_files $DOTFILES_ROOT/oh-my-zsh ~/.oh-my-zsh
 fi
 
