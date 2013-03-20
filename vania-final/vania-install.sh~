@@ -13,6 +13,15 @@ hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Abort
 
 
 
+
+
+
+# helper function
+link_files () {
+  ln -s $1 $2
+  echo "linked $1 to $2"
+}
+
 # link in oh-my-zsh
 f=~/.oh-my-zsh
 if test -h "$f"
@@ -23,13 +32,6 @@ else
     mv $f $f.backup
     link_files $DOTFILES_ROOT/.oh-my-zsh ~/.oh-my-zsh
 fi
-
-
-# helper function
-link_files () {
-  ln -s $1 $2
-  echo "linked $1 to $2"
-}
 
 
 # main function

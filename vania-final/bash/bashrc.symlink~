@@ -10,13 +10,9 @@
 ## Source all files in ~/.dotfiles/bash/
 function src() {
   local file
-  if [[ "$1" ]]; then
-    source "$HOME/.dotfiles/bash/$1.sh"
-  else
     for file in ~/.dotfiles/bash/*; do
       source "$file"
     done
-  fi
 }
 
 
