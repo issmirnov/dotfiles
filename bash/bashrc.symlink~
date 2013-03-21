@@ -33,7 +33,7 @@ if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
   c_user='\[\e[1;32m\]'
   c_path='\[\e[1;34m\]'
   c_git_cleancleann='\[\e[0;36m\]'
-  c_git_dirty='\[\e[0;33m\]'
+  c_git_dirty='\[\e[0;35m\]'
 else
   c_reset=
   c_user=
