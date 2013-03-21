@@ -28,6 +28,7 @@ if test -h "$f"
 then
     echo "$f is a symlink, all is well"
 elif test -d "$f"
+then
     mv $f $f.backup
 else 
     echo "$f DNE"
