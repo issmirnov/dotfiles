@@ -9,7 +9,11 @@ DOTFILES_ROOT="`pwd`"
 # Script to initialize home directory.
 
 # check if zsh is even installed
-hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Aborting."; exit 1; }
+hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; sudo aot-get install zsh; }
+
+# change shell to zsh
+chsh -s /bin/zsh
+
 
 
 
