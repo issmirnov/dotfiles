@@ -28,8 +28,7 @@ scp $1 $STAR/class/hw/$FOLDER/
 }
 
 # clones all git branches
-cloneall ()
-{
+function cloneall {
 for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v master `; do
    git branch --track ${branch#remotes/origin/} $branch
 done
