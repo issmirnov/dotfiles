@@ -1,13 +1,13 @@
 #!/bin/bash
-## invoke with `curl vania.com/fetch.sh | sh`
+## invoke with `curl vaniaspeedy.site44.com/fetch.sh | sh`
 
 set -e # causes this to exit if any command exits with non-zero code
 
 if command -v git > /dev/null; then
-  git clone http://github.com/vaniaspeedy/dotfiles.git ~/.pEnv
-#else
-  #echo "git not available, falling back to scp"
-  #scp -rP 484 nomcopter@nomcopter.com:/home/nomcopter/pEnv ~/.pEnv
+  git clone http://github.com/vaniaspeedy/dotfiles.git ~/.dotfiles
+else
+  echo "git not available, falling back to wget"
+  #scp -rP 484 smivan@ocf.berkeley.edu:~/dotfiles ~/.dotfiles
 fi
 
 # check for zsh
