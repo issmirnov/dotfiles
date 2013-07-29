@@ -118,9 +118,9 @@ def removeArchive(dst, pkgdir):
 	try:
 		oldar = zipfile.ZipFile(dst)
 		oldfiles = set(filter(isFileEntry, oldar.namelist()))
+		oldar.close()
 	except (zipfile.error, IOError):
 		pass
-	oldar.close()
 
 	# delete any orphaned files
 	orphanedFiles = oldfiles
