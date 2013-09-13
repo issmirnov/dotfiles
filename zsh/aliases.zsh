@@ -16,8 +16,8 @@ alias pi='python3 -i'
 
 
 # alias for cs61a-ko login
-alias lcsX='ssh -X cs61a-ko@star.cs.berkeley.edu'
-alias lcs='ssh -X cs61a-ko@star.cs.berkeley.edu'
+alias lcsX='ssh -X cs61b-hk@bcom11.eecs.berkeley.edu'
+alias lcs='ssh -X cs61b-hk@bcom11.eecs.berkeley.edu'
 ## copy hw
 
 STAR='cs61a-ko@star.cs.berkeley.edu:~'
