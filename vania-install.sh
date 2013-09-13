@@ -12,7 +12,7 @@ DOTFILES_ROOT="`pwd`"
 hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; sudo aot-get install zsh; }
 
 # change shell to zsh
-chsh -s /bin/zsh
+#chsh -s /bin/zsh
 
 
 

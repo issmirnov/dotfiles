@@ -1,0 +1,16 @@
+#libevent pkg-config source file
+
+prefix=/home/cc/cs61b/fa13/class/cs61b-hk/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libevent_pthreads
+Description: libevent_pthreads adds pthreads-based threading support to libevent
+Version: 2.0.19-stable
+Requires: libevent
+Conflicts:
+Libs: -L${libdir} -levent_pthreads
+Libs.private: -lrt  
+Cflags: -I${includedir} -pthread
+
