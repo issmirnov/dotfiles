@@ -54,6 +54,9 @@ bindsym $mod+space focus mode_toggle
 # focus the parent container
 bindsym $mod+a focus parent
 
+# fix offscren errors (focus parent, add blank terminal below tabbed interface)
+bindsym $mod+Shift+a focus parent; split v; exec i3-sensible-termianl
+
 # focus the child container
 #bindsym $mod+d focus child
 
@@ -137,7 +140,7 @@ client.urgent           $purple $red    $gold   $gold
 #client.urgent           #2f343a #900000 #ffffff #900000
 
 
-
+# focus_follows_mouse no # may be useful in the future.
 
 
 # Start i3bar to display a workspace bar (plus the system information i3status
@@ -186,6 +189,8 @@ bindsym $mod+x exec $filemanager
 #bindsym $mod+p exec "i3session save" 
 bindsym $mod+p exec "i3session restore" 
 
+# autostart
+bindsym $mod+q exec /home/vania/auto-start-for-i3.sh 
 
 
 ## startup applications
@@ -194,6 +199,8 @@ bindsym $mod+p exec "i3session restore"
 #exec $filemanager
 # exec --no-startup-id nm-applet # for network and wifi?
 
+# volume?
+exec gnome-settings-daemon
 
 # restore prev session
-exec "i3session restore"
+#exec "i3session restore"
