@@ -2,7 +2,24 @@ function prompt_char {
 	if [ $UID -eq 0 ]; then echo "#"; else echo $; fi
 }
 
-PROMPT='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n@)%m %{$fg_bold[blue]%}%(!.%1~.%~) $(git_prompt_info)%_$(prompt_char)%{$reset_color%} '
 
-ZSH_THEME_GIT_PROMPT_PREFIX="("
-ZSH_THEME_GIT_PROMPT_SUFFIX=") "
+
+## display return code (not really used by me)
+#local return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
+# RPS1="${return_code}" # also works, but not with right prompt.
+
+
+
+# variables for conveneince
+local current_dir='%{$fg_bold[blue]%}%(!.%1~.%~)'
+local user_host='%(!.%{$fg_bold[red]%}.%{$fg_bold[green]%}%n@)%m '
+local time='%{$fg_bold[yellow]%}%T %w%{$reset_color%}' # time in the form of HH:MM DAY DD
+
+
+# Prompts. Notice the double quotes rather than single.
+PROMPT="${user_host}${current_dir} $(git_prompt_info)%_$(prompt_char) %{$reset_color%}" 
+
+RPROMPT="${time}"
+
+
+

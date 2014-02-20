@@ -33,3 +33,4 @@ for branch in `git branch -a | grep remotes | grep -v HEAD | grep -v master `; d
    git branch --track ${branch#remotes/origin/} $branch
 done
 }
+alias compile='gcc --std=c99 -o '

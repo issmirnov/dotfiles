@@ -127,3 +127,4 @@ nnoremap N       Nzz
 
 " Turn on/off NERDTree with <F1>
 nmap <Tab> :NERDTreeToggle<CR>
+:set term=cons25
