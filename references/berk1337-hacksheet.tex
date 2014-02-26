@@ -1,0 +1,493 @@
+% This work is licensed under the following license:
+%
+%   Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported
+%
+% Please see the file COPYING for more information.
+\documentclass[10pt,landscape]{article}
+
+\usepackage{alltt}
+\usepackage{cprotect}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[landscape,margin=13mm,footskip=1pt,includefoot]{geometry}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{multicol}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{upquote}
+\usepackage{xspace}
+\usepackage{wasysym}
+
+\graphicspath{{figs/}}
+\pagestyle{empty}
+\parindent=0pt
+\hypersetup{
+    colorlinks=true,        % false: boxed links; true: colored links
+    linkcolor=red,          % color of internal links
+    citecolor=cyan,         % color of links to bibliography
+    filecolor=magenta,      % color of file links
+    urlcolor=blue           % color of external links
+}
+\setitemize{itemsep=1pt,topsep=0pt,parsep=1pt,leftmargin=10pt}
+%\titleformat{\subsection}{\sc}{}{}{}
+\titlespacing{\subsection}{0pt}{*0}{*1}
+
+\newcommand{\todo}[1]{\textit{\textcolor{red}{TODO: #1}}}
+\newcommand{\minisec}[1]{\textsc{#1}\\}
+\newcommand{\first}{\emph{(i)}~}
+\newcommand{\second}{\emph{(ii)}~}
+\newcommand{\third}{\emph{(iii)}~}
+\newcommand{\fourth}{\emph{(iv)}~}
+\newcommand{\fifth}{\emph{(v)}~}
+
+\newcommand{\os}[1]{\texttt{\footnotesize{#1}}}
+\newcommand{\freebsd}{\os{F}}
+\newcommand{\bsd}{\os{B}}
+\newcommand{\unix}{\os{U}}
+\newcommand{\linux}{\os{L}}
+\newcommand{\macos}{\os{M}}
+\newcommand{\windows}{\os{W}}
+\newcommand{\xp}{\os{xp}}
+\newcommand{\kk}{\os{2k}}
+\newcommand{\kkt}{\os{2k3}}
+\newcommand{\kke}{\os{2k8}}
+\newcommand{\seven}{\os{7}}
+
+\newenvironment{action}[1]
+  {\begin{minipage}[c]{\linewidth}$\star$~#1\begin{itemize}[leftmargin=1cm]}
+  {\end{itemize}\end{minipage}\vspace*{3pt}}
+\newcommand{\cmd}[2]{\item[#1] {\small\tt\# #2}}
+\newcommand{\comment}[1]{\textrm{\small(#1)}}
+\newcommand{\bulletpoint}[1]{\item {\small #1}}
+\newcommand{\tool}[2]{\item[#1] {\footnotesize\sc{#2}}\xspace}
+\newcommand{\button}[1]{\footnotesize\sf#1}
+\newcommand{\click}{$\rightarrow$\xspace}
+\newcommand{\checkbox}{\CheckedBox}
+
+\begin{document}
+
+\begin{multicols*}{3}
+
+{\Huge\scshape
+HackSheet\hspace{-2pt}\raisebox{15pt}{\tiny{master}}\hspace{-4pt}
+}
+
+%\hfill\includegraphics[width=.4\linewidth]{bro-logo-small}
+%\vspace{-38pt}
+
+{\scriptsize
+\setstretch{1.5}
+\begin{tabular}{l l}
+%Version: & \today\\
+Author: & \href{https://github.com/berke1337}{BERKE1337}\\
+Web: & \url{https://github.com/berke1337/hacksheet}\\
+License: & \href{http://creativecommons.org/licenses/by-nc-sa/3.0/}
+                {Attribution-NonCommercial-ShareAlike 3.0 Unported}
+\end{tabular}
+}
+
+%\hfill
+%\href{http://creativecommons.org/licenses/by-nc-sa/3.0/}
+%{\includegraphics[width=.2\linewidth]{by-nc-sa}}
+%\vspace{-10pt}
+
+\vspace{-10pt}
+
+\section*{Terminology}
+
+Each command contains a list of flags that indicate the OS requirement: Linux
+(\linux), BSD (\bsd), FreeBSD (\freebsd), Mac OS (\macos), UNIX (\unix), and
+Windows (\windows).
+
+\section*{Reconnaissance}
+
+\subsection*{Scanning}
+
+\begin{action}{Ping sweep of subnet and host range}
+\cmd{\unix}{nmap -sP 10.0.0.0/24 192.168.0.128-254}
+\end{action}
+
+\begin{action}{List all computers in network}
+\cmd{\windows}{net view}
+\end{action}
+
+\begin{action}{Scan specific TCP and UDP ports}
+\cmd{\unix}{nmap -pT:21-25,80,U:5000-6000 target}
+\end{action}
+
+\begin{action}{TCP SYN scan without connecting}
+\cmd{\unix}{nmap -P0 -sS target}
+\end{action}
+
+\begin{action}{Detect OS}
+\cmd{\unix}{nmap -O target}
+\cmd{\unix}{p0f -s trace.pcap}
+\end{action}
+
+\begin{action}{Grab application banners}
+\cmd{\unix}{nmap -sV target}
+\cmd{\unix}{echo QUIT | nc target 1-1024}
+\end{action}
+
+\subsection*{Wireless}
+
+\section*{Vulnerability Scanning}
+
+\subsection*{Web}
+\begin{action}{Look for web server vulnerabilities}
+\cmd{\unix}{nikto -host 10.0.0.1}
+\end{action}
+
+\section*{Hardening}
+
+\subsection*{Physical}
+
+\begin{action}{Check devices}
+\bulletpoint{Hardware keylogger (e.g., USB dongles)}
+\bulletpoint{Rogue WiFi cards}
+
+\end{action}
+
+\subsection*{OS \& Software}
+
+\begin{action}{Check for suspicious package repositories}
+\cmd{\linux}{vi /etc/apt/sources.list} \comment{Ubuntu}
+\cmd{\linux}{vi /etc/yum.repos.d/*} \comment{RHEL/Fedora}
+\end{action}
+
+\begin{action}{Run package updates}
+\cmd{\linux}{yum upgrade \emph{package}}
+\cmd{\linux}{apt-get upgrade \emph{package}}
+\end{action}
+
+\begin{action}{Update Kernel}
+\cmd{\linux}{yum update kernel} \comment{RHEL/Fedora}
+\cmd{\linux}{apt-cache search linux-image; apt-get install
+  linux-image-\emph{x.x.x-xx}} \comment{Debian}
+\end{action}
+
+\begin{action}{Harden SSHD}
+\tool{\unix}{fail2ban}
+\cmd{\unix}{vi /etc/ssh/sshd\_config\\
+  Protocol 2\\
+  AllowUsers root admin webmaster\\
+  AllowGroup sshusers\\
+  PasswordAuthentication no\\
+  HostbasedAuthentication no\\
+  RSAAuthentication yes\\
+  PubkeyAuthentication yes\\
+  PermitEmptyPasswords no\\
+  PermitRootLogin no\\
+  ServerKeyBits 2048\\
+  IgnoreRhosts yes\\
+  RhostsAuthentication no\\
+  RhostsRSAAuthentication no}
+\end{action}
+
+\subsection*{User Management}
+
+\begin{action}{Show account security settings}
+\cmd{\unix}{passwd -l \emph{user}}
+\cmd{\linux}{chage -l \emph{user}}
+\cmd{\windows}{net accounts}
+\cmd{\windows}{net accounts /domain}
+\end{action}
+
+\begin{action}{View Users}
+\cmd{\windows}{wmic useraccount list brief}
+\end{action}
+
+\begin{action}{Look for users with root privileges}
+\cmd{\unix}{awk -F: '\$3 == 0 \{print \$1\}' /etc/passwd}
+\cmd{\windows}{net localgroup administratos}
+\end{action}
+
+\begin{action}{Look for users with empty passwords}
+\cmd{\unix}{awk -F: '\$2 == "" \{print \$1\}' /etc/shadow}
+\end{action}
+
+\begin{action}{Make passwords expire}
+\cmd{\windows}{wmic path Win32\_UserAccount Set PasswordExpires=True}
+\cmd{\windows}{wmic path Win32\_UserAccount where name="\emph{username}" Set PasswordExpires=True}
+\cmd{\windows}{wmic path /Node:\emph{remotecomputer} Win32\_UserAccount where name="\emph{username}" Set PasswordExpires=True}
+\cmd{\linux}{chage -d 0 \emph{username}}
+\end{action}
+
+\begin{action}{Set maximum number of login failures}
+\cmd{\linux}{faillog -M \emph{maxNumber} -u \emph{username}}
+\cmd{\linux}{faillog -r -u \emph{username}}
+\cmd{\windows}{net accounts /lockoutthreshold:\emph{maxNumber}}
+\cmd{\windows}{net accounts /lockoutduration:\emph{numberOfMinutes}}
+\end{action}
+
+\begin{action}{Verify group memberships}
+\cmd{\unix}{vi /etc/group} \comment{admin, sudo, wheel}
+\end{action}
+
+\begin{action}{Check \texttt{sudo} users}
+\cmd{\unix}{visudo}
+\end{action}
+
+\begin{action}{Check crontab users}
+\cmd{\unix}{for u in \$(cut -f1 -d: /etc/passwd); do crontab -u \$u -l; done}
+\end{action}
+
+\begin{action}{Check remote authentication}
+\cmd{\unix}{vi \textasciitilde/.rhosts}
+\cmd{\unix}{vi \textasciitilde/.ssh/*}
+\end{action}
+
+\begin{action}{Change passwords}
+\cmd{\unix}{pwgen -sy} \comment{generate strong passwords}
+\cmd{\unix}{passwd \emph{user}}
+\cmd{\windows}{net user \emph{user} *}
+\end{action}
+
+\subsection*{File System}
+
+\begin{action}{Secure mount points}
+\cmd{\unix}{mount -o nodev,noexec,nosuid /dev.. /tmp}
+\end{action}
+
+\begin{action}{List file attributes}
+\cmd{\linux}{lsattr /var/log/foo}
+\cmd{\bsd}{ls -ol /var/log/foo}
+\cmd{\windows}{cacls.exe file.txt}
+\end{action}
+
+\begin{action}{File creation date}
+\cmd{\windows}{dir /tc /od}
+\cmd{\unix}{ls -li /etc | sort -n}
+\end{action}
+
+\begin{action}{System file checker }
+\cmd{\windows}{sfc /scannow}
+\end{action}
+
+\begin{action}{File signature serification}
+\cmd{\windows}{sigverif}
+\tool{\windows}{sigcheck}
+\cmd{\windows}{sigcheck -e -u -s c:{\textbackslash} }
+\end{action}
+
+\begin{action}{Make files append-only}
+\cmd{\linux}{chattr +a /var/log/foo}
+\end{action}
+
+\subsection*{Network}
+
+\begin{action}{Show firewall rules}
+\cmd{\linux}{for t in nat mangle filter raw; do iptables -t \$t -nL; done}
+\cmd{\windows}{netsh firewall show portopening}
+\cmd{\windows}{netsh firewall show allowedprogram}
+\cmd{\windows}{netsh firewall show config}
+\end{action}
+
+\begin{action}{Close ports}
+\cmd{\windows}{netsh advfirewall firewall add rule name="BlockAIM" \\
+protocol=TCP\\
+dir=out remoteport=4099 action=block}
+\end{action}
+
+\begin{action} {Shut down SMB vulnerable services}
+\tool{\windows}{Seconfig XP}
+\checkbox{Disable NetBIOS over TCP/IP (all interfaces)}
+\checkbox{Disable SMB over TCP/IP} 
+\checkbox{Disable RPC over TCP/IP}
+\click \button{Apply}
+\click \button{ Yes}
+\end{action}
+
+
+
+
+\begin{action}{Check DNS resolver}
+\cmd{\unix}{vi /etc/resolv.conf}
+\end{action}
+
+\begin{action}{Disable IPv6}
+\cmd{\linux}{ipv6.disable=1} \comment{add to kernel line}
+\cmd{\linux}{vi /etc/sysctl.conf\\
+  net.ipv6.conf.all.disable\_ipv6 = 1\\
+  net.ipv6.conf.<interface0>.disable\_ipv6 = 1\\
+  net.ipv6.conf.<interfaceN>.disable\_ipv6 = 1\\
+  vi /etc/hosts \comment{comment IPv6 hosts}}
+\cmd{\linux}{vi /etc/sysconfig/network\\
+  NETWORKING\_IPV6=no\\
+  IPV6INIT=no\\
+  service network restart}
+\cmd{\linux}{vi /etc/modprobe.conf\\
+  install ipv6 /bin/true \comment{append to file}}
+\cmd{\linux}{vi /etc/modprobe.conf  \comment{RHEL/CentOS}\\
+  alias net-pf-10 off}
+\cmd{\linux}{vi /etc/modprobe.conf \comment{Debian/Ubuntu}\\
+  alias net-pf-10 off \\
+  alias ipv6 off}
+  \cmd{\windows}{reg add
+  hklm{\textbackslash}system{\textbackslash}currentcontrolset{\textbackslash}services{\textbackslash}
+  tcpip6{\textbackslash}parameters /v DisabledComponents /t REG\_DWORD /d 255}
+\end{action}
+
+\begin{action}{Check network configuration}
+  \cmd{\linux}{vi /etc/network/interfaces} \comment{Ubuntu}
+  \cmd{\linux}{vi /etc/sysconfig/network-scripts/ifcfg-eth*} \comment{RHEL}
+\end{action}
+
+\section*{Forensics}
+
+\subsection*{Processes}
+
+\begin{action}{Inspect startup items}
+\cmd{\linux}{initctl show-config}
+  (\href{http://upstart.ubuntu.com/cookbook/upstart_cookbook.pdf}{upstart},
+  Ubuntu)
+\cmd{\freebsd}{less /etc/rc.local} (deprecated)
+\cmd{\freebsd}{grep local\_start /etc/defaults/rc.conf}
+\tool{\windows}{Autoruns} 
+\click\button{Options}
+\click\button{Filter Options}
+\checkbox{Verify code signatures}
+\checkbox{Hide Microsoft entries}
+
+\end{action}
+
+\begin{action}{Find SETUID and SETGID files and types}
+\cmd{\unix}{find / \textbackslash( -perm -4000 -o -perm -2000 \textbackslash)
+  -exec file \textbackslash\{\textbackslash\} \textbackslash;}
+\cmd{\unix}{crontab -e\\
+  0 4 * * * find / \textbackslash( -perm -4000 -o -perm -2000 \textbackslash)
+  -type f > /var/log/sidlog.new \&\&
+  diff /var/log/sidlog.new /var/log/sidlog \&\&
+  mv /var/log/sidlog.new /var/log/sidlog}
+\end{action}
+
+\begin{action}{Find world/group writeable directories}
+\cmd{\unix}{find / \textbackslash( -perm -g+w -o -perm -o+w \textbackslash)
+  -type d -exec ls -ald \textbackslash\{\textbackslash\} \textbackslash;}
+\end{action}
+
+\begin{action}{Find all unsigned processes}
+\tool{\windows}{ProcessExplorer}
+\button{Options} \click \button{Verify Image Signatures}
+\end{action}
+
+\begin{action} {View Process File Location}
+\tool{\windows}{ProcessExplorer}
+\button{View} \click \button{Select Columns...} \click \button{Image Path}
+\end{action}
+
+\begin{action}{Display listening TCP/UDP ports}
+\cmd{\linux\windows\unix}{netstat -tun}
+\tool{\windows}{tcpview}
+\cmd{\bsd}{netstat -p tcp -an | egrep 'Proto|LISTEN|udp'}
+\cmd{\unix}{lsof -nPi | awk '/LISTEN/'}
+\cmd{\freebsd}{sockstat -4 -l}
+\end{action}
+
+\begin{action}{Check active connections to find backdoors}
+\cmd{\unix}{lsof -nPi | awk '/ESTABLISHED/'}
+\end{action}
+
+\begin{action}{Currently Running Tasks/Processes}
+\cmd{\windows}{tasklist -svc} 
+\cmd{\linux\unix}{ps aux | less}
+\cmd{\linux\unix}{top}
+\cmd{\linux\unix}{ps -u \emph{user}}
+\end{action}
+
+\begin{action}{Kill Tasks/Processes}
+\cmd{\windows}{taskkill -pid \emph{pid}}
+\cmd{\linux\unix}{kill \emph{pid}}
+\end{action}
+
+\subsection*{Users}
+
+\begin{action}{Inspect logged in and past users}
+\cmd{\unix}{w}
+\cmd{\unix}{last | head}
+\cmd{\unix}{ps -ef | awk '\$6 != "?"'} (interactive procs)
+\tool{\windows}{PsLoggedOn}
+\tool{\windows}{Task Manager (open as administrator) -> Users Tab}
+\cmd{\windows}{wmic computersystem get username}
+\cmd{\windows}{wmic /node:\emph{remotecomputer} computersystem get username}
+\end{action}
+
+\subsection*{Cleanup}
+
+\begin{action}{Kill all processes accessing a mount point}
+\cmd{\unix}{fuser -k -c /mnt/secret}
+\end{action}
+
+\section*{System Administration}
+
+\subsection*{Date and Time}
+
+\begin{action}{Set date and time}
+\cmd{\unix}{date MMddhhmm[[cc]yy]}
+\cmd{\windows}{date}
+\cmd{\windows}{time}
+\end{action}
+
+\subsection*{Networking}
+
+\begin{action}{Forward a TCP/UDP port}
+\cmd{\unix}{mkfifo f ;\\
+nc -l 80 < f | nc 127.0.0.1 6666 > f \&}
+\cmd{\linux}{iptables -t nat -A OUTPUT|POSTROUTING \textbackslash\\
+  -p tcp -s x.x.x.x --sport 80 -j SNAT \textbackslash\\
+  --to-destination 6666}
+\cmd{\linux}{iptables -t nat -A INPUT|PREROUTING \textbackslash\\
+  -p tcp -d x.x.x.x --dport 80 -j DNAT \textbackslash\\
+  --to-destination :6666}
+% Can we do this with -j REDIRECT as well?
+%iptables -A PREROUTING -i eth1 -p tcp -m tcp --dport 80 -j REDIRECT --to-port 8080
+\end{action}
+
+\subsection*{Databases}
+
+\begin{action}{Export/Restore a MySQL Database}
+\cmd{\unix}{mysqldump -u \emph{username} -p \emph{database\_name} > dump.sql}
+\cmd{\unix}{mysql -u \emph{username} -p \emph{database\_name} < dump.sql}
+\end{action}
+\begin{action}{Export/Restore a PostgreSQL Database}
+\cmd{\unix}{pg\_dump \emph{database\_name} > dump.sql}
+\cmd{\unix}{psql -d \emph{database\_name} -f dump.sql}
+\end{action}
+
+\subsection*{Miscellaneous Windows Tasks}
+
+\begin{action}{Download File from Internet}
+\cmd{\windows}{ 
+Powershell \\
+\$source = "http:www.download.com/file.txt" \\
+\$destination = "c:\textbackslash temp\textbackslash file.txt" \\
+\$wc = New-Object System.Net.WebClient \\
+\$wc.DownloadFile(\$source, \$destination)}
+\end{action}
+  
+\begin{action}{driver query}
+\cmd{\windows}{driverquery (-v)}
+\end{action}
+
+\section*{References}
+
+\begin{itemize}
+\small
+\item \url{http://bit.ly/cmd-line-kung-fu}
+\item \url{http://bit.ly/useful-windows-one-liners}
+\item \url{http://bit.ly/vmware-esxi-reference}
+\end{itemize}
+
+\section*{Tool Downloads}
+
+\begin{itemize}
+\small
+\item Sys Internals: \url{http://bit.ly/sys-internals}
+\item Seconfig XP: \url{http://seconfig.sytes.net/}
+\end{itemize}
+
+\end{multicols*}
+
+\end{document}
