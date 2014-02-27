@@ -1,0 +1,3 @@
+#!/bin/bash
+# shortcut to mount puma/data on /mnt/puma-data
+sudo mount -t cifs //puma/data /mnt/puma-data -o username=vania,file_mode=0777,dir_mode=0777
