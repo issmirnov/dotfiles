@@ -150,7 +150,6 @@ bar {
     position          top
     mode              hide
     workspace_buttons yes
-    tray_output       output
     
     font pango: Ubuntu Mono 12
 
@@ -166,15 +165,17 @@ bar {
 }
 
 # aliases
-set $filemanager n2autilus
+set $filemanager nemo --no-desktop
 set $browser google-chrome
+set $terminal terminator
 
 
 # set wallapaper
 #exec --no-startup-id feh --bg-fill /home/vania/Pictures/wallpaper.png
 
 # lock the screen
-bindsym $MOD+l exec i3lock -d -i /home/vania/.i3/lock_screen.png -t -n
+#bindsym $MOD+l exec i3lock -d -i /home/vania/.i3/lock_screen.png -t -n
+bindsym $MOD+l exec "gnome-screensaver-command --lock"
 
 
 ## volume control
@@ -189,18 +190,24 @@ bindsym $mod+x exec $filemanager
 #bindsym $mod+p exec "i3session save" 
 bindsym $mod+p exec "i3session restore" 
 
-# autostart
-bindsym $mod+q exec /home/vania/auto-start-for-i3.sh 
 
 
 ## startup applications
 #exec $browser
-#exec gnome-terminal
+#exec o-terminal
 #exec $filemanager
 # exec --no-startup-id nm-applet # for network and wifi?
 
-# volume?
-exec gnome-settings-daemon
 
 # restore prev session
 #exec "i3session restore"
+
+
+
+# wifi stuffs
+#exec --no-startup-id nm-applet
+#exec wicd
+
+# for brightness and volume
+exec --no-startup-id gnome-settings-daemon 
+exec --no-startup-id gnome-sound-applet
