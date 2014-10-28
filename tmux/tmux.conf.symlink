@@ -1,13 +1,39 @@
-#set staus bar
+# use UTF8
+set -g utf8
+set-window-option -g utf8 on
+
+# set history to 10k lines
+set -g history-limit 10000
+
+# set window and pane index to 1 (0 by default)
+set-option -g base-index 1
+setw -g pane-base-index 1
+
+# reload ~/.tmux.conf using PREFIX r
+bind r source-file ~/.tmux.conf \; display "Reloaded!"
+
+
+
+# set status bar
+set -g status-utf8 on    
 set -g status-bg black
 set -g status-fg white
-set -g status-left '#[fg=green]#H'
+set -g status-left '#[fg=green, bright]#H' # shows hostname in green
+set -g status-right '#[fg=yellow,bg=default, bright] #(date +"%a %b %d, %H:%M")'
 
-#highlght active window
+
+
+# highlght active window
 set-window-option -g window-status-current-bg red
 
 # Set window notifications
 setw -g monitor-activity on
 set -g visual-activity on
+
+
+# Rather than constraining window size to the maximum size of any client 
+# connected to the *session*, constrain window size to the maximum size of any 
+# client connected to *that window*. Much more reasonable.
+setw -g aggressive-resize on
 
 
