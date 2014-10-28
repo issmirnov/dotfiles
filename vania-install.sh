@@ -12,7 +12,7 @@ DOTFILES_ROOT="`pwd`"
 hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; sudo apt-get install zsh; }
 
 # change shell to zsh
-#chsh -s /bin/zsh
+chsh -s /bin/zsh
 
 
 
@@ -57,9 +57,18 @@ install_dotfiles () {
     # link files
     link_files $source $dest
   done
+  
+  # manual i3 installation
+  mkdir ~/.i3
+  ln -s ~/.dotfiles/i3/ubuntu/config ~/.i3/config # default to ubunut
+  ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.cong ~/.i3status.conf
+  
+  # Manual terminator installation
+  mkdir ~/.config/terminator
+  ln -s ~/.dotfiles/config-terminator/config ~/.config/terminator/config
 }
 
-## Add binaries into the path, avodiding duplicates
+## Add binaries into the path, avoiding duplicates
 new_entry="~/.dotfiles/bin"
 echo $PATH | grep $new_entry
 if [ $? = 1 ]
