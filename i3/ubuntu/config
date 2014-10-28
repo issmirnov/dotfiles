@@ -1,5 +1,5 @@
 # Vania's i3 window manager config file.
-# Last updated: 10/29/2013
+# Last updated: 10/28/2014
 
 # set mod to Win key
 set $mod Mod4
@@ -178,36 +178,42 @@ set $terminal terminator
 bindsym $MOD+l exec "gnome-screensaver-command --lock"
 
 
-## volume control
-bindsym XF86AudioRaiseVolume exec "amixer -D pulse sset Master '3%+'"
-bindsym XF86AudioLowerVolume exec "amixer -D pulse sset Master '3%-'"
-bindsym XF86AudioMute exec "amixer -D pulse set Master toggle"
+# LAPTOP BUTTONS
+
+
+# Pulse Audio controls
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume 0 +5% #increase sound volume
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume 0 -- -5% #decrease sound volume
+bindsym XF86AudioMute exec pactl set-sink-mute 0 toggle # mute sound
+
+# Sreen brightness controls
+bindsym XF86MonBrightnessUp exec xbacklight -inc 20 # increase screen brightness
+bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightness
+
+# Media player controls
+bindsym XF86AudioPlay exec playerctl play
+bindsym XF86AudioPause exec playerctl pause
+bindsym XF86AudioNext exec playerctl next
+bindsym XF86AudioPrev exec playerctl previous
+
 
 
 # custom bindings
 bindsym $mod+z exec $browser
 bindsym $mod+x exec $filemanager
-#bindsym $mod+p exec "i3session save" 
-bindsym $mod+p exec "i3session restore" 
-
 
 
 ## startup applications
-#exec $browser
-#exec o-terminal
-#exec $filemanager
-# exec --no-startup-id nm-applet # for network and wifi?
+exec $browser
+exec terminator
 
-
-# restore prev session
-#exec "i3session restore"
-
-
-
-# wifi stuffs
-#exec --no-startup-id nm-applet
-#exec wicd
+# WiFi
+exec --no-startup-id nm-applet
 
 # for brightness and volume
 exec --no-startup-id gnome-settings-daemon 
 exec --no-startup-id gnome-sound-applet
+
+
+# Insync, for School folder in Google Drive
+exec insync start
