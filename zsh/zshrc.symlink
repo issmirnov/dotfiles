@@ -64,7 +64,40 @@ plugins=(git cp )
 source $ZSH/oh-my-zsh.sh
 
 
-# Customize to your needs...
-export PATH=/home/vania/bin:/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:~/.dotfiles/local/bin
+# Customize path
+export PATH=$PATH:~/bin:~/.dotfiles/local/bin
 
 ###################### END oh-my-zsh ##############################################################################################################
+alias ta='tmux attach -t '
+
+function ubuntu_install () {
+	# Installs commonly used programs
+	ins zsh tmux terminator fsarchiver
+
+	# i3 stuff
+	ins i3 dmenu gome-settings-daemon
+
+	# system stuff
+	ins cifs-utils filezilla gparted wicd 
+	
+	# google chrome
+	sudo echo "deb http://dl.google.com/linux/deb/ stable  main" > /etc/apt/sources.list.d/google-chrome.list
+	sudo apt-get update
+	ins google-chrome-stable
+	
+	# calibre
+	sudo -v && wget -nv -O- https://raw.githubusercontent.com/kovidgoyal/calibre/master/setup/linux-installer.py | sudo python -c "import sys; main=lambda:sys.stderr.write('Download failed\n'); exec(sys.stdin.read()); main()"
+	
+	# flux
+	sudo add-apt-repository ppa:kilian/f.lux
+	sudo apt-get update
+	sudo apt-get install fluxgui
+	
+	# insync
+	echo "install insync - https://www.insynchq.com/downloads/linux"
+	
+	# burg
+	sudo add-apt-repository ppa:n-muench/burg
+	sudo apt-get update
+	ins burg burg-themes
+}
