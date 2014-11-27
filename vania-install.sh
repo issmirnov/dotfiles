@@ -61,7 +61,7 @@ install_dotfiles () {
   # manual i3 installation
   mkdir ~/.i3
   ln -s ~/.dotfiles/i3/ubuntu/config ~/.i3/config # default to ubunut
-  ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.cong ~/.i3status.conf
+  ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
   
   # Manual terminator installation
   mkdir ~/.config/terminator
