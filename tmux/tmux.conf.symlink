@@ -18,13 +18,22 @@ bind r source-file ~/.tmux.conf \; display "Reloaded!"
 set -g status-utf8 on    
 set -g status-bg black
 set -g status-fg white
-set -g status-left '#[fg=green, bright]#H' # shows hostname in green
+set -g status-left '#[fg=green, bright]Session: #S' # shows session in green
 set -g status-right '#[fg=yellow,bg=default, bright] #(date +"%a %b %d, %H:%M")'
+set -g status-justify centre
 
 
 
-# highlght active window
-set-window-option -g window-status-current-bg red
+# set colors of active window
+setw -g window-status-current-bg red
+setw -g window-status-current-fg white
+setw -g window-status-current-attr bright
+
+# set the color of the window list
+# setw -g window-status-fg cyan
+setw -g window-status-bg default
+setw -g window-status-attr dim
+
 
 # Set window notifications
 setw -g monitor-activity on
