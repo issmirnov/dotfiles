@@ -46,3 +46,6 @@ set -g visual-activity on
 setw -g aggressive-resize on
 
 
+# disable autonaming of panes
+set-option -g allow-rename off
+
