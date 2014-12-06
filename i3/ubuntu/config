@@ -171,7 +171,7 @@ set $terminal terminator
 
 
 # set wallapaper
-#exec --no-startup-id feh --bg-fill /home/vania/Pictures/wallpaper.png
+exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg 
 
 # lock the screen
 #bindsym $MOD+l exec i3lock -d -i /home/vania/.i3/lock_screen.png -t -n
