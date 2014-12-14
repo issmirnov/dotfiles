@@ -178,6 +178,12 @@ exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg
 bindsym $MOD+l exec "gnome-screensaver-command --lock"
 
 
+# custom assignments (use xprop to get name)
+assign [class="Wicd Network Manager"] 10
+assign [class="Java - Eclipse "] 2
+
+
+
 # LAPTOP BUTTONS
 
 
