@@ -75,7 +75,7 @@ function ubuntu_install () {
 	ins zsh tmux terminator fsarchiver
 
 	# i3 stuff
-	ins i3 dmenu gome-settings-daemon
+	ins i3 i3-wm dmenu gnome-settings-daemon i3status feh
 
 	# system stuff
 	ins cifs-utils filezilla gparted wicd 
