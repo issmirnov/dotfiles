@@ -74,3 +74,5 @@ setw -g aggressive-resize on
 # disable autonaming of panes
 set-option -g allow-rename off
 
+# fixing scrolling issue
+set -g default-terminal screen-256color
