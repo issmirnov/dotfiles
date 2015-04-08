@@ -1,2 +1,0 @@
-#/bin/bash
-sshfs -o idmap=user cs61b-hk@bcom11.eecs.berkeley.edu:/home/cc/cs61b/fa13/class/cs61b-hk/ ~/cs61b-sshfs
