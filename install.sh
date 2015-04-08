@@ -3,6 +3,15 @@
 # Script to initialize home directory.
 # Author: Vania S. Based strongly on https://github.com/cowboy/dotfiles
 
+
+# update git submodules
+git submodule init
+git submodule update
+cd zsh-config
+git checkout master
+cd ..
+
+
 DOTFILES_ROOT="`pwd`"
 
 
@@ -39,16 +48,16 @@ install_dotfiles () {
       rm -rf $dest
       echo "removed $dest"
     fi
-    
+
     # link files
     link_files $source $dest
   done
-  
+
   # manual i3 installation
   mkdir ~/.i3
   ln -s ~/.dotfiles/i3/ubuntu/config ~/.i3/config # default to ubuntu
   ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
-  
+
   # Manual terminator installation
   mkdir ~/.config/terminator
   ln -s ~/.dotfiles/config-terminator/config ~/.config/terminator/config
