@@ -33,7 +33,8 @@ bind - split-window -v
 set -g status-utf8 on    
 set -g status-bg black
 set -g status-fg white
-set -g status-left '#[fg=green, bright]Session: #S' # shows session in green
+set -g status-left-length 30
+set -g status-left '#[fg=green, bright]Session: #S #[fg=black, bright]| #[fg=red, bright]Host: #H'
 set -g status-right '#[fg=yellow,bg=default, bright] #(date +"%a %b %d, %H:%M")'
 set -g status-justify centre
 
