@@ -35,6 +35,8 @@ link_files () {
 #link_files $DOTFILES_ROOT/oh-my-zsh ~/.oh-my-zsh
 
 
+# nuke old zhrc symlink, only good for updates
+rm ~/.zshrc
 
 # main function
 install_dotfiles () {
@@ -59,7 +61,7 @@ install_dotfiles () {
   ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
 
   # Manual terminator installation
-  mkdir ~/.config/terminator
+  mkdir -p ~/.config/terminator
   ln -s ~/.dotfiles/config-terminator/config ~/.config/terminator/config
 }
 
