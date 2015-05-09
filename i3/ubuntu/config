@@ -223,3 +223,9 @@ exec --no-startup-id gnome-sound-applet
 
 # Insync, for School folder in Google Drive
 exec insync start
+
+
+
+## moving workspaces
+bindsym $mod+Shift+greater move workspace to output right
+bindsym $mod+Shift+less move workspace to output left
