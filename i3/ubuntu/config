@@ -85,6 +85,13 @@ bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 
+# save last workspace
+workspace_auto_back_and_forth yes
+ 
+# move current container to previous workspace and follow it
+bindsym $mod+q move container to workspace back_and_forth; workspace back_and_forth
+
+
 # moving workspaces across monitors
 bindsym $mod+Shift+greater move workspace to output right
 bindsym $mod+Shift+less move workspace to output left
