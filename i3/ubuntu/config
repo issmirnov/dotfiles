@@ -1,5 +1,5 @@
 # Vania's i3 window manager config file.
-# Last updated: 10/28/2014
+# Last updated: 5/16/2015
 
 # set mod to Win key
 set $mod Mod4
@@ -87,7 +87,7 @@ bindsym $mod+Shift+0 move container to workspace number 10
 
 # save last workspace
 workspace_auto_back_and_forth yes
- 
+
 # move current container to previous workspace and follow it
 bindsym $mod+q move container to workspace back_and_forth; workspace back_and_forth
 
@@ -110,7 +110,7 @@ bindsym $mod+Shift+e exec "i3session save; i3-nagbar -t warning -m 'Do you reall
 # jump to urgent window
 bindsym $mod+u [urgent=latest] focus
 
-# resize window 
+# resize window
 mode "resize" {
         # These bindings trigger as soon as you enter the resize mode
 
@@ -141,7 +141,7 @@ bindsym $mod+r mode "resize"
 set $gold    #ffa000
 set $purple  #7a5ada
 set $red     #d11931
-set $grue    #2b6473 
+set $grue    #2b6473
 
 # class                 border  backgr. text    indicator
 client.focused          #4c7899 #285577 #ffffff #2e9ef4
@@ -157,7 +157,7 @@ bar {
     position          top
     mode              hide
     workspace_buttons yes
-    
+
     font pango: Ubuntu Mono 12
 
     colors {
@@ -190,7 +190,7 @@ bindsym XF86AudioPrev exec playerctl previous
 
 
 # set wallapaper
-exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg 
+exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg
 
 # lock the screen
 #bindsym $MOD+l exec i3lock -d -i /home/vania/.i3/lock_screen.png -t -n
@@ -215,13 +215,12 @@ exec $terminal
 exec --no-startup-id nm-applet
 
 # for brightness and volume
-exec --no-startup-id gnome-settings-daemon 
+exec --no-startup-id gnome-settings-daemon
 exec --no-startup-id gnome-sound-applet
 
 
 # Insync, for School folder in Google Drive
 exec insync start
 
-
-
-
+# flux
+exec fluxgui
