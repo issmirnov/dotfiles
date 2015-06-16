@@ -57,15 +57,15 @@ install_dotfiles () {
 
   # manual i3 installation
   mkdir ~/.i3
-  ln -s ~/.dotfiles/i3/ubuntu/config ~/.i3/config # default to ubuntu
-  ln -s ~/.dotfiles/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
+  ln -s $DOTFILES_ROOT/i3/ubuntu/config ~/.i3/config # default to ubuntu
+  ln -s $DOTFILES_ROOT/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
 
   # Manual terminator installation
   mkdir -p ~/.config/terminator
-  ln -s ~/.dotfiles/config-terminator/config ~/.config/terminator/config
+  ln -s $DOTFILES_ROOT/config-terminator/config ~/.config/terminator/config
 
   # Manual amix/vimrc link
-  ln -s ~/.dotfiles/vimrc ~/.vim_runtime
+  ln -s $DOTFILES_ROOT/vimrc ~/.vim_runtime
   sh ~/.vim_runtime/install_awesome_vimrc.sh
 }
 
