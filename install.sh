@@ -63,6 +63,10 @@ install_dotfiles () {
   # Manual terminator installation
   mkdir -p ~/.config/terminator
   ln -s ~/.dotfiles/config-terminator/config ~/.config/terminator/config
+
+  # Manual amix/vimrc link
+  ln -s ~/.dotfiles/vimrc ~/.vim_runtime
+  sh ~/.vim_runtime/install_awesome_vimrc.sh
 }
 
 
