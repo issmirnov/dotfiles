@@ -1,1 +1,0 @@
-yaourt -Syua --noconfirm
