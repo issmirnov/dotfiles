@@ -8,7 +8,7 @@
 #
 
 # Use the server-provided last modification date, if available
-timestamping = on
+# timestamping = on
 
 # Do not go up in the directory structure when downloading recursively
 no_parent = on
