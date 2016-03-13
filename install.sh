@@ -55,10 +55,10 @@ install_dotfiles () {
     link_files $source $dest
   done
 
-  # manual i3 installation
+  # manual i3 installation ## TODO add commands for rofi, cmus, and i3blocks
   mkdir ~/.i3
-  ln -s $DOTFILES_ROOT/i3/ubuntu/config ~/.i3/config # default to ubuntu
-  ln -s $DOTFILES_ROOT/i3/i3status-laptop/.i3status.conf ~/.i3status.conf
+  ln -s $DOTFILES_ROOT/i3/config ~/.i3/config
+  ln -s $DOTFILES_ROOT/i3/i3blocks.conf ~/.i3blocks.conf
 
   # Manual terminator installation
   mkdir -p ~/.config/terminator
