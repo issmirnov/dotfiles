@@ -7,7 +7,8 @@ set $mod Mod4
 
 ############ Look and Feel  ################################
 # Font for window titles. Will also be used by the bar unless a different font
-font pango: Ubuntu Mono 10
+#font pango: Ubuntu Mono 10
+font pango:DejaVu Sans Mono 9
 
 ### custom colors
 set $gold    #ffa000
@@ -78,6 +79,7 @@ bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
+bindsym $mod+Tab workspace back_and_forth
 
 ### move focused window
 bindsym $mod+Shift+Left move left
@@ -215,8 +217,11 @@ bindsym XF86MonBrightnessDown exec xbacklight -dec 20 # decrease screen brightne
 
 
 # Media player controls
-bindsym XF86AudioRaiseVolume exec "amixer -q sset Master,0 1+ unmute"
-bindsym XF86AudioLowerVolume exec "amixer -q sset Master,0 1- unmute"
+bindsym XF86AudioRaiseVolume "exec amixer -q sset Master 5%+ unmute"
+bindsym XF86AudioLowerVolume "exec amixer -q sset Master 5%- unmute"
+bindsym $mod+XF86AudioRaiseVolume exec "amixer -q sset Master,0 1+ unmute"
+bindsym $mod+XF86AudioLowerVolume exec "amixer -q sset Master,0 1- unmute"
+
 # bindsym XF86AudioMute exec "amixer -q sset Master,0 toggle" # UNABLE TO UNMUTE
 bindsym XF86AudioPlay exec cmus-remote -u
 bindsym XF86AudioPause exec cmus-remote -u 
