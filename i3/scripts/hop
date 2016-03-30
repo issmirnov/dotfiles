@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+
+## Author: Ivan Smirnov, ismirnov@google.com
+## NOTE: these docs are not docs, rather they are a quick mind dump of actions needed to set this up
+## A proper writeup may come one day.
+## 
+## This is script that maps evoluent buttons 5 and 6 to cycle through workspaces on a given monitor
+## dependencies: pip install i3-py (note that this is python2). file also included here if repo is lost 
+## 
+## setting up the mouse:
+## $ xinput --query-state <ID> # where ID is from xinput | grep evoluent
+## $ xinput --set-button-map 8 1 3 0 4 5 0 0 8 2 10 0 # notice the 8 and 10 - these enable the buttons on the mouse
+## $ apt-get install xbindkeys
+## $ xbindkeys --defaults > ~/.xbindkeysrc
+## Edit ~/.xbindkeyssrc and add these lines:
+## "/home/<user>/bin/hop up"
+##     b:8
+##  "/homes/<user>/bin/hop down"
+##     b:10
+
+
+
+import i3
+import sys
+
+# figure out if we are going up one level or down
+
+if len(sys.argv) < 2:
+    sys.exit(-1)
+
+up = sys.argv[1] == 'up'
+
+# get all workspaces
+works = i3.get_workspaces()
+
+# get display output
+output = str([w['output'] for w in works if w['focused']][0])
+cur_name = str([w['name'] for w in works if w['focused']][0])
+
+# get list of workspances on this display
+candidates = [str(w['name']) for w in works if w['output'] == output]
+
+# get index of current workspace
+index = candidates.index(cur_name)
+
+# get target workspace name
+if up:
+    target = (index + 1) % len(candidates)
+else:
+    target = (index - 1) % len(candidates)
+
+i3.command('workspace', candidates[target])
