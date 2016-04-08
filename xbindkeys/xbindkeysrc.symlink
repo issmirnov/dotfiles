@@ -1,0 +1,12 @@
+"/home/vania/bin/hop up"
+  b:8
+
+"/home/vania/bin/hop down"
+  b:10
+
+"/home/vania/bin/hop up"
+  Mod4 + b:8
+
+"/home/vania/bin/hop down"
+  Mod4 + b:10
+
