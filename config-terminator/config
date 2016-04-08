@@ -6,6 +6,7 @@
     background_image = None
     scrollback_infinite = True
     show_titlebar = False
+    urgent_bell = True
 [layouts]
   [[default]]
     [[[child1]]]
