@@ -26,8 +26,10 @@ client.urgent           $purple $red    $gold   $gold
 # Use Mouse+$mod to drag floating windows to their wanted position
 floating_modifier $mod
 
-# mouse follows focus
+# MOUSE
 # focus_follows_mouse no
+mouse_warping none
+
 
 # resize window
 mode "resize" {
@@ -134,7 +136,7 @@ bindsym $mod+Shift+9 move container to workspace number 9
 bindsym $mod+Shift+0 move container to workspace number 10
 
 
-# save last workspace
+# save last workspace - can toggle with mod+tab or mod+num_cur_ws
 workspace_auto_back_and_forth yes
 
 # move current container to previous workspace and follow it
@@ -207,6 +209,7 @@ bindsym $mod+Shift+plus scratchpad show
 # rofi - note, can use Shift+right to cycle through modes
 bindsym $mod+g exec "rofi -show window"
 bindsym $mod+d exec "rofi -show run"
+bindsym $mod+b exec "rofi -show Workspace"
 
 
 ############ Display and Music  ################################
@@ -235,11 +238,15 @@ set $filemanager nemo --no-desktop
 set $browser google-chrome
 set $terminal terminator
 
-
 # favorite programs
 bindsym $mod+z exec $browser
 bindsym $mod+x exec $filemanager
 bindsym $mod+Return exec i3-sensible-terminal
+
+# App Bindings
+assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
+assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
+
 
 ###### startup applications #####
 
@@ -258,3 +265,7 @@ exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg
 # laptop
 exec --no-startup-id nm-applet
 exec fluxgui
+
+# music - pop cmus to scratchpad
+for_window [title="^cmus$"] move window to scratchpad
+exec --no-startup-id terminator -T cmus -e cmus 
