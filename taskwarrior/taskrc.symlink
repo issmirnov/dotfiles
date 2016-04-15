@@ -1,4 +1,4 @@
-# manual urgenxy overrides
+# manual urgency overrides
 urgency.user.tag.later.coefficient=-6.0
 urgency.user.tag.quick.coefficient=7.0
 
