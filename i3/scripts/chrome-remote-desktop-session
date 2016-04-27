@@ -1,0 +1,7 @@
+# ~/.chrome-remote-desktop-session 
+
+# optional, for retina displays
+# xrandr --dpi 200
+
+/usr/bin/i3
+exec /usr/bin/gnome-session --session=i3
