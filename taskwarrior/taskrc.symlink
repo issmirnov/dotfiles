@@ -23,3 +23,24 @@ report.orphans.sort         = entry+
 context.home=+puma or +carbon or +@home
 context.work=project:work
 context.wiki=project:wiki
+
+## Brainpower: UDA and report
+uda.brainpower.type         = string
+uda.brainpower.label        = Brainpower
+uda.brainpower.values       = E,H,M,L
+uda.brainpower.default      = M
+report.brain.columns        = id,brainpower,estimate,project,tags,description
+report.brain.filter         = status:pending brain.not:''
+report.brain.description    = Tasks sorted by brain power.
+report.brain.labels         = ID,Br,Est,Project,Tags,Description
+report.brain.sort           = brainpower-
+
+## Time Estimate: UDA and report
+uda.estimate.type           = numeric
+uda.estimate.label          = Time Estimate (H)
+report.quick.columns        = id,brainpower,estimate,project,tags,description
+report.quick.filter         = status:pending estimate.not:''
+report.quick.description    = Tasks sorted by time estimate..
+report.quick.labels         = ID,Br,Est,Project,Tags,Description
+report.quick.sort           = estimate+
+
