@@ -1,6 +1,25 @@
-# manual urgency overrides
+# default behaviours
+default.command=ready
+
+## manual urgency overrides
 urgency.user.tag.later.coefficient=-6.0
 urgency.user.tag.quick.coefficient=7.0
+# urgency.user.tag.today.coefficient=10.0
 
-# display behavior
-default.command=ready
+## GTD Inbox. Use 'in' and 'inbox' aliases.
+report.in.columns           = id,description
+report.in.description       = Inbox
+report.in.filter            = status:pending limit:page (+in)
+report.in.labels            = ID,Description
+
+## Report to show tasks with no projects.
+report.orphans.columns      = id,status.short,entry.age,tags,wait.remaining,description
+report.orphans.filter       = proj: status.not:completed status.not:deleted
+report.orphans.description  = Tasks without Projects
+report.orphans.labels       = ID,S,Age,Tags,W,Description
+report.orphans.sort         = entry+
+
+## Contexts
+context.home=+puma or +carbon or +@home
+context.work=project:work
+context.wiki=project:wiki
