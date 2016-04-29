@@ -1,7 +1,8 @@
 # default behaviours
-default.command=ready
+default.command         = ready
+search.case.sensitive   = no
 
-## manual urgency overrides
+## urgency overrides
 urgency.user.tag.later.coefficient=-6.0
 urgency.user.tag.quick.coefficient=7.0
 # urgency.user.tag.today.coefficient=10.0
