@@ -33,7 +33,7 @@ report.brain.columns        = id,brainpower,estimate,project,tags,description
 report.brain.filter         = status:pending brain.not:''
 report.brain.description    = Tasks sorted by brain power.
 report.brain.labels         = ID,Br,Est,Project,Tags,Description
-report.brain.sort           = brainpower-
+report.brain.sort           = brainpower+,estimate+
 
 ## Time Estimate: UDA and report
 uda.estimate.type           = numeric
