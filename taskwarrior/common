@@ -9,8 +9,8 @@ urgency.user.tag.quick.coefficient=7.0
 
 
 ## Customize "next" report to show brainpower and time estimates.
-report.ready.columns =    id,start.age,entry.age,depends.indicator,priority,project,tags,recur.indicator,scheduled.countdown,due.countdown,until.remaining,estimate,brainpower,description,urgency
-report.ready.labels  =   ID,Active,Age,D,P,Project,Tags,R,S,Due,Until,Est,Br,Description,Urg
+report.ready.columns =    id,start.age,entry.age,depends.indicator,priority,project,tags,recur.indicator,scheduled.countdown,due.countdown,until.remaining,brainpower,description,urgency
+report.ready.labels  =   ID,Active,Age,D,P,Project,Tags,R,S,Due,Until,Br,Description,Urg
 
 ## GTD Inbox. Use 'in' and 'inbox' aliases.
 report.in.columns           = id,description
