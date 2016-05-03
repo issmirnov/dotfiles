@@ -49,3 +49,9 @@ report.quick.filter         = status:pending estimate.not:''
 report.quick.description    = Tasks sorted by time estimate..
 report.quick.labels         = ID,Br,Est,Project,Tags,Description
 report.quick.sort           = estimate+
+
+## Report: Goals
+report.goals.description    = Goals for the Month
+report.goals.filter         = project:goals status.not:completed status.not:deleted
+report.goals.columns        = id,brainpower,estimate,project,tags,description 
+report.goals.labels         = ID,Br,Est,Project,Tags,Description 
