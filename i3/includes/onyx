@@ -1,0 +1,10 @@
+### Onyx config ###
+#  App Bindings ########
+assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
+#assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
+
+# startup apps
+exec --no-startup-id nm-applet
+exec fluxgui
+exec ssh-agent
+exec glipper

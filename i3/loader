@@ -1,0 +1,15 @@
+#!/bin/zsh
+
+ROOT="$HOME/.dotfiles/i3"
+NAME=$(echo $HOST | cut -f1 -d".")
+
+# remove the old config. 
+mv $ROOT/config /tmp/i3-config.bak
+
+# generate new config
+cp $ROOT/includes/base $ROOT/config
+
+# copy in host specific results
+echo "Running $NAME loader"
+source $ROOT/loaders/$NAME
+
