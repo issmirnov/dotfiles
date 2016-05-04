@@ -3,14 +3,9 @@
 # Script to initialize home directory.
 # Author: Vania S. Based strongly on https://github.com/cowboy/dotfiles
 
-
 # update git submodules
 git submodule init
 git submodule update
-cd zsh-config
-git checkout master
-cd ..
-
 
 DOTFILES_ROOT="`pwd`"
 
@@ -21,19 +16,18 @@ DOTFILES_ROOT="`pwd`"
 hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; sudo apt-get install zsh; }
 
 # change shell to zsh
-chsh -s /bin/zsh
-
+if [ "$SHELL" == "/bin/zsh" ];then
+    # already zsh
+    echo "shell already zsh, no changes needed"
+else
+    chsh -s /bin/zsh
+fi
 
 # helper function
 link_files () {
   ln -s $1 $2
   echo "linked $1 to $2"
 }
-
-
-# might not be needed if zsh-config properly set
-#link_files $DOTFILES_ROOT/oh-my-zsh ~/.oh-my-zsh
-
 
 # nuke old zhrc symlink, only good for updates
 rm ~/.zshrc
