@@ -33,3 +33,6 @@ read_and_review (){
     task "$id" annotate "$link"
 }
 alias rnr=read_and_review
+
+# goals. Filters on proj:goals.cur_month
+alias tg="t goals proj:goals.${$(date +'%b'):l}"
