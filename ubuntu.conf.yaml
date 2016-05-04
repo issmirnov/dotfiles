@@ -1,0 +1,5 @@
+- link:
+    ~/.i3/config: i3/config
+    ~/.i3blocks.conf: i3/i3blocks.conf
+    ~/.config/terminator/config: terminator/config
+    ~/.xbindkeysrc: xbindkeys/xbindkeysrc

@@ -7,3 +7,6 @@
 [submodule "vimrc"]
 	path = vimrc
 	url = https://github.com/issmirnov/vimrc.git
+[submodule "dotbot"]
+	path = dotbot
+	url = https://github.com/anishathalye/dotbot

@@ -1,0 +1,25 @@
+- defaults:
+    link:
+      relink: true
+      create: true
+
+- clean: ['~']
+
+- shell:
+  - [git submodule update --init, Installing submodules]
+
+
+- link:
+    ~/.nanorc: nano/nanorc
+    ~/.taskrc: taskwarrior/taskrc
+    ~/.tmux.conf: tmux/tmux.conf
+    ~/.toprc : top/toprc
+    ~/.vim_runtime: vimrc
+    ~/.zshrc: zsh/zshrc
+    ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
+    ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
+    ~/.dotfiles/.git/hooks/post-commit: git/hooks/post-commit
+
+- shell:
+  - [sh ~/.vim_runtime/install_awesome_vimrc.sh, Installing amix vimrc]
+  - [sh ~/.dotfiles/zsh/setup, Setting ZSH to default.]

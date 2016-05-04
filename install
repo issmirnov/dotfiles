@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -e
+
+CONFIG_SUFFIX=".conf.yaml"
+DOTBOT_DIR="dotbot"
+
+DOTBOT_BIN="bin/dotbot"
+BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+cd "${BASEDIR}"
+git submodule update --init --recursive "${DOTBOT_DIR}"
+
+# base lib
+"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "default${CONFIG_SUFFIX}"
+
+# OS additions.
+if [[ $OSTYPE == 'linux-gnu' ]]; then
+	 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "ubuntu${CONFIG_SUFFIX}"
+elif [[ $OSTYPE == darwin* ]]; then
+    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "osx${CONFIG_SUFFIX}"
+fi
+set +e
