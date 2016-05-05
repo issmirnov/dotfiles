@@ -36,3 +36,6 @@ alias rnr=read_and_review
 
 # goals. Filters on proj:goals.cur_month
 alias tg="t goals proj:goals.${$(date +'%b'):l}"
+
+# all waiting or pending
+alias tpw='t all +WAITING or +PENDING'
