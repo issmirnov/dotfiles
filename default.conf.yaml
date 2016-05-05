@@ -10,6 +10,7 @@
 
 
 - link:
+    ~/.gitconfig: git/config
     ~/.nanorc: nano/nanorc
     ~/.taskrc: taskwarrior/taskrc
     ~/.tmux.conf: tmux/tmux.conf
