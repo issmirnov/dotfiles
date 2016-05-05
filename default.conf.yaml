@@ -22,4 +22,4 @@
 
 - shell:
   - [sh ~/.vim_runtime/install_awesome_vimrc.sh, Installing amix vimrc]
-  - [sh ~/.dotfiles/zsh/setup, Setting ZSH to default.]
+  - [~/.dotfiles/zsh/setup, Setting ZSH to default.]
