@@ -1,7 +1,14 @@
+- defaults:
+	link:
+	  relink: true
+	  create: true
+
+- clean: ['~']
+
 - shell:
-    - [i3/loader, "Generating i3 config"]
+	- [i3/loader, "Generating i3 config"]
 - link:
-    ~/.i3/config: i3/config
-    ~/.i3blocks.conf: i3/i3blocks.conf
-    ~/.config/terminator/config: terminator/config
-    ~/.xbindkeysrc: xbindkeys/xbindkeysrc
+	~/.i3/config: i3/config
+	~/.i3blocks.conf: i3/i3blocks.conf
+	~/.config/terminator/config: terminator/config
+	~/.xbindkeysrc: xbindkeys/xbindkeysrc
