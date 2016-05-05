@@ -1,0 +1,29 @@
+#!/bin/sh
+# tm - a simple menu interface to choose a tmux session to open
+
+# Abort if we're already inside a TMUX session
+[ "$TMUX" == "" ] || exit 0
+
+# Present menu for user to choose which session to open
+PS3="Choose session: "
+options=($(tmux list-sessions -F "#S" 2>/dev/null) "New Session")
+
+echo "Available sessions"
+echo "------------------"
+echo " "
+
+select opt in "${options[@]}"
+do
+    case $opt in
+        "New Session")
+            read -p "New session name: " SESSION_NAME
+            tmux new -s "$SESSION_NAME"
+            break
+            ;;
+
+        *)
+            tmux attach-session -t $opt
+            break
+            ;;
+    esac
+done
