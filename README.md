@@ -1,6 +1,25 @@
-## Information  
+# Ivan's Dotfiles
 
-This is a medley of various dotfile management tools. oh-my-zsh is linked in as a submodule, which makes updating the config easier on me. zsh-config is another public repo that I own, forked from Andrew Brinker. 
+>  Your dotfiles will most likely be the longest project you ever work on. 
 
-The install script is based on @holman's work, essentially looping through the repo and linking in any files ending in ".symlink". 
+Quote by Anish Athalye on his [blog](http://www.anishathalye.com/2014/08/03/managing-your-dotfiles/).
 
+I completely agree with Anish, and thus maintain this repo for my dotfiles. There are many like them, but these are mine.
+
+## Installation
+
+Clone and run `./install`. This will download [dotbot](https://github.com/anishathalye/dotbot) and symlink everything into place.
+
+## Submodules Used
+
+- I am currently using [amix's vimrc](https://github.com/amix/vimrc) for vim. It's super complicated, so be careful if you use it.
+- The ZSH folder is what used to be a fork of [Andre Brinker's ZSH](https://github.com/AndrewBrinker/zsh) repo, and is not included directly here.
+
+
+## A Note about the License & Copyright:
+
+Unless attributed otherwise, everything is under the MIT licence (see LICENCE for more info).
+
+Some stuff is not from me, and without attribution, and I no longer remember where I got it from. I apologize for that.
+
+Feel free to copy whatever suits you, and open an issue with a question if you need some help.
