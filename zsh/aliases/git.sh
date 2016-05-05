@@ -11,8 +11,7 @@ alias grm="git status | grep deleted | awk '{print \$3}' | xargs git rm"
 alias gacm='git add -A; git commit -m '
 
 # Uses git's autocompletion for inner commands. Assumes an install of git's
-# bash `git-completion` script at $completion below (this is where Homebrew
-# tosses it, at least).
+# bash `git-completion` script at $completion
 completion=/usr/local/etc/bash_completion.d/git-completion.bash
 
 if test -f $completion
