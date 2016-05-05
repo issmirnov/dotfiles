@@ -1,7 +1,12 @@
-# `zsh-config`
+# zsh
 
-This is a modular zsh config framework. All credit to [Andrew Brinker](https://github.com/AndrewBrinker/zsh)
-for his original idea.
+This is a modular zsh config framework, originally built by
+ [Andrew Brinker](https://github.com/AndrewBrinker/zsh).
 
-This is meant to be used with my main [dotfiles](https://github.com/issmirnov/dotfiles) repo, and as such certain
-config has the path `~/.dotfiles` hard coded in. Feel free to fork and modify.
+At the top level there is a simple `zshrc` that when loaded will find all of the
+files ending in `.sh` and load them in. The directory structure is pretty self
+explanatory - there's a folder for aliases, various config and some exports that
+contain handy functions.
+
+The `setup` script is called by the `install` script one level up. It checks that
+zsh is installed, and that it is the default shell.
