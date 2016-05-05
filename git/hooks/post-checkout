@@ -13,4 +13,9 @@ running $2" && eval "$2"
 
 # Generate i3 config if changes detected
 check_run i3 "~/.dotfiles/i3/loader"
+
+# run installer script for new links
 check_run .conf.yaml "~/.dotfiles/upgrade.sh"
+
+# reload zsh
+check_run zsh "zsh-reload"
