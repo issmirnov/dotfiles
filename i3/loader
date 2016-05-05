@@ -9,7 +9,8 @@ mv $ROOT/config /tmp/i3-config.bak
 # generate new config
 cp $ROOT/includes/base $ROOT/config
 
-# copy in host specific results
-echo "Running $NAME loader"
-source $ROOT/loaders/$NAME
+if [ -f $ROOT/loaders/$NAME  ]; then
+    echo "Running $NAME loader"
+    source $ROOT/loaders/$NAME
+fi
 

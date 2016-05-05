@@ -1,3 +1,5 @@
+- shell:
+    - [i3/loader, "Generating i3 config"]
 - link:
     ~/.i3/config: i3/config
     ~/.i3blocks.conf: i3/i3blocks.conf
