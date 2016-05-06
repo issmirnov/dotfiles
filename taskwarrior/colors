@@ -66,7 +66,7 @@ color.tag.in    = black underline on white
 color.tag.rnr   = on rgb102
 
 # Due
-color.due       = on rgb310
+color.due       = black on rgb310
 color.due.today = on bright yellow
 color.overdue   = on bright red
 

@@ -4,6 +4,6 @@ data.location=~/.task
 
 include ~/.task/auth
 
-include ~/.dotfiles/taskwarrior/light-16.theme 
-include ~/.dotfiles/taskwarrior/common
+include ~/.dotfiles/taskwarrior/common 
+include ~/.dotfiles/taskwarrior/colors
 
