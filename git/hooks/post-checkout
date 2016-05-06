@@ -18,4 +18,4 @@ check_run i3 "~/.dotfiles/i3/loader"
 check_run .conf.yaml "~/.dotfiles/upgrade.sh"
 
 # reload zsh
-check_run zsh "source ~/.zshrc"
+check_run zsh "zsh -c 'source ~/.zshrc'"
