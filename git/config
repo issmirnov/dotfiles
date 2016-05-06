@@ -27,28 +27,12 @@
 	statusHints = false
 	pushNonFastForward = false
 
-[diff]
-	renames = copies
-	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
-
-[merge]
-	stat = true
-
 [branch]
 	autosetupmerge = true
 
-[rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
-	enabled = true
-
-[web]
-	browser = google-chrome-stable
-
 [browser "google-chrome-stable"]
 	cmd = "/usr/bin/google-chrome-stable"
-
-[diff]
-	renames = copies
-
+	
 [color]
 	ui = true
 	pager = true
@@ -79,8 +63,29 @@
 	untracked = blue bold
 	branch = green bold
 	nobranch = red
+	
+[diff]
+	renames = copies
+	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
+
+[grep]
+	lineNumber = true
+	
+[merge]
+	stat = true
+
 [pretty]
 	default = %C(bold black)%h%Creset -%C(auto)%d%Creset %s %C(bold black)(%an %ar)%Creset
 	detailed = format:%C(cyan)%h %C(red)%ad %C(blue)[%an]%C(magenta)%d %C(white)%s
 	shorter = %C(auto)%D %C(black)--%C(bold black)%gD%N %ad by %C(white)%cn%C(reset)
 	vtree = %C(bold blue)%h%C(reset)+%C(bold black)(%cr)%C(reset)+%C(auto)%D%C(reset)++\n+++       %C(bold black)%an%C(reset)%C(black):%C(reset) %s
+
+[rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
+	enabled = true
+
+[web]
+	browser = google-chrome-stable
+	
+# Allow local customizations in the .gitconfig_local file
+[include]
+	path = ~/.gitconfig_local
