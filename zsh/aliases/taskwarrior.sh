@@ -38,4 +38,4 @@ alias rnr=read_and_review
 alias tg="t goals proj:goals.${$(date +'%b'):l}"
 
 # all waiting or pending
-alias tpw='t all +WAITING or +PENDING'
+alias tawp='t all +WAITING or +PENDING'
