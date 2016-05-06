@@ -7,6 +7,8 @@
     scrollback_infinite = True
     show_titlebar = False
     urgent_bell = True
+    use_system_font = False
+    font = Inconsolata 12
 [layouts]
   [[default]]
     [[[child1]]]
