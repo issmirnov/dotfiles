@@ -11,6 +11,7 @@
 
 - link:
     ~/.gitconfig: git/config
+    ~/.config/htop/htoprc: htop/htoprc
     ~/.nanorc: nano/nanorc
     ~/.taskrc: taskwarrior/taskrc
     ~/.tmux.conf: tmux/tmux.conf
