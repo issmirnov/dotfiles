@@ -1,0 +1,8 @@
+- shell:
+  - [git submodule update --init, Installing submodules]
+
+- link:
+    ~/.zshrc: zsh/zshrc
+    ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
+    ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
+    ~/.dotfiles/.git/hooks/post-commit: git/hooks/post-commit
