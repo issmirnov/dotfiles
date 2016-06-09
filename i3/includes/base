@@ -140,6 +140,8 @@ workspace_auto_back_and_forth yes
 # move current container to previous workspace and follow it
 bindsym $mod+k move container to workspace back_and_forth; workspace back_and_forth
 
+# rename workspaces on the fly
+bindsym Ctrl+Shift+a exec i3-input -F 'rename workspace to %s' -P 'New name: '
 
 # moving workspaces across monitors
 bindsym $mod+Shift+greater move workspace to output right
