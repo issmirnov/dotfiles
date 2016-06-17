@@ -1,0 +1,8 @@
+#!/bin/bash
+# Opens rofi and takes a new name for a workspace.
+# Currently focused window is moved to that workspace.
+
+name=$(echo -e "" | rofi -dmenu)
+if [ $? -eq 0 ]; then
+    i3-msg "move window to workspace $name"
+fi

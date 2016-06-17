@@ -147,12 +147,16 @@ bindsym Ctrl+Shift+a exec i3-input -F 'rename workspace to %s' -P 'New name: '
 bindsym $mod+Shift+greater move workspace to output right
 bindsym $mod+Shift+less move workspace to output left
 
+## handle named workspaces
+bindsym Ctrl+Shift+a exec "~/.dotfiles/i3/scripts/i3-rename"
+bindsym Ctrl+Shift+s exec "~/.dotfiles/i3/scripts/i3-move"
+
 ############ Meta Configuration and Modes  ################################
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
 
-# restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
+# restart i3 in place (preserves your layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r restart
 
 # exit i3 (logs you out of your X session)
@@ -226,7 +230,7 @@ bindsym $mod+XF86AudioLowerVolume exec "amixer -q sset Master,0 1- unmute"
 
 # bindsym XF86AudioMute exec "amixer -q sset Master,0 toggle" # UNABLE TO UNMUTE
 bindsym XF86AudioPlay exec cmus-remote -u
-bindsym XF86AudioPause exec cmus-remote -u 
+bindsym XF86AudioPause exec cmus-remote -u
 bindsym XF86AudioNext exec cmus-remote -n
 bindsym XF86AudioPrev exec cmus-remote -r
 
@@ -262,9 +266,8 @@ exec xbindkeys
 
 # music
 for_window [title="^cmus$"] move window to scratchpad
-exec --no-startup-id terminator -T cmus -e cmus 
+exec --no-startup-id terminator -T cmus -e cmus
 
 ### user apps
 exec $browser
 exec $terminal
-
