@@ -145,8 +145,8 @@ bindsym $mod+Shift+greater move workspace to output right
 bindsym $mod+Shift+less move workspace to output left
 
 ## handle named workspaces
-bindsym Ctrl+Shift+a exec "~/.dotfiles/i3/scripts/i3-rename"
-bindsym Ctrl+Shift+s exec "~/.dotfiles/i3/scripts/i3-move"
+bindsym $mod+Shift+a exec "~/.dotfiles/i3/scripts/i3-rename"
+bindsym $mod+Shift+s exec "~/.dotfiles/i3/scripts/i3-move"
 
 ############ Meta Configuration and Modes  ################################
 
