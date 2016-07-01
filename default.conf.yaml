@@ -16,7 +16,8 @@
     ~/.taskrc: taskwarrior/taskrc
     ~/.tmux.conf: tmux/tmux.conf
     ~/.toprc : top/toprc
-    ~/.vim_runtime: vimrc
+    ~/.vimrc: vim/vimrc
+    ~/.vim/bundle/Vundle.vim: vim/Vundle.vim
     ~/.zshrc: zsh/zshrc
     ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
     ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
@@ -24,5 +25,5 @@
     ~/bin/tm: tmux/tmux-menu
 
 - shell:
-  - [sh ~/.vim_runtime/install_awesome_vimrc.sh, Installing amix vimrc]
   - [~/.dotfiles/zsh/setup, Setting ZSH to default.]
+  - [vim +PluginInstall +qall, Installing Vundle.vim]
