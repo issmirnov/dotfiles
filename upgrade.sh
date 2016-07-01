@@ -1,4 +1,3 @@
 #!/bin/zsh
-
-mv ~/.gitconfig ~/.gitconfig.bak
+rm ~/.vimrc
 ./install
