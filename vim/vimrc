@@ -17,8 +17,7 @@ Plugin 'itchyny/lightline.vim'
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
-" To ignore plugin indent changes, instead use:
-"filetype plugin on
+
 "
 " Brief help
 " :PluginList       - lists configured plugins
@@ -29,14 +28,25 @@ filetype plugin indent on    " required
 " see :h vundle for more details or wiki for FAQ
 " Put your non-Plugin stuff after this line
 
+
 "" Basics
-set nocompatible                " choose no compatibility with legacy vi
 syntax enable
 set encoding=utf-8
 set showcmd                     " display incomplete commands
-filetype plugin indent on       " load file type plugins + indentation
+"filetype plugin indent on       " load file type plugins + indentation
 set nu              " enable line numbers
-color tender 
+colorscheme tender
+
+
+
+set ai                          " set auto-indenting on for programming
+set showmatch                   " automatically show matching brackets. works like it does in bbedit.
+set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
+set ruler                       " show the cursor position all the time
+set backspace=indent,eol,start  " make that backspace key work the way it should
+"set background=dark             " Use colours that work well on a dark background (Console is usually black)
+"set showmode                    " show the current mode
+"set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 
 "" Whitespace
 set nowrap                      " don't wrap lines
@@ -50,9 +60,34 @@ set incsearch                   " incremental searching
 set ignorecase                  " searches are case insensitive...
 set smartcase                   " ... unless they contain at least one capital letter
 
-" plugin settings
-" enable tender lightline theme
+""" lightline settings """
+" enable tender theme
 let g:tender_lightline = 1
-" set lighline theme
+" set lightline theme
 let g:lightline = { 'colorscheme': 'tender' }
+if !has('gui_running')
+  set t_Co=256
+endif
+set laststatus=2
 
+
+" http://www.blaenkdenum.com/posts/a-simpler-vim-statusline/
+" mode aware cursors
+set gcr=a:block
+set gcr+=o:hor50-Cursor
+set gcr+=n:Cursor
+set gcr+=i-ci-sm:InsertCursor
+set gcr+=r-cr:ReplaceCursor-hor20
+set gcr+=c:CommandCursor
+set gcr+=v-ve:VisualCursor
+
+set gcr+=a:blinkon0
+
+hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
+hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
+hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
+hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
+
+" line number colors.
+"hi CursorLineNr   term=bold ctermfg=Yellow gui=bold guifg=Yellow
+highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
