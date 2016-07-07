@@ -14,6 +14,9 @@ Plugin 'jacoborus/tender'
 " statusline
 Plugin 'itchyny/lightline.vim'
 
+" comments
+Plugin 'tpope/vim-commentary'
+
 " All of your Plugins must be added before the following line
 call vundle#end()            " required
 filetype plugin indent on    " required
@@ -33,12 +36,7 @@ filetype plugin indent on    " required
 syntax enable
 set encoding=utf-8
 set showcmd                     " display incomplete commands
-"filetype plugin indent on       " load file type plugins + indentation
-set nu              " enable line numbers
-colorscheme tender
-
-
-
+set nu                          " enable line numbers
 set ai                          " set auto-indenting on for programming
 set showmatch                   " automatically show matching brackets. works like it does in bbedit.
 set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
@@ -48,11 +46,27 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 "set showmode                    " show the current mode
 "set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 
+
+"" Leader
+let mapleader=","
+
+" yank to system clipboard
+map <leader>y "*y
+
+"" Colors
+colorscheme tender
+hi Visual guibg=#5f5f5f ctermbg=59            " manual override.
+
 "" Whitespace
 set nowrap                      " don't wrap lines
 set tabstop=4 shiftwidth=4      " a tab is two spaces
 set expandtab                   " use spaces, not tabs
 set backspace=indent,eol,start  " backspace through everything in insert mode
+command! KillWhitespace :normal :%s/ *$//g<cr><c-o><cr>
+
+"" Splits
+set splitright
+set splitbelow
 
 "" Searching
 set hlsearch                    " highlight matches
@@ -72,7 +86,7 @@ set laststatus=2
 
 
 " http://www.blaenkdenum.com/posts/a-simpler-vim-statusline/
-" mode aware cursors
+" mode aware cursors (NOTE: Gui Only)
 set gcr=a:block
 set gcr+=o:hor50-Cursor
 set gcr+=n:Cursor
@@ -80,9 +94,7 @@ set gcr+=i-ci-sm:InsertCursor
 set gcr+=r-cr:ReplaceCursor-hor20
 set gcr+=c:CommandCursor
 set gcr+=v-ve:VisualCursor
-
 set gcr+=a:blinkon0
-
 hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
 hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
 hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
@@ -91,3 +103,7 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 " line number colors.
 "hi CursorLineNr   term=bold ctermfg=Yellow gui=bold guifg=Yellow
 highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
+
+" Quickly edit me
+nnoremap <leader>ev :vsplit $MYVIMRC<cr>
+nnoremap <leader>sv :source $MYVIMRC<cr>
