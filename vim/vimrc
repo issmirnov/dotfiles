@@ -55,7 +55,8 @@ map <leader>y "*y
 
 "" Colors
 colorscheme tender
-hi Visual guibg=#5f5f5f ctermbg=59            " manual override.
+"hi Visual guibg=#5f5f5f ctermbg=59            " manual override.
+hi Visual term=reverse cterm=reverse guibg=#5f5f5f
 
 "" Whitespace
 set nowrap                      " don't wrap lines
