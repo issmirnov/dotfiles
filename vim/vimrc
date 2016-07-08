@@ -72,12 +72,25 @@ set smartcase                   " ... unless they contain at least one capital l
 " enable tender theme
 let g:tender_lightline = 1
 " set lightline theme
-let g:lightline = { 'colorscheme': 'tender' }
+let g:lightline = { 
+    \ 'colorscheme': 'tender',
+    \ 'component' : {
+    \   'readonly': '%{&filetype=="help"?"":&readonly?"-":""}',
+    \   'modified': '%{&filetype=="help"?"":&modified?"+":&modifiable?"":"-"}'
+    \ },
+    \ 'component_visible_condition': {
+    \   'readonly': '(&filetype!="help"&& &readonly)',
+    \   'modified': '(&filetype!="help"&&(&modified||!&modifiable))'
+    \ },
+    \ 'active' : {
+    \    'right' : [ [ 'lineinfo' ], [ 'percent' ], [ 'filetype' ] ]
+    \ },
+  \ }
 if !has('gui_running')
   set t_Co=256
 endif
 set laststatus=2
-
+set noshowmode
 
 " http://www.blaenkdenum.com/posts/a-simpler-vim-statusline/
 " mode aware cursors (NOTE: Gui Only)
