@@ -19,3 +19,6 @@ check_run .conf.yaml "~/.dotfiles/upgrade.sh"
 
 # reload zsh
 check_run zsh "zsh -c 'source ~/.zshrc'"
+
+# istall vim plugsin
+check_run vim "vim +PluginInstall +qall"
