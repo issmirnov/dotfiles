@@ -43,8 +43,12 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 "" Leader
 let mapleader=","
 
-" yank to system clipboard
-map <leader>y "*y  
+" system clipboard
+set clipboard=unnamedplus
+map <leader>y "+y  
+
+" :W saves the file with sudo
+command W w !sudo tee % > /dev/null
 
 "" Colors
 colorscheme tender
