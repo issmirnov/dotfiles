@@ -1,6 +1,6 @@
 # Ivan's Dotfiles
 
->  Your dotfiles will most likely be the longest project you ever work on. 
+>  Your dotfiles will most likely be the longest project you ever work on.
 
 Quote by Anish Athalye on his [blog](http://www.anishathalye.com/2014/08/03/managing-your-dotfiles/).
 
@@ -12,13 +12,14 @@ Clone and run `./install`. This will download [dotbot](https://github.com/anisha
 
 ## Submodules Used
 
-- I am currently using [amix's vimrc](https://github.com/amix/vimrc) for vim. It's super complicated, so be careful if you use it.
-- The ZSH folder is what used to be a fork of [Andre Brinker's ZSH](https://github.com/AndrewBrinker/zsh) repo, and is not included directly here.
+- Dotbot for installation.
+- oh-my-zsh for zsh foundation.
+- Vundle for vim.
 
 
 ## A Note about the License & Copyright:
 
-Unless attributed otherwise, everything is under the MIT licence (see LICENCE for more info).
+Unless attributed otherwise, everything is under the MIT license (see LICENSE for more info).
 
 Some stuff is not from me, and without attribution, and I no longer remember where I got it from. I apologize for that.
 
