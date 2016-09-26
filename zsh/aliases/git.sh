@@ -29,3 +29,6 @@ cloneall() {
 	   git branch --track ${branch#remotes/origin/} $branch
 	done
 }
+
+# Update Git submodule to latest commit on origin
+alias gsur='git submodule update --remote --merge' 
