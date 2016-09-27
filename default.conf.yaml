@@ -25,11 +25,4 @@
     ~/bin/tm: tmux/tmux-menu
 
 - shell:
-    -
-      description: "Setting ZSH to default."
-      command: "~/.dotfiles/zsh/setup"
-      stdout: true
-      stderr: true
-      stdin: true
-- shell:
   - [echo | echo | vim +PluginInstall +PluginUpdate +qall &>/dev/null, Installing Vundle.vim]
