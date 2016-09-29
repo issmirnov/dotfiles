@@ -245,8 +245,10 @@ bindsym $mod+Return exec i3-sensible-terminal
 
 # App Bindings
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
+assign [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] hangouts
 assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
 
+for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
 ###### startup applications #####
 

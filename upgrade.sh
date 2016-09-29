@@ -1,4 +1,2 @@
 #!/bin/zsh
-rm ~/.vimrc
-rm -rf ~/.dotfiles/vimrc
-./install
+# nothing to do here, for now.
