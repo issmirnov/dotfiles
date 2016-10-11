@@ -1,7 +1,7 @@
 ## Define all paths here. This simplifies hunting for random path clobbering.
 
 CUSTOM_HOME="$HOME/bin"
-SYSTEM="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+SYSTEM="/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # OS-dependent LaTeX paths.
 if [[ $OSTYPE == 'linux-gnu' ]]; then
