@@ -20,6 +20,9 @@ Plugin 'tpope/vim-commentary'
 " additional file types
 Plugin 'fatih/vim-nginx'
 
+"go packages"
+Plugin 'fatih/vim-go'
+
 call vundle#end()            " required
 filetype plugin indent on    " required
 " End Vundle config.
