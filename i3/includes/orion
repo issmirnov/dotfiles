@@ -1,0 +1,11 @@
+## orion config
+
+# startup apps
+exec --no-startup-id nm-applet
+
+#change keyboard layout
+#bindsym $mod+Shift+h exec "setxkbmap il -variant phonetic"
+#bindsym $mod+Shift+u exec "setxkbmap us"
+
+bindcode $mod+Shift+24 exec "setxkbmap us"
+bindcode $mod+Shift+25 exec "setxkbmap il -variant phonetic" 
