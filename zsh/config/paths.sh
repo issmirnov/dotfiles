@@ -12,6 +12,6 @@ fi
 
 # Go Definitions
 export GOPATH=$HOME/go
-GOLANG_OSX="/usr/local/go/bin"
+GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 
-export PATH="$CUSTOM_HOME:$TEX:$GOPATH/bin:$GOLANG_OSX:$SYSTEM"
+export PATH="$CUSTOM_HOME:$TEX:$GOPATH/bin:$GOLANG_BIN:$SYSTEM"
