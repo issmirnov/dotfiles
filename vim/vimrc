@@ -49,15 +49,14 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 let mapleader="\<Space>"
 
 ""  leader shortcuts
+" :W saves the file with sudo.  must come before the <leader>w remap below
+command W w !sudo tee % > /dev/null
 " quickly save files
 nnoremap <Leader>w :w<CR>
 
 " system clipboard
 set clipboard=unnamedplus
 map <leader>y "+y  
-
-" :W saves the file with sudo
-command W w !sudo tee % > /dev/null
 
 "" Colors
 colorscheme tender
