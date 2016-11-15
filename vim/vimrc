@@ -44,7 +44,7 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 
 
 "" Leader
-let mapleader=","
+let mapleader="\<Space>"
 
 " system clipboard
 set clipboard=unnamedplus
@@ -121,3 +121,7 @@ highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE gui
 " Quickly edit me
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
+
+" golang
+let g:go_fmt_command = "goimports"
+au FileType go nmap <leader>b <Plug>(go-build)
