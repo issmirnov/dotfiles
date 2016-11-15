@@ -46,6 +46,10 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 "" Leader
 let mapleader="\<Space>"
 
+""  leader shortcuts
+" quickly save files
+nnoremap <Leader>w :w<CR>
+
 " system clipboard
 set clipboard=unnamedplus
 map <leader>y "+y  
@@ -118,7 +122,7 @@ hi CommandCursor ctermfg=15 guifg=#fdf6e3 ctermbg=166 guibg=#cb4b16
 "hi CursorLineNr   term=bold ctermfg=Yellow gui=bold guifg=Yellow
 highlight LineNr term=bold cterm=NONE ctermfg=DarkGrey ctermbg=NONE gui=NONE guifg=DarkGrey guibg=NONE
 
-" Quickly edit me
+" Quickly edit vimrc
 nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
 
