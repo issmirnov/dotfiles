@@ -1,2 +1,9 @@
+# tmp os files
 *~
+
+# vim
+*.swp
+*.swo
+
+# generated config
 i3/config
