@@ -1,4 +1,0 @@
-#!/bin/bash
-# convenience command that connects VPN to home VPN.
-cd ~/vpn
-sudo openvpn --config home.ovpn

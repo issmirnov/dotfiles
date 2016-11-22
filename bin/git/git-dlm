@@ -1,0 +1,9 @@
+#!/bin/sh
+#
+# Delete all local branches that have been merged into HEAD. Stolen from
+# our favorite @tekkub:
+#
+#   https://plus.google.com/115587336092124934674/posts/dXsagsvLakJ
+# Source: https://github.com/holman/dotfiles/blob/master/bin/git-delete-local-merged
+
+git branch -d `git branch --merged | grep -v '^*' | grep -v 'master' | tr -d '\n'`

@@ -1,3 +1,0 @@
-#!/bin/bash
-# wrapper to launch FreeFileSync with root rights
-gksudo FreeFileSync

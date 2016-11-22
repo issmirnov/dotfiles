@@ -1,0 +1,2 @@
+# Simple script that sets up an external monitor on my thinkpad.
+xrandr --output LVDS1 --mode 1600x900 --pos 0x0 --output VGA1 --mode 2560x1440 --pos 1600x0
