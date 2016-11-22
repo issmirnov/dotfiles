@@ -1,6 +1,7 @@
 ## Define all paths here. This simplifies hunting for random path clobbering.
 
-CUSTOM_HOME="$HOME/bin"
+DOT_BIN="$HOME/.dotfiles/bin"
+USER_BIN="$HOME/bin"
 SYSTEM="/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 # OS-dependent LaTeX paths.
@@ -14,4 +15,4 @@ fi
 export GOPATH=$HOME/go
 GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 
-export PATH="$CUSTOM_HOME:$TEX:$GOPATH/bin:$GOLANG_BIN:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$TEX:$GOPATH/bin:$GOLANG_BIN:$SYSTEM"
