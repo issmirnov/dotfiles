@@ -35,6 +35,7 @@ Plug 'https://github.com/junegunn/fzf.vim'
 Plug 'https://github.com/austintaylor/vim-indentobject'
 Plug 'https://github.com/wellle/targets.vim'
 Plug 'https://github.com/bps/vim-textobj-python',                 { 'for': ['python', 'py']}
+Plug 'https://github.com/coderifous/textobj-word-column.vim'
 "" Basics
 syntax enable
 set encoding=utf-8
