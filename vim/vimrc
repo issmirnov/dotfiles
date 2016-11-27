@@ -52,6 +52,8 @@ Plug 'https://github.com/tommcdo/vim-exchange'
 " visualize marks, makes them useful
 Plug 'https://github.com/kshenoy/vim-signature'
 
+" visualize undo tree
+Plug 'https://github.com/simnalamburt/vim-mundo'
 
 
 
