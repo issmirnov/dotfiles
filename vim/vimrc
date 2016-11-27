@@ -26,6 +26,7 @@ Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' 
 
 
 Plug 'https://github.com/mattn/gist-vim',                         {'on': ['Gist']} | Plug 'https://github.com/mattn/webapi-vim'
+Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
 "" Basics
 syntax enable
 set encoding=utf-8
