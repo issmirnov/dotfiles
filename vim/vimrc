@@ -33,6 +33,7 @@ Plug 'https://github.com/mhinz/vim-startify'
 Plug 'junegunn/fzf',                                              { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'https://github.com/junegunn/fzf.vim'
 Plug 'https://github.com/austintaylor/vim-indentobject'
+Plug 'https://github.com/wellle/targets.vim'
 "" Basics
 syntax enable
 set encoding=utf-8
