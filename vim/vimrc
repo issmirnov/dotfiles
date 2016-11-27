@@ -21,6 +21,8 @@ Plug 'terryma/vim-expand-region'
 
 "go packages", lazy loaded for better startup
 Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
+" better go autocomplete
+Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 
 
 "" Basics
