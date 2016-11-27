@@ -21,6 +21,9 @@ Plug 'terryma/vim-expand-region'
 " start screen plugin.
 Plug 'https://github.com/mhinz/vim-startify'
 
+" git helpers
+Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
+
 call plug#end()
 
 "" Basics
