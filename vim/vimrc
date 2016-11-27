@@ -55,6 +55,9 @@ Plug 'https://github.com/kshenoy/vim-signature'
 " visualize undo tree
 Plug 'https://github.com/simnalamburt/vim-mundo'
 
+Plug 'https://github.com/tpope/vim-repeat'
+Plug 'https://github.com/tpope/vim-surround'
+Plug 'https://github.com/tpope/vim-unimpaired'
 
 
 call plug#end()
