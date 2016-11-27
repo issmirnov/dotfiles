@@ -1,8 +1,7 @@
-set nocompatible              " be iMproved, required
 filetype off                  " required
 
 " The following block sets up Vundle. Check github for README.
-set rtp+=~/.vim/bundle/Vundle.vim
+set runtimepath+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
 " let Vundle manage Vundle, required
