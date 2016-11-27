@@ -21,6 +21,9 @@ Plug 'terryma/vim-expand-region'
 " start screen plugin.
 Plug 'https://github.com/mhinz/vim-startify'
 
+"go packages", lazy loaded for better startup
+Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
+
 " git helpers
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
 
