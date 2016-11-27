@@ -24,7 +24,6 @@ Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBina
 " better go autocomplete
 Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 
-
 Plug 'https://github.com/mattn/gist-vim',                         {'on': ['Gist']} | Plug 'https://github.com/mattn/webapi-vim'
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
 
@@ -68,7 +67,6 @@ Plug 'https://github.com/mhinz/vim-sayonara'
 Plug 'https://github.com/ConradIrwin/vim-bracketed-paste'
 call plug#end()
 
-
 "" Basics
 syntax enable
 set encoding=utf-8
@@ -82,7 +80,6 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 "set background=dark             " Use colours that work well on a dark background (Console is usually black)
 "set showmode                    " show the current mode
 "set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
-
 
 "" Leader
 let g:mapleader="\<Space>"
