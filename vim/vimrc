@@ -38,6 +38,7 @@ Plug 'https://github.com/bps/vim-textobj-python',                 { 'for': ['pyt
 Plug 'https://github.com/coderifous/textobj-word-column.vim'
 Plug 'https://github.com/kana/vim-textobj-function',              {'for': ['python', 'c', 'java', 'vim']}
 Plug 'https://github.com/kana/vim-textobj-user'
+Plug 'https://github.com/lucapette/vim-textobj-underscore',       {'for': ['python', 'py', 'sh', 'bash', 'zsh']}
 "" Basics
 syntax enable
 set encoding=utf-8
