@@ -17,7 +17,7 @@
     ~/.tmux.conf: tmux/tmux.conf
     ~/.toprc : top/toprc
     ~/.vimrc: vim/vimrc
-    ~/.vim/bundle/Vundle.vim: vim/Vundle.vim
+    ~/.vim/autoload: vim/autoload
     ~/.zshrc: zsh/zshrc
     ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
     ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
@@ -25,4 +25,4 @@
     ~/bin/tm: tmux/tmux-menu
 
 - shell:
-  - [echo | echo | vim +PluginInstall +PluginUpdate +qall &>/dev/null, Installing Vundle.vim]
+  - [echo | echo | vim +PlugInstall +PlugUpdate +qall &>/dev/null, Installing vim plugins]
