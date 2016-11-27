@@ -58,6 +58,8 @@ Plug 'https://github.com/simnalamburt/vim-mundo'
 Plug 'https://github.com/tpope/vim-repeat'
 Plug 'https://github.com/tpope/vim-surround'
 Plug 'https://github.com/tpope/vim-unimpaired'
+Plug 'https://github.com/Raimondi/delimitMate'
+Plug 'https://github.com/tmhedberg/matchit',                      {'for': ['html', 'latex', 'lua', 'shell', 'vim', 'xml', 'sh', 'zsh']}
 
 
 call plug#end()
