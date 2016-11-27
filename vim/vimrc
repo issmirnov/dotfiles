@@ -29,6 +29,7 @@ Plug 'https://github.com/mattn/gist-vim',                         {'on': ['Gist'
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
 Plug 'https://github.com/ehamberg/vim-cute-python',                    { 'for': ['python', 'py']}
 Plug 'https://github.com/keith/investigate.vim'
+Plug 'https://github.com/mhinz/vim-startify'
 "" Basics
 syntax enable
 set encoding=utf-8
