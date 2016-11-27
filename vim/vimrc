@@ -19,6 +19,8 @@ Plug 'fatih/vim-nginx'
 " Expand region - press v repeatedly
 Plug 'terryma/vim-expand-region'
 
+"go packages", lazy loaded for better startup
+Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
 
 
 "" Basics
