@@ -23,6 +23,8 @@ Plug 'https://github.com/mhinz/vim-startify'
 
 "go packages", lazy loaded for better startup
 Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
+" better go autocomplete
+Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 
 " git helpers
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
