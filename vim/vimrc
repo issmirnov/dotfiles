@@ -33,10 +33,10 @@ filetype plugin indent on    " required
 syntax enable
 set encoding=utf-8
 set showcmd                     " display incomplete commands
-set nu                          " enable line numbers
-set ai                          " set auto-indenting on for programming
+set number                          " enable line numbers
+set autoindent                          " set auto-indenting on for programming
 set showmatch                   " automatically show matching brackets. works like it does in bbedit.
-set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
+set visualbell                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set ruler                       " show the cursor position all the time
 set backspace=indent,eol,start  " make that backspace key work the way it should
 "set background=dark             " Use colours that work well on a dark background (Console is usually black)
@@ -45,7 +45,7 @@ set backspace=indent,eol,start  " make that backspace key work the way it should
 
 
 "" Leader
-let mapleader="\<Space>"
+let g:mapleader="\<Space>"
 
 ""  leader shortcuts
 " :W saves the file with sudo.  must come before the <leader>w remap below
@@ -105,14 +105,15 @@ set noshowmode
 
 " http://www.blaenkdenum.com/posts/a-simpler-vim-statusline/
 " mode aware cursors (NOTE: Gui Only)
-set gcr=a:block
-set gcr+=o:hor50-Cursor
-set gcr+=n:Cursor
-set gcr+=i-ci-sm:InsertCursor
-set gcr+=r-cr:ReplaceCursor-hor20
-set gcr+=c:CommandCursor
-set gcr+=v-ve:VisualCursor
-set gcr+=a:blinkon0
+set guicursor=a:block
+set guicursor+=o:hor50-Cursor
+set guicursor+=n:Cursor
+set guicursor+=i-ci-sm:InsertCursor
+set guicursor+=r-cr:ReplaceCursor-hor20
+set guicursor+=c:CommandCursor
+set guicursor+=v-ve:VisualCursor
+set guicursor+=a:blinkon0
+
 hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
 hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
 hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
