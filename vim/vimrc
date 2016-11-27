@@ -1,32 +1,24 @@
-filetype off                  " required
+filetype plugin indent on    " required
 
-" The following block sets up Vundle. Check github for README.
-set runtimepath+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+" The following block sets up vim-plug. Check github for README.
+" XXX can be set to whatever path you want your plugins in
+call plug#begin('~/.vim/bundle')
 
 " colors
-Plugin 'jacoborus/tender'
+Plug 'jacoborus/tender'
 
 " statusline
-Plugin 'itchyny/lightline.vim'
+Plug 'itchyny/lightline.vim'
 
 " comments
-Plugin 'tpope/vim-commentary'
+Plug 'tpope/vim-commentary'
 
 " additional file types
-Plugin 'fatih/vim-nginx'
+Plug 'fatih/vim-nginx'
 
-" exapnd region - press v repeatedly
-Plugin 'terryma/vim-expand-region'
-"go packages"
-Plugin 'fatih/vim-go'
+" Expand region - press v repeatedly
+Plug 'terryma/vim-expand-region'
 
-call vundle#end()            " required
-filetype plugin indent on    " required
-" End Vundle config.
 
 
 "" Basics
