@@ -27,11 +27,17 @@ Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' 
 
 Plug 'https://github.com/mattn/gist-vim',                         {'on': ['Gist']} | Plug 'https://github.com/mattn/webapi-vim'
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
+
 Plug 'https://github.com/ehamberg/vim-cute-python',                    { 'for': ['python', 'py']}
+
 Plug 'https://github.com/keith/investigate.vim'
+
 Plug 'https://github.com/mhinz/vim-startify'
+
 Plug 'junegunn/fzf',                                              { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'https://github.com/junegunn/fzf.vim'
+
+" text objects
 Plug 'https://github.com/austintaylor/vim-indentobject'
 Plug 'https://github.com/wellle/targets.vim'
 Plug 'https://github.com/bps/vim-textobj-python',                 { 'for': ['python', 'py']}
@@ -40,7 +46,16 @@ Plug 'https://github.com/kana/vim-textobj-function',              {'for': ['pyth
 Plug 'https://github.com/kana/vim-textobj-user'
 Plug 'https://github.com/lucapette/vim-textobj-underscore',       {'for': ['python', 'py', 'sh', 'bash', 'zsh']}
 Plug 'https://github.com/b4winckler/vim-angry',                   {'for': ['python', 'py']}
+" swap stuff
 Plug 'https://github.com/tommcdo/vim-exchange'
+
+
+
+
+
+call plug#end()
+
+
 "" Basics
 syntax enable
 set encoding=utf-8
