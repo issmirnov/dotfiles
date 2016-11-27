@@ -49,6 +49,8 @@ Plug 'https://github.com/b4winckler/vim-angry',                   {'for': ['pyth
 " swap stuff
 Plug 'https://github.com/tommcdo/vim-exchange'
 
+" visualize marks, makes them useful
+Plug 'https://github.com/kshenoy/vim-signature'
 
 
 
