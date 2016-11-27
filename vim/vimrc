@@ -57,7 +57,7 @@ nnoremap <Leader>w :w<CR>
 
 " system clipboard
 set clipboard=unnamedplus
-map <leader>y "+y  
+map <leader>y "+y
 
 "" Colors
 colorscheme tender
@@ -85,7 +85,7 @@ set smartcase                   " ... unless they contain at least one capital l
 " enable tender theme
 let g:tender_lightline = 1
 " set lightline theme
-let g:lightline = { 
+let g:lightline = {
     \ 'colorscheme': 'tender',
     \ 'component' : {
     \   'readonly': '%{&filetype=="help"?"":&readonly?"-":""}',
