@@ -64,6 +64,8 @@ Plug 'https://github.com/tmhedberg/matchit',                      {'for': ['html
 " use this to close buffers in a more sensible way
 Plug 'https://github.com/mhinz/vim-sayonara'
 
+" makes paste work properly in insert mode
+Plug 'https://github.com/ConradIrwin/vim-bracketed-paste'
 call plug#end()
 
 
