@@ -18,6 +18,9 @@ Plug 'fatih/vim-nginx'
 " Expand region - press v repeatedly
 Plug 'terryma/vim-expand-region'
 
+" start screen plugin.
+Plug 'https://github.com/mhinz/vim-startify'
+
 call plug#end()
 
 "" Basics
