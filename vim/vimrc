@@ -61,6 +61,8 @@ Plug 'https://github.com/tpope/vim-unimpaired'
 Plug 'https://github.com/Raimondi/delimitMate'
 Plug 'https://github.com/tmhedberg/matchit',                      {'for': ['html', 'latex', 'lua', 'shell', 'vim', 'xml', 'sh', 'zsh']}
 
+" use this to close buffers in a more sensible way
+Plug 'https://github.com/mhinz/vim-sayonara'
 
 call plug#end()
 
