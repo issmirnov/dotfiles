@@ -10,3 +10,6 @@ alias ffs='gksudo FreeFileSync'
 
 # mount server
 alias mp='sudo mount -t cifs //puma/data /mnt/puma-data -o username=vania,file_mode=0777,dir_mode=0777'
+
+# print stats about partitons, excluding tmpfs mounts
+alias dfh='df -h -x tmpfs -x devtmpfs'
