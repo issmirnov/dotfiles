@@ -1,52 +1,88 @@
-set nocompatible              " be iMproved, required
-filetype off                  " required
+filetype plugin indent on    " required
 
-" The following block sets up Vundle. Check github for README.
-set rtp+=~/.vim/bundle/Vundle.vim
-call vundle#begin()
-
-" let Vundle manage Vundle, required
-Plugin 'VundleVim/Vundle.vim'
+" The following block sets up vim-plug. Check github for README.
+" XXX can be set to whatever path you want your plugins in
+call plug#begin('~/.vim/bundle')
 
 " colors
-Plugin 'jacoborus/tender'
+Plug 'jacoborus/tender'
 
 " statusline
-Plugin 'itchyny/lightline.vim'
+Plug 'itchyny/lightline.vim'
 
 " comments
-Plugin 'tpope/vim-commentary'
+Plug 'tpope/vim-commentary'
 
 " additional file types
-Plugin 'fatih/vim-nginx'
+Plug 'fatih/vim-nginx'
 
-" exapnd region - press v repeatedly
-Plugin 'terryma/vim-expand-region'
-"go packages"
-Plugin 'fatih/vim-go'
+" Expand region - press v repeatedly
+Plug 'terryma/vim-expand-region'
 
-call vundle#end()            " required
-filetype plugin indent on    " required
-" End Vundle config.
+"go packages", lazy loaded for better startup
+Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
+" better go autocomplete
+Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 
+Plug 'https://github.com/mattn/gist-vim',                         {'on': ['Gist']} | Plug 'https://github.com/mattn/webapi-vim'
+Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
+
+Plug 'https://github.com/ehamberg/vim-cute-python',                    { 'for': ['python', 'py']}
+
+Plug 'https://github.com/keith/investigate.vim'
+
+Plug 'https://github.com/mhinz/vim-startify'
+
+Plug 'junegunn/fzf',                                              { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'https://github.com/junegunn/fzf.vim'
+
+" text objects
+Plug 'https://github.com/austintaylor/vim-indentobject'
+Plug 'https://github.com/wellle/targets.vim'
+Plug 'https://github.com/bps/vim-textobj-python',                 { 'for': ['python', 'py']}
+Plug 'https://github.com/coderifous/textobj-word-column.vim'
+Plug 'https://github.com/kana/vim-textobj-function',              {'for': ['python', 'c', 'java', 'vim']}
+Plug 'https://github.com/kana/vim-textobj-user'
+Plug 'https://github.com/lucapette/vim-textobj-underscore',       {'for': ['python', 'py', 'sh', 'bash', 'zsh']}
+Plug 'https://github.com/b4winckler/vim-angry',                   {'for': ['python', 'py']}
+" swap stuff
+Plug 'https://github.com/tommcdo/vim-exchange'
+
+" visualize marks, makes them useful
+Plug 'https://github.com/kshenoy/vim-signature'
+
+" visualize undo tree
+Plug 'https://github.com/simnalamburt/vim-mundo'
+
+Plug 'https://github.com/tpope/vim-repeat'
+Plug 'https://github.com/tpope/vim-surround'
+Plug 'https://github.com/tpope/vim-unimpaired'
+Plug 'https://github.com/Raimondi/delimitMate'
+Plug 'https://github.com/tmhedberg/matchit',                      {'for': ['html', 'latex', 'lua', 'shell', 'vim', 'xml', 'sh', 'zsh']}
+
+" use this to close buffers in a more sensible way
+Plug 'https://github.com/mhinz/vim-sayonara'
+
+" makes paste work properly in insert mode
+Plug 'https://github.com/ConradIrwin/vim-bracketed-paste'
+call plug#end()
 
 "" Basics
 syntax enable
 set encoding=utf-8
 set showcmd                     " display incomplete commands
-set nu                          " enable line numbers
-set ai                          " set auto-indenting on for programming
+set number                          " enable line numbers
+set autoindent                          " set auto-indenting on for programming
 set showmatch                   " automatically show matching brackets. works like it does in bbedit.
-set vb                          " turn on the "visual bell" - which is much quieter than the "audio blink"
+set visualbell                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set ruler                       " show the cursor position all the time
 set backspace=indent,eol,start  " make that backspace key work the way it should
 "set background=dark             " Use colours that work well on a dark background (Console is usually black)
 "set showmode                    " show the current mode
 "set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 
-
 "" Leader
-let mapleader="\<Space>"
+let g:mapleader="\<Space>"
 
 ""  leader shortcuts
 " :W saves the file with sudo.  must come before the <leader>w remap below
@@ -56,7 +92,7 @@ nnoremap <Leader>w :w<CR>
 
 " system clipboard
 set clipboard=unnamedplus
-map <leader>y "+y  
+map <leader>y "+y
 
 "" Colors
 colorscheme tender
@@ -84,7 +120,7 @@ set smartcase                   " ... unless they contain at least one capital l
 " enable tender theme
 let g:tender_lightline = 1
 " set lightline theme
-let g:lightline = { 
+let g:lightline = {
     \ 'colorscheme': 'tender',
     \ 'component' : {
     \   'readonly': '%{&filetype=="help"?"":&readonly?"-":""}',
@@ -106,14 +142,15 @@ set noshowmode
 
 " http://www.blaenkdenum.com/posts/a-simpler-vim-statusline/
 " mode aware cursors (NOTE: Gui Only)
-set gcr=a:block
-set gcr+=o:hor50-Cursor
-set gcr+=n:Cursor
-set gcr+=i-ci-sm:InsertCursor
-set gcr+=r-cr:ReplaceCursor-hor20
-set gcr+=c:CommandCursor
-set gcr+=v-ve:VisualCursor
-set gcr+=a:blinkon0
+set guicursor=a:block
+set guicursor+=o:hor50-Cursor
+set guicursor+=n:Cursor
+set guicursor+=i-ci-sm:InsertCursor
+set guicursor+=r-cr:ReplaceCursor-hor20
+set guicursor+=c:CommandCursor
+set guicursor+=v-ve:VisualCursor
+set guicursor+=a:blinkon0
+
 hi InsertCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=37  guibg=#2aa198
 hi VisualCursor  ctermfg=15 guifg=#fdf6e3 ctermbg=125 guibg=#d33682
 hi ReplaceCursor ctermfg=15 guifg=#fdf6e3 ctermbg=65  guibg=#dc322f
@@ -128,8 +165,11 @@ nnoremap <leader>ev :vsplit $MYVIMRC<cr>
 nnoremap <leader>sv :source $MYVIMRC<cr>
 
 " golang
-let g:go_fmt_command = "goimports"
-au FileType go nmap <leader>b <Plug>(go-build)
+let g:go_fmt_command = 'goimports'
+
+augroup myGo
+  autocmd FileType go nmap <leader>b <Plug>(go-build)
+augroup END
 
 " expand regions (github.com/terryma/vim-expand-region)
 vmap v <Plug>(expand_region_expand)
@@ -140,6 +180,7 @@ function! RestoreRegister()
     let @" = s:restore_reg
     return ''
 endfunction
+
 function! s:Repl()
     let s:restore_reg = @"
     return "p@=RestoreRegister()\<cr>"
