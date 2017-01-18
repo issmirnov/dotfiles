@@ -25,4 +25,4 @@
     ~/bin/tm: tmux/tmux-menu
 
 - shell:
-  - [vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]
+  - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]
