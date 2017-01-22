@@ -1,5 +1,5 @@
 # To view memory usage
-free -m
+free -m -h
 
 # To view active processes
 htop
