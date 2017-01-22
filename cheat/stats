@@ -1,0 +1,14 @@
+# To view memory usage
+free -m
+
+# To view active processes
+htop
+
+# To track processes
+pstree
+
+# To check free space
+dfh # alias for df -h -x tmpfs -x devtmpfs
+
+# Top 5 memory hogs
+ps -eo pmem,pcpu,vsize,pid,comm | sort -k 1 -nr | head -5

@@ -1,0 +1,9 @@
+# sniff for local devices
+arp -a -n
+
+# detailed map of local network
+nmap -sP 10.0.37.1/24 # make sure IP range correct
+
+# Show networks
+ifconfig
+

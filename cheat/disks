@@ -1,0 +1,6 @@
+# List all partitions and devices
+lsblk
+
+# Get partition ID's
+blkid
+

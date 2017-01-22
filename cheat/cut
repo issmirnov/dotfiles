@@ -1,0 +1,5 @@
+# To cut out the third field of text or stdoutput that is delimited by a #:
+cut -d# -f3
+
+# cut out first 2 characters in each line of file
+cut -c2- FILE

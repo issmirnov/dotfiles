@@ -1,0 +1,10 @@
+# Hit: https://crontab.guru/ for help.
+
+# Run command on Thursday morning at 5:25am.
+25 5 * * 4 /bin/your/command
+
+# Run daily command at 6:38am
+38 6 * * * /bin/daily_command
+
+# run at midnight on the first of every month
+0 0 1 * * /bin/monthly_backup

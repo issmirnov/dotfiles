@@ -1,0 +1,3 @@
+# top 15 most frequent messages in syslog
+cat /var/log/syslog | awk '{ print substr($0, index($0,$5)) }' | sort | uniq -c | sort -nr | head -n 15
+
