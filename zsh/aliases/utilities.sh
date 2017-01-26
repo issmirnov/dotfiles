@@ -25,3 +25,4 @@ alias map="xargs -n1"
 
 alias zsh-reload="source ~/.zshrc"
 alias gld='cd ~/.dotfiles && git pull && git submodule update --init --recursive'
+alias c='cheat'
