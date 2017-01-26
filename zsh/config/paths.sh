@@ -11,6 +11,9 @@ elif [[ $OSTYPE == darwin* ]]; then
 	TEX="/usr/local/texlive/2014/bin/universal-darwin"
 fi
 
+# additional autocompletions
+fpath=($HOME/.dotfiles/cheat/cheat.zsh $fpath)
+
 # Go Definitions
 export GOPATH=$HOME/go
 GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
