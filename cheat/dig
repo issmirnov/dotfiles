@@ -1,0 +1,2 @@
+# Show name servers
+dig +short NS example.com
