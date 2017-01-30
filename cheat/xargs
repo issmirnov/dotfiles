@@ -1,0 +1,18 @@
+# find all file name ending with .pdf and remove them
+find -name *.pdf | xargs rm -rf
+
+# if file name contains spaces you should use this instead
+find -name *.pdf | xargs -I{} rm -rf '{}'
+
+# Will show every .pdf like:
+#	&toto.pdf=
+#	&titi.pdf=
+# -n1 => One file by one file. ( -n2 => 2 files by 2 files )
+
+find -name *.pdf | xargs -I{} -n1 echo '&{}='
+
+# run command in parallel, inserting filename in middle
+# for example. this will match all files like dir/xyz/files.i
+# and run some_command dir/xyz/files.i process
+ls dir/*/files.* | xargs -P8 -I % some_command % process
+
