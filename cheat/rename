@@ -1,0 +1,6 @@
+# Lowercase all files and folders in current directory
+rename 'y/A-Z/a-z/' *
+
+# remove prefix from all files
+remove=prefix_here
+for i in  "$remove"*;do mv "$i" "${i#"$remove"}";done
