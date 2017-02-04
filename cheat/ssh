@@ -1,0 +1,18 @@
+# To execute a command on a remote server:
+ssh -t user@example.com 'the-remote-command'
+
+# Redirect traffic with a tunnel between local host (port 8080) and a remote
+# host (remote.example.com:5000) through a proxy (personal.server.com):
+ssh -f -L 8080:remote.example.com:5000 user@personal.server.com -N
+
+# Copy files and folders through ssh from remote host to pwd with tar.gz compression
+# when there is no rsync command available
+ssh user@example.com "cd /var/www/Shared/; tar zcf - asset1 asset2" | tar zxf -
+
+# Mount folder/filesystem through SSH
+# Install SSHFS from https://github.com/libfuse/sshfs
+# Will allow you to mount a folder securely over a network.
+sshfs name@server:/path/to/folder /path/to/mount/point
+
+# Oneliner to upload pub key to server
+cat ~/.ssh/id_rsa.pub | ssh user@server 'dd of=.ssh/authorized_keys oflag=append conv=notrunc'
