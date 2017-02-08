@@ -6,7 +6,7 @@
 - clean: ['~']
 
 - shell:
-    - [i3/loader, "Generating i3 config"]
+    - [i3/genconf, "Generating i3 config"]
 
 - link:
     ~/.i3/config: i3/config
