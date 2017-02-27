@@ -31,6 +31,10 @@ If you trust me, you can also do `wget https://smirnov.link/d -O - | sh`. This
 pulls the `d` file which clones the repo, runs a full install and tells you how
 to install zsh.
 
+### Ansible
+
+There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for this repo. Simply add `issmirnov.dotfiles` as a role.
+
 ## Submodules Used
 
 - Dotbot for installation.
