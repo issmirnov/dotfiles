@@ -2,6 +2,14 @@
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 export TERM=xterm-256color
-# TODO consider setting 'screen' var for tmux et al?
 
+# Core config
 export EDITOR=vim
+
+
+# OS-dependent locations
+if [[ $OSTYPE == 'linux-gnu' ]]; then
+	ANSIBLE_ROLES_PATH='/etc/ansible'
+elif [[ $OSTYPE == darwin* ]]; then
+	ANSIBLE_ROLES_PATH='/usr/local/etc/ansible'
+fi
