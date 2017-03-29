@@ -41,9 +41,10 @@ set showmatch                   " automatically show matching brackets. works li
 set visualbell                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set ruler                       " show the cursor position all the time
 set backspace=indent,eol,start  " make that backspace key work the way it should
-"set background=dark             " Use colours that work well on a dark background (Console is usually black)
-"set showmode                    " show the current mode
-"set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
+"set background=dark            " Use colours that work well on a dark background (Console is usually black)
+"set showmode                   " show the current mode
+"set clipboard=unnamed          " set clipboard to unnamed to access the system clipboard under windows
+set hidden                      " allow hidden buffers in background
 
 
 "" Leader
