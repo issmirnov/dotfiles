@@ -9,7 +9,7 @@
 	email = isgsmirnov@gmail.com
 
 [push]
-	default = matching
+	default = current
 
 [init]
 	templatedir = ~/.dotfiles/git/template
