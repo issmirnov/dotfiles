@@ -1,0 +1,12 @@
+# Docker Machine (on OSX)
+
+# refresh machine
+ocker-machine restart default
+docker-machine regenerate-certs default
+
+# save power
+docker-machine stop default
+
+# Prep session
+eval $(docker-machine env default)
+
