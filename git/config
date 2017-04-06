@@ -9,7 +9,8 @@
 	email = isgsmirnov@gmail.com
 
 [push]
-	default = current
+    default = current
+    followTags = true
 
 [init]
 	templatedir = ~/.dotfiles/git/template
@@ -26,6 +27,12 @@
 [advice]
 	statusHints = false
 	pushNonFastForward = false
+
+# source: https://blog.scottnonnenberg.com/better-git-configuration/
+[alias]
+    prune = fetch --prune
+    undo = reset --soft HEAD^
+    
 
 [branch]
 	autosetupmerge = true
@@ -73,6 +80,7 @@
 	
 [merge]
 	stat = true
+    ff = only
 
 [pretty]
 	default = %C(bold black)%h%Creset -%C(auto)%d%Creset %s %C(bold black)(%an %ar)%Creset
@@ -82,6 +90,9 @@
 
 [rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
 	enabled = true
+
+[status]
+    showUntrackedFiles = all
 
 [web]
 	browser = google-chrome-stable
