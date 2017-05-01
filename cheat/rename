@@ -1,3 +1,6 @@
+# Change extensions
+rename "s/oldExtension/newExtension/" *
+
 # Lowercase all files and folders in current directory
 rename 'y/A-Z/a-z/' *
 

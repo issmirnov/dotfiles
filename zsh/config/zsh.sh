@@ -37,7 +37,7 @@ export ZSH=$HOME/.dotfiles/oh-my-zsh
 
 ZSH_THEME="ys" # theme for oh-my-zsh. Currently loading ys from $OMZ/custom/themes
 
-plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common-aliases osx tmux taskwarrior fasd extract adb k)
+plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common-aliases osx tmux taskwarrior fasd extract adb k vagrant)
 
 source $ZSH/oh-my-zsh.sh # note that this comes AFTER plugins sourced.
 
