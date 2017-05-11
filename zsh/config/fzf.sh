@@ -2,7 +2,6 @@
 # ---------
 export FZF_DEFAULT_OPTS='--exact' # prefer exact matches
 
-
 if command -v ag > /dev/null; then
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
 else
@@ -10,18 +9,21 @@ else
   echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
 fi
 
+# Set install dir
 if [[ $OSTYPE == 'linux-gnu' ]]; then
-  echo "please add ubuntu fzf config to fzf.sh"
+  FZF_PREFIX=/opt
 elif [[ $OSTYPE == darwin* ]]; then
-  if [[ ! "$PATH" == */usr/local/opt/fzf/bin* ]]; then
-    export PATH="$PATH:/usr/local/opt/fzf/bin"
-  fi
-  # Auto-completion
-  [[ $- == *i* ]] && source "/usr/local/opt/fzf/shell/completion.zsh" 2> /dev/null
-  # Key bindings
-  source "/usr/local/opt/fzf/shell/key-bindings.zsh"
-fi # end OS selector
+  FZF_PREFIX=/usr/local/opt
+fi
+if [[ ! "$PATH" == *$FZF_PREFIX/fzf/bin* ]]; then
+  export PATH="$PATH:$FZF_PREFIX/fzf/bin"
+fi
 
+# Auto-completion
+[[ $- == *i* ]] && source "$FZF_PREFIX/fzf/shell/completion.zsh" 2> /dev/null
+
+# Key bindings
+source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
 
 # better zz from fasd
 unalias zz
