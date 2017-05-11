@@ -36,11 +36,11 @@ function zz() {
 function show() {
     local file
     if [[ -f "$1" ]]; then
-        ccat "$1"
+        ccat --bg=dark "$1"
     else
         file=$(fzf --query="$1"\
           --select-1 --exit-0)
-        [ -n "$file" ] && ccat "$file"
+        [ -n "$file" ] && ccat --bg=dark "$file"
     fi
 }
 
