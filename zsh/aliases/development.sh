@@ -1,5 +1,4 @@
 ## basics
-alias h="history"
 alias compile='gcc --std=c99 -o '
 
 ## python

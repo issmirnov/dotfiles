@@ -48,3 +48,9 @@ alias urgent='echo -e "'"\a"'"'
 
 # i3 aliases
 alias i3c='vim ~/.i3/config'
+
+# find files fast
+unalias ff
+function ff () {
+    find . -iname "*$@*" ;
+}
