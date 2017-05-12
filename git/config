@@ -80,7 +80,6 @@
 	
 [merge]
 	stat = true
-    ff = only
 
 [pretty]
 	default = %C(bold black)%h%Creset -%C(auto)%d%Creset %s %C(bold black)(%an %ar)%Creset
