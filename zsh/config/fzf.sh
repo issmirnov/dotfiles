@@ -38,16 +38,23 @@ function show() {
     if [[ -f "$1" ]]; then
         ccat --bg=dark "$1"
     else
-        file=$(fzf --query="$1"\
+        file=$(fzf --query="$*"\
           --select-1 --exit-0)
         [ -n "$file" ] && ccat --bg=dark "$file"
     fi
 }
 
 # Pick file to edit
-function fv() {
+function vf() {
   local file
-  file=$(fzf --exact --height 40% --reverse --query="$1"  --select-1 --exit-0)
+  file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0)
   [ -n "$file" ] && vim "$file"
 }
-#alias fv='vim $(fzf --height 40% --reverse --query="$1")'
+
+# global file search -> vim
+function vfg() {
+  local file;
+  file="$(fzf --query="$*" --select-1 --exit-0)";  
+  [ -n "$file" ] && vim "$file";
+}
+
