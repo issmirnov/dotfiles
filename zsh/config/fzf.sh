@@ -54,7 +54,7 @@ function vf() {
 # global file search -> vim
 function vfg() {
   local file;
-  file="$(fzf --query="$*" --select-1 --exit-0)";  
+  file="$(fasd -Ral "$*" | fzf --query="$*" --select-1 --exit-0)";  
   [ -n "$file" ] && vim "$file";
 }
 
