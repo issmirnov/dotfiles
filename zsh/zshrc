@@ -22,11 +22,13 @@ setopt HIST_VERIFY
 # Don't clobber files accidentally.
 setopt NOCLOBBER
 
+# Evaluate prompt each time it is shown. Allows embedding commands.
+setopt PROMPT_SUBST
+
 # Uncomment following line if you want to  shown in the command execution time stamp
 # in the history command output. The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|
 # yyyy-mm-dd
 HIST_STAMPS="yyyy-mm-dd"
-
 
 ######################
 ## oh-my-zsh config ##
