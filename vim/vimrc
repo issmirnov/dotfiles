@@ -21,6 +21,9 @@ Plug 'terryma/vim-expand-region'
 " start screen plugin.
 Plug 'https://github.com/mhinz/vim-startify'
 
+" ansible packages
+Plug 'pearofducks/ansible-vim', {'for': ['ansible']}
+
 "go packages", lazy loaded for better startup
 Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
 " better go autocomplete
@@ -151,3 +154,7 @@ function! s:Repl()
     return "p@=RestoreRegister()\<cr>"
 endfunction
 vmap <silent> <expr> p <sid>Repl()
+
+" ansible config
+let g:ansible_unindent_after_newline = 1
+let g:ansible_extra_syntaxes = "sh.vim ruby.vim"
