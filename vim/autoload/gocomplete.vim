@@ -1,1 +1,1 @@
-/home/vania/.vim/plugged/gocode/vim/autoload/gocomplete.vim
+/Users/ismirnov/.vim/plugged/gocode/vim/autoload/gocomplete.vim
