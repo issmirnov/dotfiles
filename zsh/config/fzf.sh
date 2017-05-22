@@ -11,12 +11,9 @@ fi
 
 # Set install dir
 if [[ $OSTYPE == 'linux-gnu' ]]; then
-  FZF_PREFIX=/opt
+  export FZF_PREFIX=/opt
 elif [[ $OSTYPE == darwin* ]]; then
-  FZF_PREFIX=/usr/local/opt
-fi
-if [[ ! "$PATH" == *$FZF_PREFIX/fzf/bin* ]]; then
-  export PATH="$PATH:$FZF_PREFIX/fzf/bin"
+  export FZF_PREFIX=/usr/local/opt
 fi
 
 # Auto-completion
@@ -26,7 +23,6 @@ fi
 source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
 
 # better zz from fasd
-unalias zz
 function zz() {
   local dir
   dir="$(fasd -Rdl "$1" | fzf --query="$1" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
