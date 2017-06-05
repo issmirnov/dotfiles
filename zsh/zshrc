@@ -38,6 +38,7 @@ ZSH_THEME="ys" # theme for oh-my-zsh. Currently loading ys from $OMZ/custom/them
 
 plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common-aliases osx tmux taskwarrior fasd extract adb k vagrant)
 
+DISABLE_AUTO_UPDATE=true
 source $ZSH/oh-my-zsh.sh # note that this comes AFTER plugins sourced.
 source ~/.dotfiles/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
