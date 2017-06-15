@@ -9,6 +9,7 @@
     urgent_bell = True
     use_system_font = False
     font = Inconsolata 12
+    scroll_on_output = False
 [layouts]
   [[default]]
     [[[child1]]]
