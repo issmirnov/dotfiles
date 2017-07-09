@@ -158,3 +158,27 @@ vmap <silent> <expr> p <sid>Repl()
 " ansible config
 let g:ansible_unindent_after_newline = 1
 let g:ansible_extra_syntaxes = "sh.vim ruby.vim"
+
+" Automatic paste detection.
+" Credit: https://szunyog.github.io/vim/vim-automatically-set-paste-mode
+function! WrapForTmux(s)
+  if !exists('$TMUX')
+    return a:s
+  endif
+
+  let tmux_start = "\<Esc>Ptmux;"
+  let tmux_end = "\<Esc>\\"
+
+  return tmux_start . substitute(a:s, "\<Esc>", "\<Esc>\<Esc>", 'g') . tmux_end
+endfunction
+
+let &t_SI .= WrapForTmux("\<Esc>[?2004h")
+let &t_EI .= WrapForTmux("\<Esc>[?2004l")
+
+function! XTermPasteBegin()
+  set pastetoggle=<Esc>[201~
+  set paste
+  return ""
+endfunction
+
+inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
