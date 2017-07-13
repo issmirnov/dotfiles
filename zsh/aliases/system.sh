@@ -25,6 +25,7 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
 elif [[ $OSTYPE == darwin* ]]; then
 	alias update='brew update'
 	alias upgrade="brew upgrade; brew cleanup"
+    alias ins="osx_ins"
 fi
 
 alias ll='ls -lha --color'
