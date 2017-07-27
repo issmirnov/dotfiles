@@ -208,7 +208,7 @@ bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+Shift+plus scratchpad show
 
 # rofi - note, can use Shift+right to cycle through modes
-bindsym $mod+g exec "rofi -show window"
+bindsym $mod+c exec "rofi -show window"
 bindsym $mod+d exec "rofi -show run"
 bindsym $mod+b exec "rofi -show Workspace"
 
