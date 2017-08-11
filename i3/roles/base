@@ -14,13 +14,14 @@ font pango:DejaVu Sans Mono 9
 set $gold    #ffa000
 set $purple  #7a5ada
 set $red     #d11931
-set $grue    #2b6473
+set $grue    #285577
+set $white   #ffffff
 
-# class                 border  backgr. text    indicator
-client.focused          #4c7899 #285577 #ffffff #2e9ef4
-client.focused_inactive #333333 #5f676a #ffffff #484e50
-client.unfocused        #333333 #222222 #888888 #292d2e
-client.urgent           $purple $red    $gold   $gold
+# class                 border   backgr.  text     indicator
+client.focused          #4c7899  $grue    $white   #2e9ef4
+client.focused_inactive #333333  #5f676a  $white   #484e50
+client.unfocused        #333333  #222222  #aaaaaa  #292d2e
+client.urgent           $purple  $red     $gold    $gold
 
 
 # Use Mouse+$mod to drag floating windows to their wanted position
