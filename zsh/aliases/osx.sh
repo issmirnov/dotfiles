@@ -1,4 +1,6 @@
 # vim: set tabstop=4:softtabstop=4:shiftwidth=4:expandtab
+if [[ $OSTYPE == darwin* ]]; then
+
 alias fixbrew='sudo chown -R `whoami`:admin /usr/local'
 
 # OSX install wrapper
@@ -15,3 +17,8 @@ function osx_ins() {
     fi
     echo "Package $1 not found in brew or cask."
 }
+
+alias dfh='df -H -l | awk -F" " '"'"'{ $6="";  $7=""; $8=""; $10=""; print}'"'"' | column -t'
+
+
+fi
