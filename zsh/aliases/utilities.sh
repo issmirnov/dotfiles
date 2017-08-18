@@ -24,5 +24,5 @@ alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash; sudo 
 alias map="xargs -n1"
 
 alias zsh-reload="source ~/.zshrc"
-alias gld='cd ~/.dotfiles && git pull && git submodule update --init --recursive'
+alias gld='cd ~/.dotfiles && git pull && git submodule update --init --recursive && popd'
 alias c='cheat'
