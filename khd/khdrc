@@ -60,3 +60,7 @@ alt - d : chunkc tiling::window --toggle parent
 
 # float / unfloat window
 alt - space : chunkc tiling::window --toggle float
+
+# lock screen
+cmd + shift - l : ~/bin/lock
+
