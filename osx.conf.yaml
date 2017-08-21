@@ -8,3 +8,5 @@
 - link:
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/Library/Fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
+    ~/.khdrc: khd/khdrc
+    ~/.chunkwmrc: chunkwm/chunkwmrc
