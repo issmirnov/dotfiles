@@ -21,7 +21,7 @@ check_run .conf.yaml "~/.dotfiles/upgrade.sh"
 check_run zsh "zsh -c 'source ~/.zshrc'"
 
 # istall vim plugsin
-check_run vim "(printf '\n' | vim +PlugInstall +qall)"
+check_run vim "(printf '\n' | vim +PlugInstall +PlugUpdate +qall)"
 
 # restart OSX window managers
 check_run khdrc "khd -e 'reload'"
