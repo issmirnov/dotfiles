@@ -29,14 +29,14 @@ alt - up    : chunkc tiling::window --focus north
 alt - right : chunkc tiling::window --focus east
 
 # move window
-shift + alt - left  : chunkc tiling::window --warp west
-shift + alt - down  : chunkc tiling::window --warp south
-shift + alt - up    : chunkc tiling::window --warp north
-shift + alt - right : chunkc tiling::window --warp east
+shift + cmd - left  : chunkc tiling::window --warp west
+shift + cmd - down  : chunkc tiling::window --warp south
+shift + cmd - up    : chunkc tiling::window --warp north
+shift + cmd - right : chunkc tiling::window --warp east
 
 # send window to monitor and follow focus
-shift + cmd - left  : chunkc tiling::window --send-to-monitor prev; chunkc tiling::monitor -f prev
-shift + cmd - right  : chunkc tiling::window --send-to-monitor next; chunkc tiling::monitor -f next
+shift + alt - left   : chunkc tiling::window --send-to-monitor prev; chunkc tiling::monitor -f prev
+shift + alt - right  : chunkc tiling::window --send-to-monitor next; chunkc tiling::monitor -f next
 
 # send window to desktop - handy for next spoace, doesn't do monitors
 shift + alt - c : chunkc tiling::window --send-to-desktop $(chunkc get _last_active_desktop)
