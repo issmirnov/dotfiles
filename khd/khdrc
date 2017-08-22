@@ -12,7 +12,7 @@ cmd + alt + ctrl - r : khd -e "reload"
 #alt - z : open -na "/Applications/Google Chrome.app"; chunkc tiling::desktop --equalize
 
 # close current window
-alt -x : khd -p "cmd - w"
+alt -x : chunkc tiling::window --close
 
 # focus monitor
 ctrl + alt - z  : chunkc tiling::monitor -f prev
