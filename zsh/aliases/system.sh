@@ -15,6 +15,11 @@ alias cl="fc -e - | pbcopy"
 alias cds="cd && clear && ls"
 alias cls="clear && ls"
 
+# create and enter directory
+function mdc() {
+    mkdir -p $1
+    cd $1
+}
 ## some OS dependent aliases ##
 if [[ $OSTYPE == 'linux-gnu' ]]; then
 	alias update='sudo apt-get update'
