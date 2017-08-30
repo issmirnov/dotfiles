@@ -27,13 +27,14 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
 	alias ins='sudo apt-get install'
 	alias rem='sudo apt-get remove'
 	alias open='xdg-open'
+    alias ll='ls -lha --color'
 elif [[ $OSTYPE == darwin* ]]; then
 	alias update='brew update'
 	alias upgrade="brew upgrade; brew cleanup"
     alias ins="osx_ins"
+    alias ll='ls -lha'
 fi
 
-alias ll='ls -lha --color'
 
 alias ta='tmux attach -t '
 
