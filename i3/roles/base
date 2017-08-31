@@ -253,10 +253,6 @@ for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
 ###### startup applications #####
 
-## gnome indicators
-exec --no-startup-id gnome-settings-daemon
-exec --no-startup-id gnome-sound-applet
-exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
 
 # set wallapaper
 exec --no-startup-id feh --bg-fill ~/.dotfiles/pics/ubuntu_blue.jpg

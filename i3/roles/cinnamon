@@ -1,0 +1,4 @@
+## cinnamon indicators
+exec --no-startup-id cinnamon-settings-daemon
+exec --no-startup-id cinnamon-sound-applet
+

@@ -1,0 +1,5 @@
+## gnome indicators
+exec --no-startup-id gnome-settings-daemon
+exec --no-startup-id gnome-sound-applet
+exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+
