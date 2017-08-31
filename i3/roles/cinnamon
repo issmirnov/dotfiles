@@ -2,3 +2,6 @@
 exec --no-startup-id cinnamon-settings-daemon
 exec --no-startup-id cinnamon-sound-applet
 
+# lock the screen
+bindsym $MOD+l exec "cinnamon-screensaver-command --lock"
+

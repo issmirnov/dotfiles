@@ -107,8 +107,6 @@ bindsym $mod+a focus parent
 # jump to urgent window
 bindsym $mod+u [urgent=latest] focus
 
-# lock the screen
-bindsym $MOD+l exec "gnome-screensaver-command --lock"
 ############ Workspace Management  ################################
 
 # switch to workspace
