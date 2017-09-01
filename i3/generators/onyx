@@ -1,4 +1,4 @@
-roles=(laptop onyx)
+roles=(laptop cinnamon onyx)
 for role in $roles; do
     cat $ROOT/roles/$role >> $ROOT/config
 done
