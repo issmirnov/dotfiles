@@ -11,9 +11,6 @@ check_run() {
 running $2" && eval "$2"
 }
 
-# Generate i3 config if changes detected
-check_run i3 "~/.dotfiles/i3/genconf"
-
 # run installer script for new links
 check_run .conf.yaml "~/.dotfiles/upgrade.sh"
 
@@ -23,7 +20,12 @@ check_run zsh "zsh -c 'source ~/.zshrc'"
 # istall vim plugsin
 check_run vim "(printf '\n' | vim +PlugInstall +PlugUpdate +qall)"
 
-# restart OSX window managers
-check_run khdrc "khd -e 'reload'"
-check_run chunkwmrc "brew services restart chunkwm"
+if [[ $OSTYPE == 'linux-gnu' ]]; then
+    # Generate i3 config if changes detected
+    check_run i3 "~/.dotfiles/i3/genconf"
+elif [[ $OSTYPE == darwin* ]]; then
+    # restart OSX window managers
+    check_run khdrc "khd -e 'reload'"
+    check_run chunkwmrc "brew services restart chunkwm"
+fi
 
