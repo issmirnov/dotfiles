@@ -8,3 +8,6 @@ exec --no-startup-id nm-applet
 exec fluxgui
 exec ssh-agent
 exec glipper
+
+# update mouse speed
+exec "xset mouse 13/10 0"
