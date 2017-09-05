@@ -22,10 +22,10 @@ function mdc() {
 }
 ## some OS dependent aliases ##
 if [[ $OSTYPE == 'linux-gnu' ]]; then
-	alias update='sudo apt-get update'
-	alias upgrade='sudo apt-get -y upgrade; sudo apt-get autoremove'
-	alias ins='sudo apt-get install'
-	alias rem='sudo apt-get remove'
+	alias update='sudo apt update'
+	alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
+	alias ins='sudo apt install'
+	alias rem='sudo apt remove'
 	alias open='xdg-open'
     alias ll='ls -lha --color'
 elif [[ $OSTYPE == darwin* ]]; then
