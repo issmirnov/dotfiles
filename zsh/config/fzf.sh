@@ -2,13 +2,6 @@
 # ---------
 export FZF_DEFAULT_OPTS='--exact' # prefer exact matches
 
-if command -v ag > /dev/null; then
-  export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
-else
-  export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || find . -path "*/\.*" -prune -o -type f -print -o -type l -print | sed s/^..//) 2> /dev/null'
-  echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
-fi
-
 # Set install dir
 if [[ $OSTYPE == 'linux-gnu' ]]; then
   export FZF_PREFIX=/opt
@@ -17,6 +10,13 @@ elif [[ $OSTYPE == darwin* ]]; then
 else
   # FZF not available
   return 0
+fi
+
+if command -v ag > /dev/null; then
+  export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
+else
+  export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || find . -path "*/\.*" -prune -o -type f -print -o -type l -print | sed s/^..//) 2> /dev/null'
+  echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
 fi
 
 # Auto-completion
