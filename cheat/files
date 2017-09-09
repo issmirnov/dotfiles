@@ -1,0 +1,2 @@
+# Find 20 largest files in current dir tree
+find . -type f -print0 | xargs -0 du -h | sort -hr | head -20
