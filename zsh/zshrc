@@ -44,7 +44,10 @@ source ~/.dotfiles/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 ##################################################
 # Load custom config last, so it takes priority ##
-find ~/.dotfiles/zsh -type f -iregex ".*\(sh\)" -print0 |
+find ~/.dotfiles/zsh -type f -name '*.sh' -print0 |
 while IFS= read -r -d $'\0' line; do
 	source "$line"
 done
+
+# Load local config if present, for final overrides.
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

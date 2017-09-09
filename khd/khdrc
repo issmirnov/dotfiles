@@ -9,7 +9,7 @@ cmd + alt + ctrl - r : khd -e "reload"
 
 # open apps
 alt - s : open -na /Applications/Utilities/Terminal.app
-# alt - z : open -na "/Applications/Google Chrome.app" #; chunkc tiling::desktop --equalize
+alt - z : chrome-cli open "https://smirnov.wiki" -n
 
 # close current window
 alt -x : chunkc tiling::window --close
