@@ -1,2 +1,5 @@
 # Find 20 largest files in current dir tree
 find . -type f -print0 | xargs -0 du -h | sort -hr | head -20
+
+# search text inside PDF's
+find /path -name '*.pdf' -exec sh -c 'pdftotext "{}" - | grep --with-filename --label="{}" --color "your pattern"' \;
