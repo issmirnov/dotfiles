@@ -69,10 +69,15 @@ hi Visual term=reverse cterm=reverse guibg=#5f5f5f
 
 "" Whitespace
 set nowrap                      " don't wrap lines
-set tabstop=4 shiftwidth=4      " a tab is two spaces
+set tabstop=4 shiftwidth=4      " a tab is four spaces
 set expandtab                   " use spaces, not tabs
 set backspace=indent,eol,start  " backspace through everything in insert mode
 command! KillWhitespace :normal :%s/ *$//g<cr><c-o><cr>
+
+"" indentation and tabbing rules
+autocmd Filetype yaml setlocal ts=2 sts=2 sw=2
+autocmd Filetype sh setlocal ts=4 sts=4 sw=4
+
 
 "" Splits
 set splitright
