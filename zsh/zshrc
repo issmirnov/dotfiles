@@ -40,7 +40,7 @@ plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common
 
 DISABLE_AUTO_UPDATE=true
 source $ZSH/oh-my-zsh.sh # note that this comes AFTER plugins sourced.
-source ~/.dotfiles/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 ##################################################
 # Load custom config last, so it takes priority ##
