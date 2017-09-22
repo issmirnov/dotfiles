@@ -1,2 +1,2 @@
 #!/bin/zsh
-rm -rf ~/.dotfiles/oh-my-zsh/custom/plugins/k
+rm -rf ~/.dotfiles/zsh-syntax-highlighting
