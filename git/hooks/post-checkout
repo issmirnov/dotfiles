@@ -12,7 +12,10 @@ running $2" && eval "$2"
 }
 
 # run installer script for new links
-check_run .conf.yaml "~/.dotfiles/upgrade.sh"
+check_run .conf.yaml "~/.dotfiles/install"
+
+# run upgrade script for cleanup
+check_run upgrade.sh "~/.dotfiles/upgrade.sh"
 
 # reload zsh
 check_run zsh "zsh -c 'source ~/.zshrc'"
