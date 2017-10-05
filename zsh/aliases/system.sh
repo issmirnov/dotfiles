@@ -30,9 +30,18 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
     alias ll='ls -lha --color'
 elif [[ $OSTYPE == darwin* ]]; then
 	alias update='brew update'
-	alias upgrade="brew upgrade; brew cleanup"
     alias ins="osx_ins"
     alias ll='ls -lha'
+    function upgrade() {
+        # check for permissions
+        if [[ "$(stat -f '%u' /usr/local)" != "$(id -u)" ]];then
+            echo "/usr/local is not owned by $(whoami)"
+            sudo chown -R `whoami`:admin /usr/local
+        fi
+        # run upgrades
+        brew upgrade
+        brew cleanup
+    }
 fi
 
 
