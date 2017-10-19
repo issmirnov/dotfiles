@@ -13,7 +13,7 @@ Plug 'itchyny/lightline.vim'
 Plug 'tpope/vim-commentary'
 
 " additional file types
-Plug 'fatih/vim-nginx'
+"Plug 'fatih/vim-nginx'
 
 " Expand region - press v repeatedly
 Plug 'terryma/vim-expand-region'
@@ -29,8 +29,19 @@ Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBina
 " better go autocomplete
 Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' }
 
+" general syntax
+Plug 'https://github.com/sheerun/vim-polyglot'
+Plug 'https://github.com/tpope/vim-sleuth' " proper tabstops 
+
 " git helpers
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
+Plug 'https://github.com/airblade/vim-gitgutter'
+
+" basic system utils
+Plug 'https://github.com/tpope/vim-eunuch'
+
+" Awesome navigation
+Plug 'https://github.com/justinmk/vim-sneak'
 
 call plug#end()
 
@@ -88,6 +99,9 @@ set hlsearch                    " highlight matches
 set incsearch                   " incremental searching
 set ignorecase                  " searches are case insensitive...
 set smartcase                   " ... unless they contain at least one capital letter
+
+""" faster loads for gitgutter
+set updatetime=250
 
 """ lightline settings """
 " enable tender theme
