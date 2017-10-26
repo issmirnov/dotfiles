@@ -1,0 +1,8 @@
+# Catch stdout into clipboard
+echo "hello world" | xclip -sel clip    # linux
+echo "hello world" | pbcopy             # osx
+
+# Paste contents of clipboard into stdout
+xclip -sel clip -o  # linux
+pbpaste             # osx
+
