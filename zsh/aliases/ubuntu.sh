@@ -15,4 +15,8 @@ alias mp='sudo mount -t cifs //puma/data /mnt/puma-data -o username=vania,file_m
 # print stats about partitons, excluding tmpfs mounts
 alias dfh='df -h -x tmpfs -x devtmpfs | column -t'
 
+# clipboard manipulation
+alias cpb='xclip -sel clip'
+alias cpbo='xclip -sel clip -o'
+
 fi

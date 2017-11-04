@@ -53,7 +53,7 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
   folder. Basically you can add rules for a specific host and factor out common
   config, which gets spliced in dynamically on every pull.
 - The [vim](vim/) directory is relatively standalone, and contains my attempt
-  at building a sane vim config that isn't compelx enough to launch nukes when
+  at building a sane vim config that isn't complex enough to launch nukes when
   your cat sneezes on the keyboard. 
 
 ## A Note about the License & Copyright:
