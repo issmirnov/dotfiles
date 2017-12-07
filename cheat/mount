@@ -15,3 +15,9 @@ mount -o loop disk1.iso /mnt/disk
 
 # to check who is using mounted device, when umount fails
 sudo fuser -vm /mnt/path/here
+
+# to list ext4 mounts
+findmnt --types ext4
+
+# to list all mounts except temp and shared mem
+findmnt --types notmpfs,noshm
