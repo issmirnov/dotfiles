@@ -1,0 +1,5 @@
+# Start docker cluster in background
+docker-compose up  -d
+
+# Restart docker compose with fresh images
+docker-compose up --force-recreate  -d

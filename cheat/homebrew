@@ -1,0 +1,8 @@
+# Upgrade casks selectively
+brew cask outdated | fzf -m -n 1 --tac --header='Select casks to upgrade with tab' | xargs brew cask reinstall
+
+# Upgrade all casks
+brew cask outdated | xargs brew cask reinstall
+
+# Fix ownership on /usr/local
+sudo chown -R `whoami`:admin /usr/local

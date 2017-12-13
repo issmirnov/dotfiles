@@ -12,12 +12,12 @@ alias gacm='git add -A; git commit -m '
 
 # Uses git's autocompletion for inner commands. Assumes an install of git's
 # bash `git-completion` script at $completion
-completion=/usr/local/etc/bash_completion.d/git-completion.bash
+# completion=/usr/local/etc/bash_completion.d/git-completion.bash
 
-if test -f $completion
-then
-  source $completion
-fi
+# if test -f $completion
+# then
+#   source $completion
+# fi
 
 
 git-branch-del-regex() {
