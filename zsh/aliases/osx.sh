@@ -1,7 +1,7 @@
 # vim: set tabstop=4:softtabstop=4:shiftwidth=4:expandtab
 if [[ $OSTYPE == darwin* ]]; then
 
-alias fixbrew='sudo chown -R `whoami`:admin /usr/local'
+alias fixbrew='sudo chown -R $(whoam):admin $(brew --prefix)/*'
 
 # OSX install wrapper
 function osx_ins() {
