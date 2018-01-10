@@ -1,0 +1,4 @@
+# Adhoc command
+ansible your_host -m shell -a 'echo $TERM'
+
+
