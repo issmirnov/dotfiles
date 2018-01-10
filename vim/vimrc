@@ -158,6 +158,10 @@ augroup myGo
   autocmd FileType go nmap <leader>b <Plug>(go-build)
 augroup END
 
+" sane defaults for Make files
+autocmd FileType make setlocal noexpandtab "shiftwidth=4 softtabstop=0 tabstop=4
+autocmd FileType make nmap <leader>t :%s/^<Space>\{4}/\t/<CR>
+
 " expand regions (github.com/terryma/vim-expand-region)
 vmap v <Plug>(expand_region_expand)
 vmap <C-v> <Plug>(expand_region_shrink)
