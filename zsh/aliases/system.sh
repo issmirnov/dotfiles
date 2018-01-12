@@ -28,6 +28,7 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
 	alias rem='sudo apt remove'
 	alias open='xdg-open'
     alias ll='ls -lha --color'
+    alias cpuhogs='ps -Ao pcpu,pmem,comm,comm,pid --sort=-pcpu | head -n 6'
 elif [[ $OSTYPE == darwin* ]]; then
 	alias update='brew update'
     alias ins="osx_ins"
@@ -42,6 +43,7 @@ elif [[ $OSTYPE == darwin* ]]; then
         brew upgrade
         brew cleanup
     }
+    alias cpuhogs='ps -Aro pcpu,pmem,comm,comm,pid  | head -n 6'
 fi
 
 
