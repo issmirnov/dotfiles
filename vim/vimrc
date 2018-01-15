@@ -65,9 +65,13 @@ let g:mapleader="\<Space>"
 
 ""  leader shortcuts
 " :W saves the file with sudo.  must come before the <leader>w remap below
-command W w !sudo tee % > /dev/null
+cmap W w !sudo tee % > /dev/null
+
 " quickly save files
 nnoremap <Leader>w :w<CR>
+inoremap <leader>w <C-c>:w<cr> " works in insert mode
+" write and quit
+noremap <leader>q :q<cr>
 
 " system clipboard
 set clipboard=unnamedplus
