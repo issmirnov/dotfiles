@@ -26,3 +26,9 @@ alias map="xargs -n1"
 alias zsh-reload="source ~/.zshrc"
 alias gld='cd ~/.dotfiles && git pull && git submodule update --init --recursive && popd'
 alias c='cheat'
+
+# Search through text of PDF's. Requires poppler.
+function pdfsearch() {
+    [ -z "$1" ] && echo "Error: No search term supplied" && exit 1
+    find . -name '*.pdf' | xargs -I {} sh -c "pdftotext \"{}\" - | grep --with-filename --label=\"{}\" --color $1"
+}
