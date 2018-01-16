@@ -39,4 +39,7 @@ ch() {
 # upgrade casks
 alias upgrade_casks='brew cask outdated | xargs brew cask reinstall'
 
+# updatedb
+alias updatedb='sudo /usr/libexec/locate.updatedb'
+
 fi
