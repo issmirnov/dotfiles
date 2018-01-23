@@ -69,7 +69,6 @@ cmap W w !sudo tee % > /dev/null
 
 " quickly save files
 nnoremap <Leader>w :w<CR>
-inoremap <leader>w <C-c>:w<cr> " works in insert mode
 " write and quit
 noremap <leader>q :q<cr>
 
