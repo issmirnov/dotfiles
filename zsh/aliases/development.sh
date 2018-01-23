@@ -12,4 +12,5 @@ alias p="cd /Volumes/Data/Personal/Projects"
 
 ## ansible
 alias ap='ansible-playbook'
+alias agi='ansible-galaxy install -r requirements.yml --ignore-errors'
 alias vup='vagrant up'
