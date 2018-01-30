@@ -23,4 +23,11 @@ alias cpbo='xclip -sel clip -o'
 alias ss='sudo systemctl status' # note: conflicts with /bin/ss
 alias sr='sudo systemctl restart'
 
+# screenshot helper
+function shot(){
+    vared -p 'Name your screenshot: ' -c sn
+    echo "Select screen area..."
+    maim --noopengl  -s ~/Pictures/$sn.png
+    echo "Done! Saved to ~/Pictures/$sn.png"
+}
 fi
