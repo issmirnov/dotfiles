@@ -2,7 +2,7 @@
 # Opens rofi and takes a new name for a workspace.
 # Currently focused window is moved to that workspace.
 
-name=$($HOME/.dotfiles/i3/scripts/i3_switch_workspace.sh | rofi -dmenu -p "Move window to workspace: " -i)
+name=$($HOME/.dotfiles/i3/scripts/i3_list_workspaces.sh | rofi -dmenu -p "Move window to workspace: " -i)
 if [ $? -eq 0 ]; then
     i3-msg "move window to workspace $name"
 fi
