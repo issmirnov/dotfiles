@@ -2,7 +2,7 @@
 # Opens rofi and takes a new name for a workspace.
 # Current workspace is renamed.
 
-name=$(echo -e "" | rofi -dmenu)
+name=$(echo -e "" | rofi -dmenu -p "Rename workspace: ")
 if [ $? -eq 0 ]; then
     i3-msg "rename workspace to $name"
 fi

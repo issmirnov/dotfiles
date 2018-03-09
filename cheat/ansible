@@ -1,4 +1,12 @@
 # Adhoc command
 ansible your_host -m shell -a 'echo $TERM'
+ansible your_group -i inventory -a "whoami" -s
 
+# Install role to current dir
+ansible-galaxy install --roles-path . nameof.role
 
+# Install requirements
+ansible-galaxy install -r requirements.yml
+
+# Init new role
+ansible-galaxy init role_name
