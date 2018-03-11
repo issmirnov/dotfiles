@@ -12,6 +12,7 @@
     ~/.i3/config: i3/config
     ~/.i3blocks.conf: i3/i3blocks.conf
     ~/bin/hop: i3/scripts/hop
+    ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
     ~/.config/terminator/config: terminator/config
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf

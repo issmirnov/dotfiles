@@ -1,0 +1,11 @@
+# Create zip file
+zip archive.zip file1 directory/
+
+# Split zip file into 50mb chunks
+zip archive.zip --out split.zip -s 50m
+
+# Recreate original zip file from  multi-part zip splits
+zip -F split.zip --out archive.zip
+
+# To list, test and extract zip archives, see unzip
+cheat unzip

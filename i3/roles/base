@@ -207,9 +207,7 @@ bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+Shift+plus scratchpad show
 
 # rofi - note, can use Shift+right to cycle through modes
-bindsym $mod+c exec "rofi -show window"
-bindsym $mod+d exec "rofi -show run"
-bindsym $mod+b exec "rofi -show Workspace"
+bindsym $mod+d exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
 
 ############ Display and Music  ################################
 
