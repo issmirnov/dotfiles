@@ -24,6 +24,9 @@ Plug 'https://github.com/mhinz/vim-startify'
 " ansible packages
 Plug 'pearofducks/ansible-vim', {'for': ['ansible']}
 
+" dart support
+Plug 'dart-lang/dart-vim-plugin'
+
 "go packages", lazy loaded for better startup
 Plug 'fatih/vim-go', {'for': ['go'], 'do': [':GoInstallBinaries', ':GoUpdateBinaries']}
 " better go autocomplete
