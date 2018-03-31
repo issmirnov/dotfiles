@@ -56,3 +56,6 @@ git checkout -p HEAD^ -- /path/to/file
 
 # Reset git repo into one commit
 git reset $(git commit-tree HEAD^{tree} -m "message here")
+
+# merge changes from other branch
+git merge -X theirs branchB
