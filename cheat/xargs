@@ -1,3 +1,6 @@
+# Pipe list of lines to command
+cat file_with_lines | xargs -I {} mycommand --line {}
+
 # find all file name ending with .pdf and remove them
 find -name *.pdf | xargs rm -rf
 
