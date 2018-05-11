@@ -1,0 +1,7 @@
+# Beware of nested expansions. 
+ta ll # will fail because 'll' is an alias
+ta "ll" # works, since 'll' is quoted
+
+# "which" vs "whereis"
+which # shows defined token, may sometimes map to zsh shell expansion
+whereis # lists binaries from $PATH
