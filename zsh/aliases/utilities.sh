@@ -35,5 +35,5 @@ function pdfsearch() {
 
 # wrapper around find
 function f(){
-    'find . -iname "*$1*"'
+    find . -iname "*$1*"
 }
