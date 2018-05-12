@@ -32,3 +32,8 @@ function pdfsearch() {
     [ -z "$1" ] && echo "Error: No search term supplied" && exit 1
     find . -name '*.pdf' | xargs -I {} sh -c "pdftotext \"{}\" - | grep --with-filename --label=\"{}\" --color $1"
 }
+
+# wrapper around find
+function f(){
+    'find . -iname "*$1*"'
+}
