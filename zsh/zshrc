@@ -36,7 +36,7 @@ export ZSH=$HOME/.dotfiles/oh-my-zsh
 
 ZSH_THEME="ys" # theme for oh-my-zsh. Currently loading ys from $OMZ/custom/themes
 
-plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common-aliases osx tmux taskwarrior extract adb vagrant)
+plugins=(git git-extras zsh-completions alias-tips history brew brew-cask common-aliases osx tmux taskwarrior extract adb vagrant zsh-completions)
 
 DISABLE_AUTO_UPDATE=true
 source $ZSH/oh-my-zsh.sh # note that this comes AFTER plugins sourced.
@@ -48,6 +48,9 @@ find ~/.dotfiles/zsh -type f -name '*.sh' -print0 |
 while IFS= read -r -d $'\0' line; do
 	source "$line"
 done
+
+# Enable all completions
+autoload -U compinit && compinit
 
 # Load local config if present, for final overrides.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
