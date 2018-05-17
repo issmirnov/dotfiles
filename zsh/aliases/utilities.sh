@@ -33,7 +33,9 @@ function pdfsearch() {
     find . -name '*.pdf' | xargs -I {} sh -c "pdftotext \"{}\" - | grep --with-filename --label=\"{}\" --color $1"
 }
 
+
 # wrapper around find
+unalias f
 function f(){
     find . -iname "*$1*"
 }
