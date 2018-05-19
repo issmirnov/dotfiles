@@ -1,0 +1,5 @@
+# Run iperf server
+iperf -s 
+
+# Start client
+iperf -c 123.123.123.123
