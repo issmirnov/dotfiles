@@ -1,0 +1,21 @@
+# List all loaded/active units
+systemctl list-units
+
+# List running units
+systemctl list-units --state=running
+
+# Check the status of a service
+systemctl status foo
+
+# Control a service
+systemctl {start,stop,restart,reload} foo
+
+# Change startup on boot
+systemctl {enable,disable} foo
+
+# List the dependencies of a service
+# when no service name is specified, lists the dependencies of default.target
+systemctl list-dependencies foo.service 
+
+# Show boot chain
+systemd-analyze blame
