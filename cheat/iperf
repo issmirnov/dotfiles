@@ -1,0 +1,10 @@
+# Docs: https://software.es.net/iperf/invoking.html#iperf3-manual-page
+
+# Run iperf server
+iperf -s 
+
+# Start client
+iperf -c 123.123.123.123
+
+# Specify download size
+iperf -c 123.123.123.123 -n 10M
