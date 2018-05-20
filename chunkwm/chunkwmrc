@@ -87,7 +87,7 @@ chunkc core::load tiling.so
 #       to pass value containing a whitespace.
 #
 
-chunkc tiling::rule --owner Finder --name Copy --state float
-chunkc tiling::rule --owner Finder --name Trash --state float
-chunkc tiling::rule --owner \"App Store\" --state float
-chunkc tiling::rule --owner \"NVIDIA® WebDriver Updater\" --state float
+chunkc tiling::rule --owner Finder --name Copy --state float &
+chunkc tiling::rule --owner Finder --name Trash --state float &
+chunkc tiling::rule --owner \"App Store\" --state float  &
+chunkc tiling::rule --owner \"NVIDIA® WebDriver Updater\" --state float &
