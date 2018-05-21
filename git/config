@@ -16,9 +16,9 @@
 	templatedir = ~/.dotfiles/git/template
 
 [core]
-	whitespace = trailing-space,space-before-tab
-	excludesfile = ~/.dotfiles/git/ignore
-
+    whitespace = trailing-space,space-before-tab
+    excludesfile = ~/.dotfiles/git/ignore
+    editor = vim
 
 #------------------------------------------------------------#
 # Less common config, will likely remain the same for years.
@@ -32,6 +32,10 @@
 [alias]
     prune = fetch --prune
     undo = reset --soft HEAD^
+    d = difftool
+    reword = commit --amend
+    fuck = reset --hard
+     amend = commit --amend --no-edit
     
 
 [branch]
@@ -74,12 +78,18 @@
 [diff]
 	renames = copies
 	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
+	tool = vimdiff
 
 [grep]
 	lineNumber = true
 	
 [merge]
-	stat = true
+    stat = true
+    tool = vimdiff
+    conflictstyle = diff3
+
+[mergetool]
+    prompt = false
 
 [pretty]
 	default = %C(bold black)%h%Creset -%C(auto)%d%Creset %s %C(bold black)(%an %ar)%Creset
