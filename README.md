@@ -37,9 +37,9 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
 
 ## Submodules Used
 
-- Dotbot for installation.
-- oh-my-zsh for zsh foundation.
-- Vundle for vim.
+- [Dotbot](https://github.com/anishathalye/dotbot) for installation.
+- [oh-my-zsh](https://github.com/robbyrussell/oh-my-zsh) for zsh foundation.
+- [Vundle](https://github.com/VundleVim/Vundle.vim) for vim.
 
 ## Points of Interest
 
