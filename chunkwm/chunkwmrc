@@ -14,6 +14,9 @@ chunkc core::plugin_dir /usr/local/opt/chunkwm/share/chunkwm/plugins
 
 chunkc core::hotload 1
 
+# Enable logging to file
+chunkc core::log_file stdout /var/log/chunkwm.log
+
 #
 # NOTE: the following are config variables for the chunkwm-tiling plugin.
 #
@@ -84,7 +87,7 @@ chunkc core::load tiling.so
 #       to pass value containing a whitespace.
 #
 
-chunkc tiling::rule --owner Finder --name Copy --state float
-chunkc tiling::rule --owner Finder --name Trash --state float
-chunkc tiling::rule --owner \"App Store\" --state float
-chunkc tiling::rule --owner \"NVIDIA® WebDriver Updater\" --state float
+chunkc tiling::rule --owner Finder --name Copy --state float &
+chunkc tiling::rule --owner Finder --name Trash --state float &
+chunkc tiling::rule --owner \"App Store\" --state float  &
+chunkc tiling::rule --owner \"NVIDIA® WebDriver Updater\" --state float &
