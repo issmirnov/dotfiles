@@ -1,0 +1,8 @@
+# To split a file into FAT32 friendly size with prefix "$file."
+split -b 4000M -d -a 1 $file $file. # the dot is not a typo, keep it.
+
+# To split a large binary file into smaller files of 10M each:
+split file.txt -b 10M
+
+# To consolidate split files into a single file:
+cat x* > file.txt
