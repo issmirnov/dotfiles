@@ -13,3 +13,7 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
 elif [[ $OSTYPE == darwin* ]]; then
 	ANSIBLE_ROLES_PATH='/usr/local/etc/ansible'
 fi
+
+# Customize github.com/djui/alias-tips
+export ZSH_PLUGINS_ALIAS_TIPS_REVEAL=1
+export ZSH_PLUGINS_ALIAS_TIPS_REVEAL_EXCLUDES="(_ ll vi)"
