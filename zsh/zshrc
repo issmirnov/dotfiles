@@ -1,6 +1,9 @@
 ######################
 ## basic zsh config ##
 
+# Set vim keybinds first, so that all plugins know about it.
+bindkey -v
+
 # Save each command's timestamp and duration.
 setopt EXTENDED_HISTORY
 
@@ -34,12 +37,16 @@ HIST_STAMPS="yyyy-mm-dd"
 ## oh-my-zsh config ##
 export ZSH=$HOME/.dotfiles/oh-my-zsh
 
-ZSH_THEME="ys" # theme for oh-my-zsh. Currently loading ys from $OMZ/custom/themes
+ZSH_THEME="ivan" # theme for oh-my-zsh. Currently loading ys from $OMZ/custom/themes
 
 plugins=(git git-extras zsh-autosuggestions zsh-completions alias-tips history fasd brew brew-cask common-aliases osx tmux taskwarrior extract adb vagrant zsh-completions)
 
 DISABLE_AUTO_UPDATE=true
+
+# oh-my-zsh/lib/key-bindings.zsh sets emacs mode, so we source and reset to vim
 source $ZSH/oh-my-zsh.sh # note that this comes AFTER plugins sourced.
+bindkey -v
+
 source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
 ##################################################

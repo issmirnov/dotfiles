@@ -1,5 +1,7 @@
 # zsh
 
+**WARNING: This config uses `bindkey -v` rather than the [emacs default](https://sgeb.io/posts/2014/04/zsh-zle-custom-widgets/).**
+
 This is a modular zsh config framework, originally built by
  [Andrew Brinker](https://github.com/AndrewBrinker/zsh).
 
