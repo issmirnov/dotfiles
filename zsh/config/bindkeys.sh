@@ -54,6 +54,7 @@ alias vilist='bindkey -M vicmd'
 # Updates editor information when the keymap changes.
 function zle-keymap-select() {
   zle reset-prompt
+  declare VIM=${vi_info}
   zle -R
 }
 
@@ -62,6 +63,12 @@ zle -N zle-keymap-select
 function vi_mode_prompt_info() {
   echo "${${KEYMAP/vicmd/[% NORMAL]%}/(main|viins)/[% INSERT]%}"
 }
+
+
+function vi_info(){
+	echo "${${KEYMAP/vicmd/⌘}/(main|viins)/$}"
+}
+
 
 # define right prompt, regardless of whether the theme defined it
 RPS1='$(vi_mode_prompt_info)'
