@@ -1,0 +1,9 @@
+# List file names
+ls *(:t) # (:t) replaces basename
+
+# Modifiers
+(:t) # basename
+(:h) # dirname
+(/) # directories
+(.) # plain files
+(D) # also match hidden files
