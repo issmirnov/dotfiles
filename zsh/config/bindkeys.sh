@@ -33,7 +33,15 @@ bindkey -M vicmd '\-' _fzf-cd-insert
 bindkey -M vicmd -r "s"
 bindkey -M vicmd 's' push-line-or-edit
 
+# edit command line
+autoload -U edit-command-line
+zle -N edit-command-line
+bindkey -M vicmd -r "S"
+bindkey -M vicmd 'S' edit-command-line
 
+
+# expand history refs like !!
+bindkey -M viins ' ' magic-space
 # doesn't quite work yet
 # bindkey -M vicmd -s 'z' 'zsh-reload^M'
 
