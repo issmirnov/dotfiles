@@ -21,7 +21,7 @@ alias week="date +%V"
 alias emptytrash="sudo rm -rfv /Volumes/*/.Trashes; sudo rm -rfv ~/.Trash; sudo rm -rfv /private/var/log/asl/*.asl"
 
 # map ~ Kickass map function
-alias map="xargs -n1"
+#alias map="xargs -n1"
 
 alias zsh-reload="source ~/.zshrc"
 alias gld='cd ~/.dotfiles && git pull && git submodule update --init --recursive && popd'
