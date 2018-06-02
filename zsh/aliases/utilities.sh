@@ -35,3 +35,30 @@ function pdfsearch() {
 
 # Alias search. https://sgeb.io/posts/2016/11/til-alias-search/
 alias als='alias | grep -i --'
+
+#### https://ebzzry.io/en/zsh-tips-4/ ###
+# applies $1 to all subsequent args
+# ex: map 'git clone' repo1 repo2 repo3
+function map () {
+  for i (${argv[2,-1]}) { ${(ps: :)${1}} $i }
+}
+
+# inverse map - apply commands to first arg
+# ex: rmap . 'du -h' stat 'sudo lsof'
+function rmap () {
+  for i (${argv[2,-1]}) { ${(ps: :)${i}} $1 }
+}
+
+# show true filepath
+function fp () {
+  [ -z "$1" ] && echo "Error: no target specified"  && exit 1
+  echo "${1:A}"
+}
+
+# parallel removal of large trees
+function rm+ () {
+  parallel --will-cite 'rm -rf {}' ::: $@
+}
+
+#### end zsh-tips ####
+

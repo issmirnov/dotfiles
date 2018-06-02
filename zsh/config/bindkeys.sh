@@ -86,6 +86,18 @@ bindkey -M viins ' ' magic-space
 # doesn't quite work yet
 # bindkey -M vicmd -s 'z' 'zsh-reload^M'
 
+
+# command quote helper - append $() and places cursor inside parens.
+function _quote_helper(){
+    zle .end-of-line
+    BUFFER="$BUFFER \$()"
+    zle .end-of-line
+    zle .vi-backward-char
+    zle .vi-insert # switch to insert mode
+}
+zle -N _quote_helper
+bindkey -M vicmd '\`' _quote_helper
+
 # line navigation
 bindkey -M vicmd -r 'k'
 bindkey -M vicmd 'k' vi-end-of-line
