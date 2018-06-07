@@ -19,7 +19,11 @@ alias sr='sudo systemctl restart'
 
 # screenshot helper
 function shot(){
-    vared -p 'Name your screenshot: ' -c sn
+    if [[ ! -n $1 ]];then
+        vared -p 'Name your screenshot: ' -c sn
+    else
+        sn=$1
+    fi
     echo "Select screen area..."
     maim --noopengl  -s ~/Pictures/$sn.png
     echo "Done! Saved to ~/Pictures/$sn.png"
