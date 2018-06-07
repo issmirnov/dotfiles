@@ -5,7 +5,9 @@
 # Notes:
 #  - `bindkey -M vicmd` will show all bound commands
 
-
+# Add back emacs keys, useful on MBP keyboards where ESC is unreachable
+bindkey "^A" vi-beginning-of-line
+bindkey "^E" vi-end-of-line
 
 # remove all escape binds, to speed up shell
 # bindkey -rpM viins '^['
