@@ -88,6 +88,20 @@ bindkey -M viins ' ' magic-space
 # doesn't quite work yet
 # bindkey -M vicmd -s 'z' 'zsh-reload^M'
 
+# better handling of ../
+# credit: https://grml.org/zsh/zsh-lovers.html
+rationalise-dot() { 
+if [[ $LBUFFER = *.. ]]; then  # initial trigger on third dot (".." -> "../../")
+    LBUFFER+=/../
+elif [[ $LBUFFER = *../ ]]; then  # climb directories and append slash for tab completion
+    LBUFFER+=../
+else 
+    LBUFFER+=. # we still need a regular dot sometimes
+fi
+} 
+zle -N rationalise-dot 
+bindkey -M viins '.' rationalise-dot
+
 
 # command quote helper - append $() and places cursor inside parens.
 function _quote_helper(){
