@@ -11,6 +11,7 @@
 [push]
     default = current
     followTags = true
+    recurseSubmodules = check # See: https://stackoverflow.com/questions/5814319/git-submodule-push
 
 [init]
 	templatedir = ~/.dotfiles/git/template
