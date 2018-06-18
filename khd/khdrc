@@ -28,11 +28,28 @@ alt - down  : chunkc tiling::window --focus south
 alt - up    : chunkc tiling::window --focus north
 alt - right : chunkc tiling::window --focus east
 
+# change focus
+alt - h : chunkc tiling::window --focus west
+alt - j : chunkc tiling::window --focus south
+alt - k : chunkc tiling::window --focus north
+alt - l : chunkc tiling::window --focus east
+alt - p : chunkc tiling::window --focus prev
+alt - n : chunkc tiling::window --focus next
+
 # move window
 shift + cmd - left  : chunkc tiling::window --warp west
+shift + cmd - h  : chunkc tiling::window --warp west
+
 shift + cmd - down  : chunkc tiling::window --warp south
+shift + cmd - j  : chunkc tiling::window --warp south
+
 shift + cmd - up    : chunkc tiling::window --warp north
+shift + cmd - k    : chunkc tiling::window --warp north
+
 shift + cmd - right : chunkc tiling::window --warp east
+shift + cmd - l : chunkc tiling::window --warp east
+
+
 
 # send window to monitor and follow focus
 shift + alt - left   : chunkc tiling::window --send-to-monitor prev; chunkc tiling::monitor -f prev
@@ -45,6 +62,9 @@ shift + alt - x : chunkc tiling::window --send-to-desktop next
 
 # equalize size of windows
 shift + alt - 0 : chunkc tiling::desktop --equalize
+
+# Rotate windows on monitor
+alt - r : chunkc tiling::desktop --rotate 90
 
 # mirror tree y-axis
 alt - y : chunkc tiling::desktop --mirror vertical
@@ -62,5 +82,5 @@ alt - d : chunkc tiling::window --toggle parent
 alt - space : chunkc tiling::window --toggle float
 
 # lock screen
-cmd + shift - l : ~/bin/lock
+cmd - l ![Google Chrome]: ~/bin/lock
 
