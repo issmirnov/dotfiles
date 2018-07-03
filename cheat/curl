@@ -7,6 +7,29 @@ curl http://example.com/file.zip -o new_file.zip
 # Download multiple files
 curl -O URLOfFirstFile -O URLOfSecondFile
 
+# Follow redirects
+curl -L http://t.co/d
+
+# Follow redirects and fetch all intermediate headers
+curl -IL http://t.co/d
+
+# Samples for '--write-out' syntax.
+# - %{content_type} 
+# - %{filename_effective}
+# - %{response_code}
+# - %{num_redirects}
+# - %{size_download}
+# - %{speed_download}/%{speed_upload}
+# - %{ssl_verify_result}
+# - %{url_effective} - useful with -L
+curl http://t.co/d -w "Code: %{http_code}; R: %{redirect_url}\n" -o /dev/null
+
+# Enable extra verbosity. https://ec.haxx.se/usingcurl-verbose.html
+curl -v http://example.com
+
+# Curl with full dump of bytes.
+curl --trace dump http://example.com
+
 # Download all sequentially numbered files (1-24)
 curl http://example.com/pic[1-24].jpg
 
