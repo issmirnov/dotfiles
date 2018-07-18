@@ -110,3 +110,7 @@
 # Allow local customizations in the .gitconfig_local file
 [include]
 	path = ~/.gitconfig_local
+[rebase]
+	autoStash = true
+[pull]
+	rebase = true
