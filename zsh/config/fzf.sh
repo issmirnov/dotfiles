@@ -57,3 +57,50 @@ function vfg() {
   [ -n "$file" ] && vim "$file";
 }
 
+# Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
+# fa <dir> - Search dirs and cd to them
+# TODO: Use sharkdp/fd instead, to leverage gitignore?
+fa() {
+  local dir
+  dir=$(find ${1:-.} -path '*/\.*' -prune \
+                  -o -type d -print 2> /dev/null | fzf +m) &&
+  cd "$dir"
+}
+
+# fah <dir> - Search dirs and cd to them (included hidden dirs)
+fah() {
+  local dir
+  dir=$(find ${1:-.} -type d 2> /dev/null | fzf +m) && cd "$dir"
+}
+
+# cd into the directory of the selected file
+fl() {
+  local file
+  local dir
+  file=$(fzf +m -q "$1") && dir=$(dirname "$file") && cd "$dir"
+  ls
+}
+
+
+# Search env variables
+fenv() {
+  local out
+  out=$(env | fzf)
+  # echo $(echo $out | cut -d= -f2)
+  echo $(echo $out)
+}
+
+
+cd..(){
+  local declare dirs=()
+  get_parent_dirs() {
+    if [[ -d "${1}" ]]; then dirs+=("$1"); else return; fi
+    if [[ "${1}" == '/' ]]; then
+      for _dir in "${dirs[@]}"; do echo $_dir; done
+    else
+      get_parent_dirs $(dirname "$1")
+    fi
+  }
+  local DIR=$(get_parent_dirs $(realpath "${1:-$PWD}") | fzf-tmux --tac)
+  cd "$DIR"
+}

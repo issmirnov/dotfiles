@@ -72,3 +72,37 @@ unalias ff
 function ff () {
     find . -iname "*$@*" ;
 }
+
+
+# ram usage counter. 
+# Credit: https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/functions.zsh#L480
+function ram() {
+    local sum
+    local items
+    local app="$1"
+    if [ -z "$app" ]; then
+        echo "First argument - pattern to grep from processes"
+    else
+        sum=0
+        for i in `ps aux | grep -i "$app" | grep -v "grep" | awk '{print $6}'`; do
+            sum=$(($i + $sum))
+        done
+        sum=$(echo $sum | awk '{ split( "KB MB GB TB" , v ); s=1; while( $1>1024 ){ $1/=1024; s++ } printf("%0.2f %s", $1, v[s]) }')
+        # sum=$(echo "scale=2; $sum / 1024.0" | bc)
+        if [[ $sum != "0.00 KB" ]]; then
+            echo "${fg[blue]}${app}${reset_color} uses ${fg[green]}${sum}s${reset_color} of RAM."
+        else
+            echo "There are no processes with pattern '${fg[blue]}${app}${reset_color}' are running."
+        fi
+    fi
+}
+
+# jump to dotfiles
+function d..(){
+  cd ~/.dotfiles
+}
+
+# edit SSH config
+function essh(){
+  vim ~/.ssh/config
+}

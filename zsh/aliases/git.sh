@@ -10,6 +10,8 @@ alias gs='git status -sb' # upgrade your git if -sb breaks for you. it's fun.
 alias grm="git status | grep deleted | awk '{print \$3}' | xargs git rm"
 alias gacm='git add -A; git commit -m '
 
+
+alias gj='open `git config remote.origin.url`'
 # Uses git's autocompletion for inner commands. Assumes an install of git's
 # bash `git-completion` script at $completion
 # completion=/usr/local/etc/bash_completion.d/git-completion.bash
