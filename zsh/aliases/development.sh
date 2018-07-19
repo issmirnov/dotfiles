@@ -6,5 +6,5 @@ alias pserver="python -m SimpleHTTPServer"
 
 ## ansible
 alias ap='ansible-playbook'
-alias agi='ansible-galaxy install -r requirements.yml --ignore-errors'
+alias agi='ansible-galaxy install -r requirements.yml --ignore-errors --keep-scm-meta'
 alias vup='vagrant up'
