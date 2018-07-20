@@ -34,23 +34,16 @@ function zz() {
 # does global file search, shows selected file in bat
 function show() {
     local file
-    if [[ -f "$1" ]]; then
-        bat"$1"
-    else
-        file=$(locate / | fzf --query="$*" --select-1 --exit-0)
-        [ -n "$file" ] && bat "$file"
-    fi
+    file=$(locate / | fzf --query="$*" --select-1 --exit-0)
+    [ -n "$file" ] && bat "$file"
 }
 
 # does local file search, from current directory, displays file in bat
 function showl() {
     local file
-    if [[ -f "$1" ]]; then
-        bat "$1"
-    else
-        file=$(fzf --query="$*"\
-          --select-1 --exit-0)
-        [ -n "$file" ] && bat "$file"
+    file=$(fzf --query="$*"\
+      --select-1 --exit-0)
+    [ -n "$file" ] && bat "$file"
     fi
 }
 
