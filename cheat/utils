@@ -1,0 +1,23 @@
+## Utils from dotfiles
+# map: applies $1 to all subsequent args
+map 'git clone' repo1 repo2 repo3
+
+# rmap: inverse map - apply commands to first arg
+rmap . 'du -h' stat 'sudo lsof'
+
+# rm+: parallel removal of large trees
+
+# highlight: helper that adds color decorators to text
+cat file | highlight red ERROR TEXT
+
+## moreutils
+# - chronic: only print stderr/stdout iff exit code nonzero
+# - combine: combines the lines in two files using boolean operations
+# - pee: redirect pipe into multiple commands. Forks data flow.
+# - sponge: writes stdin to file. but soaks up entire input. 
+#           Can be used to write to same file as input
+#           ex: `sort filename | uniq | sponge filename`
+# - ts: adds a timestamp to the beginning of each line of input
+#       ex: `./script.sh | ts`
+# - vidir: edit contents of a directory in a text editor
+
