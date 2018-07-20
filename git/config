@@ -98,8 +98,13 @@
 	shorter = %C(auto)%D %C(black)--%C(bold black)%gD%N %ad by %C(white)%cn%C(reset)
 	vtree = %C(bold blue)%h%C(reset)+%C(bold black)(%cr)%C(reset)+%C(auto)%D%C(reset)++\n+++       %C(bold black)%an%C(reset)%C(black):%C(reset) %s
 
+[pull]
+        rebase = false
+
+# https://mislav.net/2013/02/merge-vs-rebase/
+# TODO: Pick a merging model for my downstream projects.
 [rebase]
-	autoStash = true
+	autoStash = false
 
 [rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
 	enabled = true
