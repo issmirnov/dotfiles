@@ -44,7 +44,6 @@ function showl() {
     file=$(fzf --query="$*"\
       --select-1 --exit-0)
     [ -n "$file" ] && bat "$file"
-    fi
 }
 
 # global file search -> vim
