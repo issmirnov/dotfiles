@@ -31,15 +31,15 @@ function zz() {
   dir="$(fasd -Rdl "$1" | fzf --query="$1" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
 }
 
-# does global file search, do zz -> ccat
+# does global file search, do zz -> bat
 function show() {
     local file
     if [[ -f "$1" ]]; then
-        ccat --bg=dark "$1"
+        bat "$1"
     else
         file=$(fzf --query="$*"\
           --select-1 --exit-0)
-        [ -n "$file" ] && ccat --bg=dark "$file"
+        [ -n "$file" ] && bat "$file"
     fi
 }
 
