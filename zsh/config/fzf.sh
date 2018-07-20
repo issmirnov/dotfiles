@@ -35,7 +35,7 @@ function zz() {
 function show() {
     local file
     if [[ -f "$1" ]]; then
-        ccat --bg=dark "$1"
+        bat"$1"
     else
         file=$(locate / | fzf --query="$*" --select-1 --exit-0)
         [ -n "$file" ] && bat "$file"
@@ -46,7 +46,7 @@ function show() {
 function showl() {
     local file
     if [[ -f "$1" ]]; then
-        ccat --bg=dark "$1"
+        bat "$1"
     else
         file=$(fzf --query="$*"\
           --select-1 --exit-0)
