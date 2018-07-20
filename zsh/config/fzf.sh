@@ -31,11 +31,22 @@ function zz() {
   dir="$(fasd -Rdl "$1" | fzf --query="$1" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
 }
 
-# does global file search, do zz -> bat
+# does global file search, shows selected file in bat
 function show() {
     local file
     if [[ -f "$1" ]]; then
-        bat "$1"
+        ccat --bg=dark "$1"
+    else
+        file=$(locate / | fzf --query="$*" --select-1 --exit-0)
+        [ -n "$file" ] && bat "$file"
+    fi
+}
+
+# does local file search, from current directory, displays file in bat
+function showl() {
+    local file
+    if [[ -f "$1" ]]; then
+        ccat --bg=dark "$1"
     else
         file=$(fzf --query="$*"\
           --select-1 --exit-0)
@@ -43,19 +54,20 @@ function show() {
     fi
 }
 
-# Pick file to edit
+# global file search -> vim
 function vf() {
+  local file;
+  file="$(locate / | fzf --query="$*" --select-1 --exit-0)";  
+  [ -n "$file" ] && vim "$file";
+}
+
+# Pick file to edit
+function vfl() {
   local file
   file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0)
   [ -n "$file" ] && vim "$file"
 }
 
-# global file search -> vim
-function vfg() {
-  local file;
-  file="$(fasd -Ral "$*" | fzf --query="$*" --select-1 --exit-0)";  
-  [ -n "$file" ] && vim "$file";
-}
 
 # Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
 # fa <dir> - Search dirs and cd to them
