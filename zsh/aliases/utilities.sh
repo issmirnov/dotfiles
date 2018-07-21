@@ -85,3 +85,5 @@ highlight() {
     shift
     sed -u s"/$*/$fg_c\0$c_rs/g"
 }
+
+alias batp='bat --style=plain'
