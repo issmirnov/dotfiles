@@ -1,0 +1,24 @@
+# Start vm 
+vagrant up
+
+# Connect to started instance
+vagrant ssh
+
+# Shutdown vm
+vagrant halt
+
+# Hibernate vm
+vagrant suspend
+
+# Set vm to initial state by cleaning all data
+vagrant destroy
+
+# Restart vm with new provision script
+vagrant reload --provision
+
+# List running vm's
+vboxmanage list runningvms
+
+# Delete VM (includes backing files)
+vboxmanage unregistervm YourVMName --delete
+vagrant destroy VMName
