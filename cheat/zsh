@@ -1,0 +1,24 @@
+# Dot glob
+cp foo/*(D) .
+
+# Show only directories
+print -l **/*(/)
+
+# Show only regular files
+print -l **/*(.)
+
+# Show files greater than 3 KB
+print -l **/*(Lk+3)
+
+# Show files modified in the last hour
+print -l **/*(mh-1)
+
+# Sort files from most to least recently modified and show the last 3
+print -l **/*(om[1,3])
+
+# Show every directory that contain directory `.git`
+print -l **/*(e:'[[ -d $REPLY/.git ]]':)
+
+# Join expansion flag, opposite of the split flag.
+array=(a b c d)
+echo ${(j.-.)array} # a-b-c-d
