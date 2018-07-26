@@ -51,7 +51,7 @@ source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.z
 
 ##################################################
 # Load custom config last, so it takes priority ##
-find ~/.dotfiles/zsh -type f -name '*.sh' -print0 |
+find ~/.dotfiles/zsh -type f -name '*.sh' -print0 | sort -z |
 while IFS= read -r -d $'\0' line; do
 	source "$line"
 done
