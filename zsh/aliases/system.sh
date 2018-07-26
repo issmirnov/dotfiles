@@ -58,8 +58,11 @@ alias fuck='eval $(thefuck $(fc -ln -1 | tail -n 1)); fc -R'
 alias fixgpg='sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com'
 
 # tar commands
-alias tarx='tar xvzf'
-alias tarc='tar cvzf'
+compress(){
+  tar cvzf $1.tgz $1
+}
+# note: "extract" is provided by oh-my-zsh/plugins/extract
+
 
 # triggering urgent bell
 alias urgent='echo -e "'"\a"'"'
