@@ -1,0 +1,4 @@
+for s in $snippets; do
+    cat $ROOT/snippets/$s >> $ROOT/config
+done
+

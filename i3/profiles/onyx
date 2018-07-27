@@ -1,4 +1,2 @@
-roles=(laptop cinnamon onyx)
-for role in $roles; do
-    cat $ROOT/roles/$role >> $ROOT/config
-done
+snippets=(laptop cinnamon onyx)
+source $ROOT/profiles/_builder
