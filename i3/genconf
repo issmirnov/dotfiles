@@ -7,10 +7,10 @@ NAME=$(echo $HOST | cut -f1 -d".")
 mv $ROOT/config /tmp/i3-config.bak
 
 # generate new config
-cp $ROOT/roles/base $ROOT/config
+cp $ROOT/snippets/base $ROOT/config
 
-if [ -f $ROOT/generators/$NAME  ]; then
+if [ -f $ROOT/profiles/$NAME  ]; then
     echo "Running $NAME config generator"
-    source $ROOT/generators/$NAME
+    source $ROOT/profiles/$NAME
 fi
 
