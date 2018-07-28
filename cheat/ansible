@@ -10,3 +10,7 @@ ansible-galaxy install -r requirements.yml
 
 # Init new role
 ansible-galaxy init role_name
+
+# Pull variables from setup module
+ansible localhost -m setup | sed 's@localhost | SUCCESS => {@{@g' | jq '.ansible_facts.ansible_default_ipv4'
+
