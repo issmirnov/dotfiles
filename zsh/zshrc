@@ -28,10 +28,13 @@ setopt NOCLOBBER
 # Evaluate prompt each time it is shown. Allows embedding commands.
 setopt PROMPT_SUBST
 
-# Uncomment following line if you want to  shown in the command execution time stamp
-# in the history command output. The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|
-# yyyy-mm-dd
+# Show command execution time stamp in history.
+# The optional three formats: "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
 HIST_STAMPS="yyyy-mm-dd"
+
+# long date format in ls(1)
+# https://www.gnu.org/software/coreutils/manual/html_node/Formatting-file-timestamps.html
+export TIME_STYLE=long-iso
 
 ######################
 ## oh-my-zsh config ##
