@@ -1,6 +1,5 @@
 # Setup fzf
 # ---------
-export FZF_DEFAULT_OPTS='--exact' # prefer exact matches
 
 # Set install dir
 if [[ $OSTYPE == 'linux-gnu' ]]; then
@@ -11,6 +10,14 @@ else
   # FZF not available
   return 0
 fi
+
+# use spectrum_ls to list all ansi colors
+# https://github.com/junegunn/fzf/wiki/Color-schemes
+export FZF_DEFAULT_OPTS='
+  --exact
+  --color fg:-1,bg:-1,hl:230,fg+:193,bg+:233,hl+:231
+  --color info:150,prompt:110,spinner:150,pointer:167,marker:174 
+'
 
 if command -v ag > /dev/null; then
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
