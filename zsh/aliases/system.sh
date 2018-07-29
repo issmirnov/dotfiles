@@ -106,6 +106,11 @@ function d..(){
   cd ~/.dotfiles
 }
 
+# jump to dotfiles/zsh
+function dz..(){
+  cd ~/.dotfiles/zsh
+}
+
 # edit SSH config
 function essh(){
   vim ~/.ssh/config
