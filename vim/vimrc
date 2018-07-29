@@ -46,6 +46,9 @@ Plug 'https://github.com/tpope/vim-eunuch'
 " Awesome navigation
 Plug 'https://github.com/justinmk/vim-sneak'
 
+" Open files from grep results
+Plug 'https://github.com/wsdjeg/vim-fetch'
+
 call plug#end()
 
 "" Basics

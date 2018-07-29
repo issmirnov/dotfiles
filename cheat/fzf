@@ -4,6 +4,7 @@ fah # quick jump to directory, includes hidden folders
 fl # cd into the directory of the selected file (follow)
 fenv # search and print env variables
 cd.. # climb directory tree interactively
+vaf $query # search for query with ag, pipe to fzf then open in vim
 
 # global file access
 show hosts # does global file search, then pipes to bat
@@ -12,3 +13,5 @@ vf hosts   # global file search piped into vim
 # local file access - search root is current directory
 showl project_file # search . and pipe to bat
 vfl project_file   # search . and pipe to vim
+
+

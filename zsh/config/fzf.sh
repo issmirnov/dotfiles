@@ -67,6 +67,17 @@ function vfl() {
   [ -n "$file" ] && vim "$file"
 }
 
+# Search through all files with ag, then open file at location
+# Requires Vim to have https://github.com/wsdjeg/vim-fetch
+function vaf(){
+  if [ !  "$*" ]; then
+    echo "Usage: $0 search_term"
+    exit 1
+  fi
+  local file
+  file=$(ag $* | fzf --select-1 | cut -d':' -f -2)
+  [ -n "$file" ] && vim "$file"
+}
 
 # Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
 # fa <dir> - Search dirs and cd to them
