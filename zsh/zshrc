@@ -7,6 +7,10 @@ bindkey -v
 # Save each command's timestamp and duration.
 setopt EXTENDED_HISTORY
 
+# Expand '=command' as path of command
+# e.g.) '=ls' -> '/bin/ls'
+setopt EQUALS
+
 # Incrementally append history instead of waiting for exit to write out.
 setopt INC_APPEND_HISTORY
 
