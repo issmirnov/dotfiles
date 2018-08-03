@@ -1,0 +1,23 @@
+# Normal
+regexp=[aAcCdDeijsStTu]
+colours=cyan
+-
+# User Namespace
+regexp=[iadA]
+colours=bright_green
+-
+# Read Only
+regexp=[EhINXZ]
+colours=bold red
+-
+# Separators
+regexp=[\-]
+colours=dark
+-
+# Error
+regexp=(lsattr:) \w.*
+colours=default, bold red
+-
+# Filename
+regexp=(\/[-\w\d. ]+)+$
+colours=yellow,bold
