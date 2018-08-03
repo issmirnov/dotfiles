@@ -42,4 +42,6 @@ alias upgrade_casks='brew cask outdated | xargs brew cask reinstall'
 # updatedb
 alias updatedb='sudo /usr/libexec/locate.updatedb'
 
+alias google-chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
 fi
+
