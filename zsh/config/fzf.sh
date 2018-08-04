@@ -33,6 +33,7 @@ fi
 source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
 
 # better zz from fasd
+unalias zz
 function zz() {
   local dir
   dir="$(fasd -Rdl "$1" | fzf --query="$1" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
