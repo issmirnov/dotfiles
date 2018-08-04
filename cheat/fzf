@@ -14,4 +14,7 @@ vf hosts   # global file search piped into vim
 showl project_file # search . and pipe to bat
 vfl project_file   # search . and pipe to vim
 
-
+# shortcutsj
+- Alt  + C: CD into directory
+- Ctrl + R: history search and paste
+- Ctrl + T: file picker.
