@@ -258,7 +258,7 @@ exec xbindkeys
 # set Microsoft Curve 4000 "Menu" key to "Win" for Mod4
 exec --no-startup-id xmodmap -e 'keycode 135 = Super_R' && xset -r 135
 # Supercharge key repeat rate. http://xahlee.info/linux/linux_set_key_repeat_rate.html
-xset r rate 280 40
+exec xset r rate 280 40
 
 # music
 for_window [title="^cmus$"] move window to scratchpad
