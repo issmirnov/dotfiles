@@ -87,10 +87,10 @@ color.summary.background = on white
 # Command: calendar
 color.calendar.due        = on bright green
 color.calendar.due.today  = blue on bright yellow
-color.calendar.holiday    = on yellow
+color.calendar.holiday    = on bright blue
 color.calendar.overdue    = on bright red
-color.calendar.today      = blue
-color.calendar.weekend    = on white
+color.calendar.today      = bright green
+color.calendar.weekend    = on black
 color.calendar.weeknumber = blue
 
 # Command: sync

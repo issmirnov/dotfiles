@@ -1,11 +1,15 @@
+# See reference at: https://www.systutorials.com/docs/linux/man/5-taskrc/
+
 # default behaviours
 default.command         = ready
 search.case.sensitive   = no
 
 ## urgency overrides
-urgency.user.tag.later.coefficient=-6.0
 urgency.user.tag.quick.coefficient=7.0
-# urgency.user.tag.today.coefficient=10.0
+urgency.user.tag.today.coefficient=10.0
+urgency.user.tag.urgent.coefficient=3
+urgency.user.tag.later.coefficient=-6.0
+urgency.user.tag.someday.coefficient=-9.0
 
 
 ## Customize "next" report to show brainpower and time estimates.
@@ -56,3 +60,7 @@ report.goals.filter         = project:goals status.not:completed status.not:dele
 report.goals.columns        = id,brainpower,estimate,scheduled,project,tags,description 
 report.goals.labels         = ID,Br,Est,Sched,Project,Tags,Description 
 report.goals.sort           = project-
+
+## Calendar tweaks
+weekstart=Monday # test with: task rc.weekstart:Monday calendar
+displayweeknumber=no
