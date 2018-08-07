@@ -87,3 +87,4 @@ highlight() {
 }
 
 alias batp='bat --style=plain'
+alias vimrc='vim ~/.vimrc'

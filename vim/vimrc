@@ -12,6 +12,9 @@ Plug 'itchyny/lightline.vim'
 " comments
 Plug 'tpope/vim-commentary'
 
+" better tabs (try ":Tab /=" in a config file)
+Plug 'godlygeek/tabular'
+
 " additional file types
 "Plug 'fatih/vim-nginx'
 
