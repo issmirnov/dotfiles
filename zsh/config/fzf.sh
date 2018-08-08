@@ -96,8 +96,17 @@ fah() {
   dir=$(find ${1:-.} -type d 2> /dev/null | fzf +m) && cd "$dir"
 }
 
-# cd into the directory of the selected file
+# global:  cd into the directory of the selected file
+# similar to 'zz', but this one does a full global file search
 fl() {
+  local file
+  local dir
+  file=$(locate / | fzf +m -q "$1") && dir=$(dirname "$file") && cd "$dir"
+  ls
+}
+
+# cd into the directory of the selected file
+fll() {
   local file
   local dir
   file=$(fzf +m -q "$1") && dir=$(dirname "$file") && cd "$dir"

@@ -9,10 +9,12 @@ vaf $query # search for query with ag, pipe to fzf then open in vim
 # global file access
 show hosts # does global file search, then pipes to bat
 vf hosts   # global file search piped into vim
+fl         # global file search, pick and jump to directory.
 
 # local file access - search root is current directory
 showl project_file # search . and pipe to bat
 vfl project_file   # search . and pipe to vim
+fll file_name # pick a file and jump to it's directory
 
 # shortcutsj
 - Alt  + C: CD into directory
