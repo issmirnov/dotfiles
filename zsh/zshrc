@@ -4,6 +4,8 @@
 # Set vim keybinds first, so that all plugins know about it.
 bindkey -v
 
+# EDITOR is vim.
+export EDITOR=vim
 # Save each command's timestamp and duration.
 setopt EXTENDED_HISTORY
 
