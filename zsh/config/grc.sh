@@ -2,7 +2,7 @@
 # Uses config from ~/.dotfiles/grc
 _grc_injector(){
     if (( ! ${+DISABLE_GRC} )); then
-	for f in $(ls ~/.dotfiles/grc); do
+	for f in $(ls ~/.dotfiles/grc/conf*); do
 	    local prog=${f:e}
 	    if [[ "$BUFFER" =~ "(^|[/\w\.]+/)$prog\s?" && ! "$BUFFER" =~ "grcat conf*" ]]; then
 		BUFFER=$BUFFER" | grcat conf.$prog"
