@@ -1,6 +1,12 @@
 # Start vm 
 vagrant up
 
+# start vm's in parallel (2 at a time)
+# https://stackoverflow.com/questions/45823630/vagrant-multi-machine-parallel-start
+grep config.vm.define Vagrantfile | awk '{print $4}' | tr -d "|" | xargs -P2 -I {} vagrant up {}
+# for non virtualbox providers
+vagrant up --parallel
+
 # Connect to started instance
 vagrant ssh
 
