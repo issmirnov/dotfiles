@@ -21,7 +21,7 @@ function mdc() {
     cd $1
 }
 ## some OS dependent aliases ##
-if [[ $OSTYPE == 'linux-gnu' ]]; then
+if [[ $OSTYPE == linux-* ]]; then
 	alias update='sudo apt update'
 	alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
 	alias ins='sudo apt install'
