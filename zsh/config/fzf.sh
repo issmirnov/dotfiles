@@ -2,7 +2,7 @@
 # ---------
 
 # Set install dir
-if [[ $OSTYPE == 'linux-*' ]]; then
+if [[ $OSTYPE == linux-* ]]; then
   export FZF_PREFIX=/opt
 elif [[ $OSTYPE == darwin* ]]; then
   export FZF_PREFIX=/usr/local/opt
