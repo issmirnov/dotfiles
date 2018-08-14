@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Handy ubuntu aliases
-if [[ $OSTYPE == 'linux-gnu' ]]; then
+if [[ $OSTYPE == linux-* ]]; then
 
 # sound
 #alias maxvol='amixer -D pulse sset Master '"'"'100%='"'"''
