@@ -88,3 +88,7 @@ highlight() {
 
 alias batp='bat --style=plain'
 alias vimrc='vim ~/.vimrc'
+
+# Easily view config files. Removes all comments and displays actual live settings
+# Usage: "cat /file/with/hashtag/comments "
+alias -g prp='| grep -v "#" | sed "/^$/d"'
