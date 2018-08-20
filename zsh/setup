@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # setup script, called by dotbot
 
@@ -10,5 +10,5 @@ if [ $(basename $SHELL) == "zsh" ]; then
     # already zsh
     echo 'shell already zsh, no changes needed'
 else
-    chsh -s /bin/zsh
+    chsh -s "$(which zsh)"
 fi

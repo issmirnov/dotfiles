@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 ROOT="$HOME/.dotfiles/i3"
 NAME=$(echo $HOST | cut -f1 -d".")

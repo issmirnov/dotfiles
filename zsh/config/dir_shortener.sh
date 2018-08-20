@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 # This file is the second component of the directory injection mechanism created in
 # https://github.com/issmirnov/oh-my-zsh/commit/48f3b0e1a2f2f02764504ab3157f2e643077936c
 # The functions get dynamically loaded into the prompt and allow transformations such as
