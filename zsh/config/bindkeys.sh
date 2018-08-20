@@ -33,6 +33,7 @@ function _fzf-cd-insert {
 }
 zle -N _fzf-cd-insert
 
+zle -N fzf-history-widget
 bindkey -M vicmd '/' fzf-history-widget
 bindkey -M vicmd -r '\-'
 bindkey -M vicmd '\-' _fzf-cd-insert

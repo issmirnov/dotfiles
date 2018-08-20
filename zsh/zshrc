@@ -69,13 +69,7 @@ done
 autoload -U compinit && compinit
 
 # As per instructions, load this last so that it wraps ZLE widgets.
-# NOTE: we have to set the configuration here, as it appears to be reset to default
-# when sourcing the script
 source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-# see: # see https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/docs/highlighters.md
-export ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern cursor)
-ZSH_HIGHLIGHT_PATTERNS+=('rm -rf *' 'fg=white,bold,bg=red')
-
 
 # Load local config if present, for final overrides.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
