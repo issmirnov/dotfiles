@@ -1,3 +1,5 @@
+# vim:ft=zsh
+#
 # Inspiration: https://sgeb.io/posts/2014/04/zsh-zle-custom-widgets/
 # Resources:
 #  - http://zsh.sourceforge.net/Doc/Release/Zsh-Line-Editor.html#Zle-Builtins

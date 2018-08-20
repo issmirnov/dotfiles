@@ -1,3 +1,4 @@
+# vim:ft=zsh
 # pko <content> : copy <content> to the clipboard
 pko() {
     echo "$*" | piknik -copy

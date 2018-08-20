@@ -1,6 +1,7 @@
 # ZSH supports "suffix aliases", which allow executing commands based on file names. Incredible.
 # Simply enter a file name as a command and magic happens.
 # http://zsh.sourceforge.net/Intro/intro_8.html
+# vim:ft=zsh
 
 # cleanup aliases from oh-my-zsh/common-aliases
 unalias -s pdf

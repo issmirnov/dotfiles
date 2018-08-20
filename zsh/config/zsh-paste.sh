@@ -1,4 +1,5 @@
 # Utilities and Configs that help with copy pasting text
+# vim:ft=zsh
 
 # Smart URLs: https://github.com/tai-allman/prezto/modules/environment/init.zsh
 # This logic comes from an old version of zim. Essentially, bracketed-paste was

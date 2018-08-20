@@ -1,3 +1,4 @@
+# vim:ft=zsh
 # vim: set tabstop=4:softtabstop=4:shiftwidth=4:expandtab
 if [[ $OSTYPE == darwin* ]]; then
 

@@ -1,3 +1,5 @@
+# vim:ft=zsh
+
 export ZSH_AUTOSUGGEST_STRATEGY=match_prev_cmd
 
 # async, for speed

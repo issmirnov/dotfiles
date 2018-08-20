@@ -1,5 +1,6 @@
 # Grc plugin
 # Uses config from ~/.dotfiles/grc
+# vim:ft=zsh
 _grc_injector(){
     if (( ! ${+DISABLE_GRC} )); then
 	for f in $(ls ~/.dotfiles/grc/conf*); do

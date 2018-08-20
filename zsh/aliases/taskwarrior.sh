@@ -1,4 +1,5 @@
 ### Task Warrior Utils ###
+# vim:ft=zsh
 
 # inbox
 alias in='task add +in'

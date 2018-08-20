@@ -1,3 +1,4 @@
+filetype off
 filetype plugin indent on    " required
 
 " The following block sets up vim-plug. Check github for README.

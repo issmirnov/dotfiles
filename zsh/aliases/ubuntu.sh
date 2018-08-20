@@ -1,4 +1,5 @@
 #!/usr/bin/env zsh
+# vim:ft=zsh
 # Handy ubuntu aliases
 if [[ $OSTYPE == linux-* ]]; then
 

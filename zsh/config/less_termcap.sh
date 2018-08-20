@@ -1,4 +1,5 @@
 # Less Colors for Man Pages
+# vim:ft=zsh
 # https://unix.stackexchange.com/questions/108699/documentation-on-less-termcap-variables/108840#108840
 # https://linuxtidbits.wordpress.com/2009/03/23/less-colors-for-man-pages/
 export LESS_TERMCAP_mb=$'\e[01;31m'       # begin blinking

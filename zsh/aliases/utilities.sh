@@ -1,3 +1,4 @@
+# vim:ft=zsh
 # Fix potentially broken commands
 command -v md5sum > /dev/null || alias md5sum="md5"
 

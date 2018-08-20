@@ -1,3 +1,5 @@
+# vim:ft=zsh
+
 # Let aliases be sudo'ed
 alias sudo="sudo "
 

@@ -1,4 +1,5 @@
 ## Define all paths here. This simplifies hunting for random path clobbering.
+# vim:ft=zsh
 
 DOT_BIN="$HOME/.dotfiles/bin"
 USER_BIN="$HOME/bin"
