@@ -34,7 +34,7 @@ function dir_tail(){
     done
 
     # show full path by default
-    if [[ ! $found ]];then
+    if [[ ! "$found" ]]; then
         echo %~
     fi
 }
