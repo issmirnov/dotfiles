@@ -60,7 +60,7 @@ bindkey -v
 
 ##################################################
 # Load custom config last, so it takes priority ##
-find ~/.dotfiles/zsh -type f -name '*.sh' -print0 | sort -z |
+find ~/.dotfiles/zsh/config ~/.dotfiles/zsh/aliases -type f -name '*.zsh' -print0 | sort -z |
 while IFS= read -r -d $'\0' line; do
 	source "$line"
 done
