@@ -19,6 +19,9 @@ vagrant suspend
 # Set vm to initial state by cleaning all data
 vagrant destroy
 
+# destroy all VM's on the system
+for i in `vagrant global-status | grep virtualbox | awk '{ print $1 }'` ; do vagrant destroy -f $i ; done
+
 # Restart vm with new provision script
 vagrant reload --provision
 
