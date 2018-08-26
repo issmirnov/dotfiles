@@ -4,3 +4,5 @@ lsblk
 # Get partition ID's
 blkid
 
+# list mounts
+findmnt
