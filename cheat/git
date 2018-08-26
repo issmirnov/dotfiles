@@ -1,6 +1,9 @@
 # To edit previous commit message
 git commit --amend
 
+# To stage last commit
+git reset HEAD~ 
+
 # To remove untracked files
 git clean -f -d
 
