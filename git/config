@@ -20,6 +20,7 @@
     whitespace = trailing-space,space-before-tab
     excludesfile = ~/.dotfiles/git/ignore
     editor = vim
+    pager = diff-so-fancy | less --tabs=4 -RFX
 
 #------------------------------------------------------------#
 # Less common config, will likely remain the same for years.
