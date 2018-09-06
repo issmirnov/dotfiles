@@ -3,7 +3,7 @@
 
 # define proper variable types, otherwise they are reset in the plugin init code.
 typeset -ga ZSH_HIGHLIGHT_HIGHLIGHTERS
-export ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern cursor)
+export ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern)
 
 # add rules for highlights
 typeset -gA ZSH_HIGHLIGHT_PATTERNS
