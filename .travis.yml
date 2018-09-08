@@ -1,0 +1,10 @@
+---
+language: generic
+addons:
+  apt:
+    packages:
+      - git
+      - zsh
+
+script:
+  - cd zsh && if [[ $(grep -r '#!/bin/zsh' .) ]]; then echo "Found malformed shebangs"; exit 1;fi
