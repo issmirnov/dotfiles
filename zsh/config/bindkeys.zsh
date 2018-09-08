@@ -124,8 +124,12 @@ bindkey -M vicmd -r 'j'
 bindkey -M vicmd 'j' vi-beginning-of-line
 
 
-bindkey -M viins '^K' autosuggest-accept
 
 alias zlasearch='zle -la G '
 alias vilist='bindkey -M vicmd'
+
+# autosuggestions
+bindkey -M viins '^K' autosuggest-accept
+bindkey -r "^G"
+bindkey -M viins "^G" autosuggest-clear
 
