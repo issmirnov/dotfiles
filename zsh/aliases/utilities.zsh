@@ -93,3 +93,21 @@ alias vimrc='vim ~/.vimrc'
 # Easily view config files. Removes all comments and displays actual live settings
 # Usage: "cat /file/with/hashtag/comments "
 alias -g prp='| grep -v "#" | sed "/^$/d"'
+
+
+# Wrapper for cp, will mkdir if target doesn't exist. Useful when copying deep paths.
+function cpd(){
+    src=$1
+    dest=$2
+    case "$dest" in
+    */)
+        ndir=$dest
+        ;;
+    *)
+        ndir=$(dirname $dest);
+        ;;
+    esac
+    # try to make directory
+    mkdir -p $ndir
+    cp $src $dest
+}
