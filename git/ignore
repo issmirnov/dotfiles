@@ -15,6 +15,8 @@
 # Other things
 .bundle
 .vagrant
-.idea
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
 node_modules/
 bower_components/
