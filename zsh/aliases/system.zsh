@@ -1,3 +1,4 @@
+#!/usr/bin/env zsh
 # vim:ft=zsh
 
 # Let aliases be sudo'ed
@@ -11,7 +12,7 @@ else
 fi
 
 # Copy output of last command to clipboard
-alias cl="fc -e - | pbcopy"
+alias copylast="fc -e - | pbcopy"
 
 # clear shortcuts
 alias cds="cd && clear && ls"
@@ -24,15 +25,17 @@ function mdc() {
 }
 ## some OS dependent aliases ##
 if [[ $OSTYPE == linux-* ]]; then
-	alias update='sudo apt update'
-	alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
-	alias ins='sudo apt install'
-	alias rem='sudo apt remove'
-	alias open='xdg-open'
+    alias update='sudo apt update'
+    alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
+    alias ins='sudo apt install'
+    alias rem='sudo apt remove'
+    alias open='xdg-open'
     alias ll='ls -lha --color'
     alias cpuhogs='ps -Ao pcpu,pmem,comm,comm,pid --sort=-pcpu | head -n 6'
+    alias copy='xclip -sel clip'
+    alias paste='xclip -sel clip -o'
 elif [[ $OSTYPE == darwin* ]]; then
-	alias update='brew update'
+    alias update='brew update'
     alias ins="osx_ins"
     alias ll='ls -lha'
     function upgrade() {
@@ -46,6 +49,8 @@ elif [[ $OSTYPE == darwin* ]]; then
         brew cleanup
     }
     alias cpuhogs='ps -Aro pcpu,pmem,comm,comm,pid  | head -n 6'
+    alias copy='pbcopy'
+    alias paste='pbpaste'
 fi
 
 

@@ -10,10 +10,6 @@ if [[ $OSTYPE == linux-* ]]; then
 # print stats about partitons, excluding tmpfs mounts
 alias dfh='df -h -x tmpfs -x devtmpfs | column -t'
 
-# clipboard manipulation
-alias cpb='xclip -sel clip'
-alias cpbo='xclip -sel clip -o'
-
 # systemd shortcuts
 alias ss='sudo systemctl status' # note: conflicts with /bin/ss
 alias sr='sudo systemctl restart'
