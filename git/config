@@ -37,7 +37,11 @@
     d = difftool
     reword = commit --amend
     fuck = reset --hard
-     amend = commit --amend --no-edit
+    amend = commit --amend --no-edit
+    wip = !git add --all && git commit -am 'wip'
+    popwip = !git log -1 --pretty=%B | grep -q '^wip$' && git reset HEAD^ || echo 'HEAD is not a wip commit'
+
+
     
 
 [branch]
