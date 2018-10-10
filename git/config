@@ -46,6 +46,7 @@
 
 [branch]
 	autosetupmerge = true
+	sort = authordate
 
 [browser "google-chrome-stable"]
 	cmd = "/usr/bin/google-chrome-stable"
