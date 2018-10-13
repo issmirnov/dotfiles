@@ -11,6 +11,8 @@ alias agif='agi --force'
 af() {
   ansible localhost -m setup | sed 's@localhost | SUCCESS => {@{@g' | jq ".ansible_facts.$1"
 }
+# profile playbook
+alias pap='ANSIBLE_CALLBACK_WHITELIST="profile_roles, profile_tasks, timer" ap'
 
 # vagrant
 alias vup='vagrant up'
