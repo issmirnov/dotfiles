@@ -8,7 +8,7 @@ if [[ $OSTYPE == linux-* ]]; then
 #alias minvol='amixer -D pulse sset Master '"'"'0%='"'"''
 
 # print stats about partitons, excluding tmpfs mounts
-alias dfh='df -h -x tmpfs -x devtmpfs | column -t'
+alias dfh='df -h -x tmpfs -x devtmpfs -x overlay | column -t'
 
 # systemd shortcuts
 alias ss='sudo systemctl status' # note: conflicts with /bin/ss
