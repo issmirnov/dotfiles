@@ -33,3 +33,12 @@ docker images
 
 # update all docker images
 docker images |grep -v REPOSITORY|awk '{print $1}'|xargs -L1 docker pull
+
+# stop all running containers
+docker stop $(docker ps -aq)
+
+# remove all containers
+docker rm $(docker ps -aq)
+
+# remove all images
+docker rmi $(docker images -q)

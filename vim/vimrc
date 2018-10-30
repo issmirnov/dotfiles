@@ -22,7 +22,7 @@ Plug 'godlygeek/tabular'
 " Expand region - press v repeatedly
 Plug 'terryma/vim-expand-region'
 
-" sample demo commit
+Plug 'w0rp/ale'
 
 " start screen plugin.
 Plug 'https://github.com/mhinz/vim-startify'
@@ -40,7 +40,7 @@ Plug 'nsf/gocode', { 'rtp': 'vim', 'do': '~/.vim/plugged/gocode/vim/symlink.sh' 
 
 " general syntax
 Plug 'https://github.com/sheerun/vim-polyglot'
-Plug 'https://github.com/tpope/vim-sleuth' " proper tabstops 
+Plug 'https://github.com/tpope/vim-sleuth' " proper tabstops
 
 " git helpers
 Plug 'https://github.com/jreybert/vimagit',                       {'branch': 'next', 'on': ['Magit', 'MagitOnly']}
@@ -67,9 +67,7 @@ set showmatch                   " automatically show matching brackets. works li
 set visualbell                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set ruler                       " show the cursor position all the time
 set backspace=indent,eol,start  " make that backspace key work the way it should
-"set background=dark             " Use colours that work well on a dark background (Console is usually black)
-"set showmode                    " show the current mode
-"set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
+set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 
 
 "" Leader
@@ -213,10 +211,40 @@ endfunction
 let &t_SI .= WrapForTmux("\<Esc>[?2004h")
 let &t_EI .= WrapForTmux("\<Esc>[?2004l")
 
+
+" Fix copy-paste
 function! XTermPasteBegin()
   set pastetoggle=<Esc>[201~
   set paste
   return ""
 endfunction
-
 inoremap <special> <expr> <Esc>[200~ XTermPasteBegin()
+
+" Return to last edit position when opening file
+au BufReadPost * if line("'\"") > 1 && line("'\"    ") <= line("$") | exe "normal! g'\"" | endif
+
+" Persistent undo
+try
+  set undodir=~/.vim/temp_dirs/undodir
+  set undofile
+catch
+endtry
+
+" stop from automatically yanking on visual select (?)
+set clipboard-=autoselect
+
+" vim-sneak 's' repeats search
+let g:sneak#s_next = 1
+" case-insensitive vim-sneak
+let g:sneak#use_ic_scs = 1
+
+" AlE config
+" errors on airline
+let g:airline#extensions#ale#enabled = 1
+" fixers
+let g:ale_fixers = {
+\   '*': ['remove_trailing_lines', 'trim_whitespace'],
+\   'javascript': ['eslint'],
+\}
+" fix files when you save them.
+let g:ale_fix_on_save = 1
