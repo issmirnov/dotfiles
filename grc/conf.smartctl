@@ -1,0 +1,23 @@
+# header
+regexp=START OF READ SMART DATA SECTION
+colours=bold white
+======
+# status
+regexp=PASSED
+colours=bold green
+=====
+# status
+regexp=No Errors Logged
+colours=bold green
+=====
+# test result
+regexp=Completed without error
+colours=green
+=====
+# clean up footers
+regexp=smartctl \d\.\d(.+?)
+skip=yes
+=====
+# clean up footers
+regexp=Copyright \(C\)(.+?)
+skip=yes
