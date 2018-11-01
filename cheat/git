@@ -65,3 +65,9 @@ git merge -X theirs branchB
 
 # to squash the last two commits into one
 git rebase -i HEAD~2
+
+# To save a patch
+git diff > name.patch
+
+# apply patch
+git apply name.patch
