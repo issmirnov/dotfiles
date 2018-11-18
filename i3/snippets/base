@@ -8,7 +8,7 @@ set $mod Mod4
 ############ Look and Feel  ################################
 # Font for window titles. Will also be used by the bar unless a different font
 #font pango: Ubuntu Mono 10
-font pango:DejaVu Sans Mono 9
+font pango: Source Code Pro 10
 
 ### custom colors
 set $gold    #ffa000
@@ -180,13 +180,12 @@ bindsym $mod+Shift+e mode "$mode_system"
 
 # Start i3bar to display a workspace bar
 bar {
-    #status_command   i3status
     status_command    SCRIPT_DIR=~/.dotfiles/i3/blocklets i3blocks
     position          top
-    mode              hide
+    mode              dock
     workspace_buttons yes
 
-    font pango: Ubuntu Mono 12
+    font pango: Source Code Pro 12
 
     colors {
         background #333333
