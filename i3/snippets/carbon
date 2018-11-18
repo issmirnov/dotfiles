@@ -12,3 +12,9 @@ exec glipper
 # update mouse speed
 # exec "xset mouse 13/10 0"
 exec 'xset m 1/2 8'
+
+## feh override
+exec --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper"
+
+# redshift
+exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3700 -r
