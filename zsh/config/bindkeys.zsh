@@ -129,9 +129,7 @@ alias zlasearch='zle -la G '
 alias vilist='bindkey -M vicmd'
 
 # autosuggestions
-zle -N autosuggest-accept
 bindkey -M viins '^K' autosuggest-accept
-zle -N autosuggest-clear
 bindkey -r "^G"
 bindkey -M viins "^G" autosuggest-clear
 
