@@ -77,8 +77,6 @@ let g:mapleader="\<Space>"
 " :W saves the file with sudo.  must come before the <leader>w remap below
 command W w !sudo tee % > /dev/null
 
-" demo commmit
-"
 " quickly save files
 nnoremap <Leader>w :w<CR>
 " write and quit
