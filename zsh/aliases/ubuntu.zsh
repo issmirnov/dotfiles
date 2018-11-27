@@ -22,7 +22,7 @@ function shot(){
         sn=$1
     fi
     echo "Select screen area..."
-    maim --noopengl  -s ~/Pictures/$sn.png
+    maim --noopengl  -s ~/Pictures/$sn.png --hidecursor
     echo "Done! Saved to ~/Pictures/$sn.png"
 }
 fi
