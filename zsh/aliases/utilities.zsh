@@ -88,6 +88,7 @@ highlight() {
 }
 
 alias batp='bat --style=plain'
+alias cat='bat --style=plain --paging=never' # override cat, since bat has support for pipes if needed
 alias vimrc='vim ~/.vimrc'
 
 # Easily view config files. Removes all comments and displays actual live settings
