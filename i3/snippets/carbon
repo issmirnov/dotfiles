@@ -4,13 +4,16 @@
 set $disp1 DisplayPort-0
 set $disp2 DisplayPort-1
 set $disp3 DisplayPort-2
-
 exec xrandr --output $disp1 --right-of $disp3 --output $disp2 --right-of $disp1
+
+# fill up backgrounds
+exec feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper
+
 
 #  App Bindings ########
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 #assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
-
+assign [class="^TelegramDesktop$"] telegram
 # startup apps
 exec --no-startup-id nm-applet
 exec fluxgui
