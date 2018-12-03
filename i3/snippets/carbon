@@ -14,6 +14,7 @@ exec feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 #assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
 assign [class="^TelegramDesktop$"] telegram
+assign [class="^Standard Notes$"] notes
 # startup apps
 exec --no-startup-id nm-applet
 exec fluxgui
