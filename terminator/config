@@ -1,65 +1,63 @@
 [global_config]
-  title_hide_sizetext = True
   title_font = Source Code Pro 9
+  title_hide_sizetext = True
   title_use_system_font = False
 [keybindings]
+[layouts]
+  [[default]]
+    [[[child1]]]
+      parent = window0
+      type = Terminal
+    [[[window0]]]
+      parent = ""
+      type = Window
+  [[Square]]
+    [[[child0]]]
+      order = 0
+      parent = ""
+      position = 2961:20
+      size = 1275, 981
+      type = Window
+    [[[child1]]]
+      order = 0
+      parent = child0
+      position = 490
+      type = VPaned
+    [[[child2]]]
+      order = 0
+      parent = child1
+      position = 637
+      type = HPaned
+    [[[child5]]]
+      order = 1
+      parent = child1
+      position = 637
+      type = HPaned
+    [[[terminal3]]]
+      order = 0
+      parent = child2
+      profile = default
+      type = Terminal
+    [[[terminal4]]]
+      order = 1
+      parent = child2
+      profile = default
+      type = Terminal
+    [[[terminal6]]]
+      order = 0
+      parent = child5
+      profile = default
+      type = Terminal
+    [[[terminal7]]]
+      order = 1
+      parent = child5
+      profile = default
+      type = Terminal
+[plugins]
 [profiles]
   [[default]]
-    background_image = None
+    font = Inconsolata 12
     scrollback_infinite = True
     show_titlebar = False
     urgent_bell = True
     use_system_font = False
-    font = Inconsolata 12
-    scroll_on_output = False
-[layouts]
-  [[default]]
-    [[[child1]]]
-      type = Terminal
-      parent = window0
-    [[[window0]]]
-      type = Window
-      parent = ""
-  [[Square]]
-    [[[child0]]]
-      position = 2961:20
-      type = Window
-      order = 0
-      parent = ""
-      size = 1275, 981
-    [[[child1]]]
-      position = 490
-      type = VPaned
-      order = 0
-      parent = child0
-    [[[child2]]]
-      position = 637
-      type = HPaned
-      order = 0
-      parent = child1
-    [[[child5]]]
-      position = 637
-      type = HPaned
-      order = 1
-      parent = child1
-    [[[terminal3]]]
-      profile = default
-      type = Terminal
-      order = 0
-      parent = child2
-    [[[terminal4]]]
-      profile = default
-      type = Terminal
-      order = 1
-      parent = child2
-    [[[terminal7]]]
-      profile = default
-      type = Terminal
-      order = 1
-      parent = child5
-    [[[terminal6]]]
-      profile = default
-      type = Terminal
-      order = 0
-      parent = child5
-[plugins]
