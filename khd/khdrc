@@ -84,3 +84,4 @@ alt - space : chunkc tiling::window --toggle float
 # lock screen
 cmd - l ![Google Chrome]: ~/bin/lock
 
+cmd - h : echo ""
