@@ -77,7 +77,7 @@ function vaf(){
     exit 1
   fi
   local file
-  file=$(ag $* | fzf --select-1 | cut -d':' -f -2)
+  file=$(ag -U $* | fzf --select-1 | cut -d':' -f -2)
   [ -n "$file" ] && vim "$file"
 }
 
