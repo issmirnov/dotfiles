@@ -112,3 +112,5 @@ function cpd(){
     mkdir -p $ndir
     cp $src $dest
 }
+
+alias -g Gv='| grep -v '
