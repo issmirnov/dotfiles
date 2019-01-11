@@ -11,6 +11,7 @@
 .DS_Store?
 ._*
 .Trashes
+.AppleDouble
 
 # Other things
 .bundle
