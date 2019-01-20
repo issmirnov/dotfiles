@@ -16,3 +16,6 @@ alias pap='ANSIBLE_CALLBACK_WHITELIST="profile_roles, profile_tasks, timer" ap'
 
 # vagrant
 alias vup='vagrant up'
+
+# docker
+alias ubuntu='docker run -ti ubuntu:bionic sh'
