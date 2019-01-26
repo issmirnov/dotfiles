@@ -97,9 +97,14 @@ highlight() {
     $SED_CMD -u s"/$*/$fg_c\0$c_rs/g"
 }
 
-alias batp='bat --style=plain'
-alias cat='bat --style=plain --paging=never' # override cat, since bat has support for pipes if needed
 alias vimrc='vim ~/.vimrc'
+
+alias batp='bat --style=plain'
+
+# if 'bat' exists on system, enhance cat.
+if (exists bat);then
+  alias cat='bat --style=plain --paging=never'
+fi
 
 # Easily view config files. Removes all comments and displays actual live settings
 # Usage: "cat /file/with/hashtag/comments "
