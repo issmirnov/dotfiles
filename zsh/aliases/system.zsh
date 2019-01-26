@@ -125,6 +125,7 @@ function essh(){
 
 # checks for existence of binary
 # use in scripts like so: if (! exists "foo"); then echo "doesn't exist";fi
+# https://www.topbug.net/blog/2016/10/11/speed-test-check-the-existence-of-a-command-in-bash-and-zsh/
 function exists(){
   if [[ -z "$1" ]]; then
     echo "Usage: exists cmd_name"
