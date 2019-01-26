@@ -73,6 +73,8 @@ highlight() {
     fi
     SED_CMD=sed
 
+    # sed on OSX is messed up.
+    # https://unix.stackexchange.com/questions/13711/differences-between-sed-on-mac-osx-and-other-standard-sed
     if [[ $OSTYPE == darwin* ]];then
       if (! exists gsed); then
         echo "Missing gnu-sed on OSX, please install."
