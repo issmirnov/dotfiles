@@ -85,7 +85,7 @@ function ff () {
 }
 
 
-# ram usage counter. 
+# ram usage counter.
 # Credit: https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/functions.zsh#L480
 function ram() {
     local sum
@@ -121,4 +121,15 @@ function dz..(){
 # edit SSH config
 function essh(){
   vim ~/.ssh/config
+}
+
+# checks for existence of binary
+# use in scripts like so: if (! exists "foo"); then echo "doesn't exist";fi
+function exists(){
+  if [[ -z "$1" ]]; then
+    echo "Usage: exists cmd_name"
+    exit 1
+  fi
+  (( $+commands[$1] ))
+  return $?
 }

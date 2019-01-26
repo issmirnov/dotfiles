@@ -7,7 +7,7 @@ alias fixbrew='sudo chown -R $(whoami):admin $(brew --prefix)/*'
 # OSX install wrapper
 function osx_ins() {
     if brew cask ls --versions $1 >/dev/null 2>/dev/null; then
-        echo "Running: brew cask install $1"        
+        echo "Running: brew cask install $1"
         brew cask install $1
         return
     fi
@@ -44,5 +44,10 @@ alias upgrade_casks='brew cask outdated | xargs brew cask reinstall'
 alias updatedb='sudo /usr/libexec/locate.updatedb'
 
 alias google-chrome="/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome"
-fi
 
+# service management
+alias sr='brew services restart'
+function ss(){
+  brew services list | grep $1 | highlight green started | highlight red stopped
+}
+fi

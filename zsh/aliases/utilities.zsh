@@ -71,6 +71,16 @@ highlight() {
         echo "Usage: $0 black|red|green|yellow|blue|magenta|cyan your text here"
         return 2
     fi
+    SED_CMD=sed
+
+    if [[ $OSTYPE == darwin* ]];then
+      if (! exists gsed); then
+        echo "Missing gnu-sed on OSX, please install."
+        exit 1
+      else
+	SED_CMD=gsed
+      fi
+    fi
 
     declare -A fg_color_map
     fg_color_map[black]=30
@@ -84,7 +94,7 @@ highlight() {
     fg_c=$(echo -e "\e[1;${fg_color_map[$1]}m")
     c_rs=$'\e[0m'
     shift
-    sed -u s"/$*/$fg_c\0$c_rs/g"
+    $SED_CMD -u s"/$*/$fg_c\0$c_rs/g"
 }
 
 alias batp='bat --style=plain'
