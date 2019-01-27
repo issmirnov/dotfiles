@@ -17,7 +17,7 @@ fi
 export FZF_DEFAULT_OPTS='
   --exact
   --color fg:-1,bg:-1,hl:230,fg+:193,bg+:233,hl+:231
-  --color info:150,prompt:110,spinner:150,pointer:167,marker:174 
+  --color info:150,prompt:110,spinner:150,pointer:167,marker:174
 '
 
 if command -v ag > /dev/null; then
@@ -58,7 +58,7 @@ function showl() {
 # global file search -> vim
 function vf() {
   local file;
-  file="$(locate / | fzf --query="$*" --select-1 --exit-0)";  
+  file="$(locate / | fzf --query="$*" --select-1 --exit-0)";
   [ -n "$file" ] && vim "$file";
 }
 
@@ -102,7 +102,7 @@ fah() {
 fl() {
   local file
   local dir
-  file=$(locate / | fzf +m -q "$1") && dir=$(dirname "$file") && cd "$dir"
+  file=$(locate / | fzf +m -q "$*") && dir=$(dirname "$file") && cd "$dir"
   ls
 }
 
@@ -110,7 +110,7 @@ fl() {
 fll() {
   local file
   local dir
-  file=$(fzf +m -q "$1") && dir=$(dirname "$file") && cd "$dir"
+  file=$(fzf +m -q "$*") && dir=$(dirname "$file") && cd "$dir"
   ls
 }
 
