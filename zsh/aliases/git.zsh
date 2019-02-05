@@ -1,6 +1,8 @@
 # vim:ft=zsh
 alias g="git"
-alias glog="git log --all --decorate --oneline --graph --color=always --pretty=format:'%C(auto)%h%C(auto)%d %s %C(cyan)(%aN, %ar)'"
+alias glog="git log --decorate --oneline --graph --color=always --pretty=format:'%C(auto)%h%C(auto)%d %s %C(cyan)(%aN, %ar)'"
+unalias gloga # remove oh-my-zsh variant
+alias gloga="glog --all"
 alias gp='git push origin HEAD'
 alias gd='git diff'
 alias gc='git commit'
@@ -35,7 +37,7 @@ cloneall() {
 }
 
 # Update Git submodule to latest commit on origin
-alias gsur='git submodule update --remote --merge' 
+alias gsur='git submodule update --remote --merge'
 
 # git commit browser by Junegunn Choi
 # https://junegunn.kr/2015/03/browsing-git-commits-with-fzf
