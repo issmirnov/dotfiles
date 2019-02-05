@@ -1,6 +1,6 @@
 # vim:ft=zsh
 alias g="git"
-alias glog="git log --graph --pretty=format:'%Cred%h%Creset %an: %s - %Creset %C(yellow)%d%Creset %Cgreen(%cr)%Creset' --abbrev-commit --date=relative"
+alias glog="git log --all --decorate --oneline --graph --color=always --pretty=format:'%C(auto)%h%C(auto)%d %s %C(cyan)(%aN, %ar)'"
 alias gp='git push origin HEAD'
 alias gd='git diff'
 alias gc='git commit'
