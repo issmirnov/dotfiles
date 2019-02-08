@@ -82,7 +82,7 @@ bindsym $mod+Left focus left
 bindsym $mod+Down focus down
 bindsym $mod+Up focus up
 bindsym $mod+Right focus right
-bindsym $mod+Tab workspace back_and_forth
+bindsym $mod+Tab exec "rofi -combi-modi Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
 
 ### move focused window
 bindsym $mod+Shift+Left move left
