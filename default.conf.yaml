@@ -25,6 +25,7 @@
     ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
     ~/.dotfiles/.git/hooks/post-commit: git/hooks/post-commit
     ~/bin/tm: tmux/tmux-menu
+    ~/.config/bat: bat
 
 - shell:
   - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]

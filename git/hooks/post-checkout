@@ -27,6 +27,8 @@ check_run upgrade.sh "~/.dotfiles/upgrade.sh"
 # istall vim plugsin
 check_run vim "(printf '\n' | vim +PlugInstall +PlugUpdate +qall)"
 
+check_run "bat/syntaxes" "bat cache --build"
+
 if [[ $OSTYPE == 'linux-gnu' ]]; then
     # Generate i3 config if changes detected
     check_run i3 "~/.dotfiles/i3/genconf"
