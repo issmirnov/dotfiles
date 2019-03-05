@@ -143,13 +143,13 @@ cd..(){
 # - fzf: https://github.com/junegunn/fzf
 # - ag: https://github.com/ggreer/the_silver_searcher
 # - bat: https://github.com/sharkdp/bat
-# Notes: 
+# Notes:
 #  - if you want to replace ag for rg feel free (https://blog.burntsushi.net/ripgrep/)
 #  - Same goes for bat, although ccat and others are definitely worse
 #  - the $ext extraction uses a ZSH specific text globber
 unalias s
 s(){
   #file=$(fzf --query="$*" --preview 'echo {}| cut -d':' -f 1 | xargs bat --color=always --style=numbers')
-  file=$(ag "$*" | fzf --select-1 --exit-0 --preview-window up:10 --height=40% --preview 'search={};file=$(echo $search | cut -d':' -f 1 );line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e)); tail -n +$(($line-5)) $file | head -n 10 | bat --color=always --style=plain --language=$ext')
+  file=$(ag "$*" | fzf --select-1 --exit-0 --preview-window up:11 --height=60% --preview 'search={};file=$(echo $search | cut -d':' -f 1 );line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e)); tail -n +$(($line-5)) $file | head -n 11 | bat --paging=never --color=always --style=plain --language=$ext --highlight-line 6')
   [ -n "$file" ] && vim "$file"
 }
