@@ -4,6 +4,13 @@
 # git hook to run a command after `git pull` or `git checkout` if a specified file was changed
 # Run `chmod +x post-checkout` to make it executable then put it into `.git/hooks/`.
 
+# Check HEAD to see if we are in a rebase, and avoid running the hook if so.
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [[ $BRANCH == "HEAD" ]];then
+    exit 0
+fi
+
+
 changed_files="$(git diff-tree -r --name-only --no-commit-id HEAD@{1} HEAD)"
 
 check_run() {
@@ -28,4 +35,3 @@ elif [[ $OSTYPE == darwin* ]]; then
     check_run khdrc "khd -e 'reload'"
     check_run chunkwmrc "brew services restart chunkwm"
 fi
-
