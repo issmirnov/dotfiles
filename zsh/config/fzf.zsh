@@ -149,7 +149,12 @@ cd..(){
 #  - the $ext extraction uses a ZSH specific text globber
 unalias s
 s(){
-  #file=$(fzf --query="$*" --preview 'echo {}| cut -d':' -f 1 | xargs bat --color=always --style=numbers')
-  file=$(ag "$*" | fzf --select-1 --exit-0 --preview-window up:11 --height=60% --preview 'search={};file=$(echo $search | cut -d':' -f 1 );line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e)); tail -n +$(( $(($line-5)) > 0 ? $(($line-5)) : 0)) $file | head -n 11 | bat --paging=never --color=always --style=plain --language=$ext --highlight-line 6' | cut -d':' -f -2)
+  local preview_cmd='search={};file=$(echo $search | cut -d':' -f 1 );'
+  preview_cmd+='line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e));'
+  preview_cmd+='tail -n +$(( $(($line-5)) > 0 ? $(($line-5)) : 0)) $file | head -n 11 |'
+  preview_cmd+='bat --paging=never --color=always --style=plain --language=$ext --highlight-line 6'
+  file=$(ag "$*" \
+    | fzf --select-1 --exit-0 --preview-window up:11 --height=60%  --preview $preview_cmd \
+    | cut -d':' -f -2)
   [ -n "$file" ] && vim "$file"
 }
