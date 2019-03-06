@@ -85,14 +85,14 @@ function vaf(){
 # fa <dir> - Search dirs and cd to them
 fa() {
   local dir
-  dir=$(fd -t d | fzf +m --query="$*") &&
+  dir=$(fd --type directory | fzf --no-multi --query="$*") &&
   cd "$dir"
 }
 
 # fah <dir> - Search dirs and cd to them (included hidden dirs)
 fah() {
   local dir
-  dir=$(fd --type directory --hidden| fzf +m --query="$*") &&
+  dir=$(fd --type directory --hidden --no-ignore | fzf --no-multi --query="$*") &&
   cd $dir
 }
 
