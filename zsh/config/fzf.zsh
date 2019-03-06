@@ -83,18 +83,17 @@ function vaf(){
 
 # Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
 # fa <dir> - Search dirs and cd to them
-# TODO: Use sharkdp/fd instead, to leverage gitignore?
 fa() {
   local dir
-  dir=$(find ${1:-.} -path '*/\.*' -prune \
-                  -o -type d -print 2> /dev/null | fzf +m) &&
+  dir=$(fd -t d | fzf +m --query="$*") &&
   cd "$dir"
 }
 
 # fah <dir> - Search dirs and cd to them (included hidden dirs)
 fah() {
   local dir
-  dir=$(find ${1:-.} -type d 2> /dev/null | fzf +m) && cd "$dir"
+  dir=$(fd --type directory --hidden| fzf +m --query="$*") &&
+  cd $dir
 }
 
 # global:  cd into the directory of the selected file
