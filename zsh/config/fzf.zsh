@@ -143,18 +143,21 @@ cd..(){
 # - fzf: https://github.com/junegunn/fzf
 # - ag: https://github.com/ggreer/the_silver_searcher
 # - bat: https://github.com/sharkdp/bat
+# - vim-fetch: https://github.com/wsdjeg/vim-fetch
 # Notes:
 #  - if you want to replace ag for rg feel free (https://blog.burntsushi.net/ripgrep/)
 #  - Same goes for bat, although ccat and others are definitely worse
 #  - the $ext extraction uses a ZSH specific text globber
 unalias s
 s(){
+  local margin=5 # number of lines above and below search result.
   local preview_cmd='search={};file=$(echo $search | cut -d':' -f 1 );'
+  preview_cmd+="margin=$margin;" # Inject value into scope.
   preview_cmd+='line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e));'
-  preview_cmd+='tail -n +$(( $(($line-5)) > 0 ? $(($line-5)) : 0)) $file | head -n 11 |'
-  preview_cmd+='bat --paging=never --color=always --style=plain --language=$ext --highlight-line 6'
+  preview_cmd+='tail -n +$(( $(( $line - $margin )) > 0 ? $(($line-$margin)) : 0)) $file | head -n $(($margin*2+1)) |'
+  preview_cmd+='bat --paging=never --color=always --style=plain --language=$ext --highlight-line $(($margin+1))'
   file=$(ag "$*" \
-    | fzf --select-1 --exit-0 --preview-window up:11 --height=60%  --preview $preview_cmd \
+    | fzf --select-1 --exit-0 --preview-window up:$(($margin*2+1)) --height=60%  --preview $preview_cmd \
     | cut -d':' -f -2)
   [ -n "$file" ] && vim "$file"
 }
