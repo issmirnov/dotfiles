@@ -22,3 +22,6 @@ print -l **/*(e:'[[ -d $REPLY/.git ]]':)
 # Join expansion flag, opposite of the split flag.
 array=(a b c d)
 echo ${(j.-.)array} # a-b-c-d
+
+# Debug shell.
+zsh -xv
