@@ -34,7 +34,7 @@ fi
 source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
 
 # better zz from fasd
-unalias zz
+# TODO convert to Z
 function zz() {
   local dir
   dir="$(fasd -Rdl "$1" | fzf --query="$*" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
@@ -147,7 +147,6 @@ cd..(){
 #  - if you want to replace ag for rg feel free (https://blog.burntsushi.net/ripgrep/)
 #  - Same goes for bat, although ccat and others are definitely worse
 #  - the $ext extraction uses a ZSH specific text globber
-unalias s
 s(){
   local margin=5 # number of lines above and below search result.
   local preview_cmd='search={};file=$(echo $search | cut -d':' -f 1 );'
