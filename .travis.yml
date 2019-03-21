@@ -19,4 +19,4 @@ before_script:
 
 script:
   - ./install # test installation scipt. VIM, bat, etc.
-  - cd zsh && if [[ $(grep -r '#!/bin/zsh' .) ]]; then echo "Found malformed shebangs"; exit 1;fi
+  - cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1;fi
