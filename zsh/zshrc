@@ -17,7 +17,7 @@ if ! zgen saved; then
 	zgen load zsh-users/zsh-autosuggestions
 	zgen load zsh-users/zsh-completions
 	zgen load djui/alias-tips
-	zgen load romkatv/zsh-prompt-benchmark
+	#zgen load romkatv/zsh-prompt-benchmark
 
 	# As per instructions, load this last so that it wraps ZLE widgets.
 	zgen load zsh-users/zsh-syntax-highlighting
