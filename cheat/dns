@@ -1,0 +1,4 @@
+# Linux
+## View DNS resolvers
+cat /etc/resolv.conf
+nmcli dev show | grep DNS
