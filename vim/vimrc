@@ -248,3 +248,8 @@ let g:ale_fixers = {
 \}
 " fix files when you save them.
 let g:ale_fix_on_save = 1
+
+map ^[OA <up>
+map ^[OB <down>
+map ^[OC <right>
+map ^[OD <left>

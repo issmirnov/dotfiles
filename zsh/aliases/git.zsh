@@ -1,6 +1,7 @@
 # vim:ft=zsh
 alias g="git"
-alias glog="git log --decorate --oneline --graph --color=always --pretty=format:'%C(auto)%h%C(auto)%d %s %C(cyan)(%aN, %ar)'"
+# https://git-scm.com/docs/pretty-formats - reference on --format flag.
+alias glog="git log --decorate --oneline --graph --color=always --pretty=format:'%C(auto)%h%C(auto)%d %s %C(cyan)(%aN, %cr)'"
 unalias gloga # remove oh-my-zsh variant
 alias gloga="glog --all"
 alias gp='git push origin HEAD'

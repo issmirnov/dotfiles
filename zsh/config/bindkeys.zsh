@@ -8,6 +8,7 @@
 #  - `bindkey -M vicmd` will show all bound commands
 
 # Add back emacs keys, useful on MBP keyboards where ESC is unreachable
+bindkey -v
 bindkey "^A" vi-beginning-of-line
 bindkey "^E" vi-end-of-line
 
@@ -93,16 +94,16 @@ bindkey -M viins ' ' magic-space
 
 # better handling of ../
 # credit: https://grml.org/zsh/zsh-lovers.html
-rationalise-dot() { 
+rationalise-dot() {
 if [[ $LBUFFER = *.. ]]; then  # initial trigger on third dot (".." -> "../../")
     LBUFFER+=/../
 elif [[ $LBUFFER = *../ ]]; then  # climb directories and append slash for tab completion
     LBUFFER+=../
-else 
+else
     LBUFFER+=. # we still need a regular dot sometimes
 fi
-} 
-zle -N rationalise-dot 
+}
+zle -N rationalise-dot
 bindkey -M viins '.' rationalise-dot
 
 
@@ -132,4 +133,3 @@ alias vilist='bindkey -M vicmd'
 bindkey -M viins '^K' autosuggest-accept
 bindkey -r "^G"
 bindkey -M viins "^G" autosuggest-clear
-
