@@ -231,7 +231,7 @@ bindsym XF86AudioPrev exec cmus-remote -r
 ############ Apps  ################################
 
 set $filemanager nemo --no-desktop
-set $browser google-chrome
+set $browser "google-chrome --force-device-scale-factor=1.25"
 set $terminal terminator
 
 # favorite programs

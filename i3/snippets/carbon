@@ -1,10 +1,9 @@
 ### carbon config ###
 
-# monitor layout is [3][1][2]
+# monitor layout is [1][2]
 set $disp1 DisplayPort-0
 set $disp2 DisplayPort-1
-set $disp3 DisplayPort-2
-exec xrandr --output $disp1 --right-of $disp3 --output $disp2 --right-of $disp1
+exec xrandr --output $disp2 --right-of $disp1
 
 # fill up backgrounds
 exec feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper
@@ -30,3 +29,6 @@ exec --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpa
 
 # redshift
 exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3700 -r
+
+# DPI override
+exec --no-startup-id "xrandr --dpi 137"
