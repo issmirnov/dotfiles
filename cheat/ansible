@@ -14,3 +14,5 @@ ansible-galaxy init role_name
 # Pull variables from setup module
 ansible localhost -m setup | sed 's@localhost | SUCCESS => {@{@g' | jq '.ansible_facts.ansible_default_ipv4'
 
+# Print available keys. Useful for remembering common ansible variables
+ansible localhost -m setup | sed 's@localhost | SUCCESS => {@{@g' | jq '.ansible_facts | keys'
