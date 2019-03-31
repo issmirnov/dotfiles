@@ -1,27 +1,48 @@
 ### carbon config ###
 
 # monitor layout is [1][2]
-set $disp1 DisplayPort-0
-set $disp2 DisplayPort-1
-exec xrandr --output $disp2 --right-of $disp1
+set $left DisplayPort-0
+set $right DisplayPort-1
+exec xrandr --output $right --right-of $left
+
+# workspace layout
+workspace 1 output $left
+workspace 2 output $left
+workspace 3 output $left
+workspace 4 output $left
+workspace 5 output $left
+
+workspace 6 output $right
+workspace 7 output $right
+workspace 8 output $right
+workspace 9 output $right
+workspace 10 output $right
+
+
 
 # fill up backgrounds
 exec feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper
 
 
 #  App Bindings ########
-assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
-#assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
-assign [class="^TelegramDesktop$"] telegram
 assign [class="^Standard Notes$"] notes
+
+# Studio
+assign [class="^jetbrains-studio$"] studio
+workspace studio output $left
+
+# Telegram
+assign [class="^TelegramDesktop$"] telegram
+workspace telegram output $right
+
 # startup apps
 exec --no-startup-id nm-applet
 exec fluxgui
 exec ssh-agent
 exec glipper
 
+
 # update mouse speed
-# exec "xset mouse 13/10 0"
 exec 'xset m 1/2 8'
 
 ## feh override
