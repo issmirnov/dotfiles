@@ -4,5 +4,5 @@ exec --no-startup-id gnome-sound-applet
 exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
 
 # lock the screen
-bindsym $MOD+l exec "gnome-screensaver-command --lock"
+bindsym $MOD+l exec "gnome-screensaver-command --lock && sleep 1 && xset dpms force off"
 

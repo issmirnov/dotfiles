@@ -53,3 +53,6 @@ exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r
 
 # DPI override
 exec --no-startup-id "xrandr --dpi 137"
+
+# screen timeouts. 5 mins for monitor, no sleep and no halt.
+exec --no-startup-id "xset dpms 300 0 0"
