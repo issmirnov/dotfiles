@@ -8,8 +8,8 @@
 
 - shell:
   - [git submodule update --init --recursive, Installing submodules]
+  - [mkdir -p ~/.vim/temp_dirs/undodir, Crating vim undo dir]
   - [bat cache --build, Updating bat syntax cache]
-
 
 - link:
     ~/.gitconfig: git/config
