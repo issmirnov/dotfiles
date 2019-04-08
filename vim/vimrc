@@ -253,3 +253,11 @@ map ^[OA <up>
 map ^[OB <down>
 map ^[OC <right>
 map ^[OD <left>
+
+" template files
+if has("autocmd")
+  augroup templates
+    autocmd BufNewFile *.sh 0r ~/.vim/templates/skeleton.sh
+    autocmd BufNewFile *.zsh 0r ~/.vim/templates/skeleton.zsh
+  augroup END
+endif

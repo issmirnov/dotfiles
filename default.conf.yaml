@@ -21,6 +21,7 @@
     ~/.toprc : top/toprc
     ~/.vimrc: vim/vimrc
     ~/.vim/autoload: vim/autoload
+    ~/.vim/templates: vim/templates
     ~/.zshrc: zsh/zshrc
     ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
     ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
