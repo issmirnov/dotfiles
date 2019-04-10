@@ -1,0 +1,25 @@
+#!/bin/bash
+
+if ! git rev-parse --git-dir > /dev/null; then
+  exit 1
+fi
+
+if [ -n "$1" ]; then
+    revision=$(git rev-parse "$1" 2>/dev/null)
+else
+    revision=$(git log -n 20 --color=always \
+                 --pretty=format:"%Cgreen%h%Creset - %s%C(yellow)%d%Creset" \
+             | fzf-tmux --ansi --no-sort -d 22 --prompt "Which commit to fixup? " \
+             | cut -d' ' -f1)
+    if [ -z "$revision" ]; then
+        exit
+    fi
+fi
+
+if [ $? != 0 ]; then
+    echo "Error: $revision is not a valid revision"
+    exit 1
+fi
+
+git commit --fixup=$revision && \
+    GIT_SEQUENCE_EDITOR=: git rebase -i --autostash --autosquash $revision^
