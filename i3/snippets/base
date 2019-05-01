@@ -100,7 +100,7 @@ bindsym $mod+e layout toggle split
 bindsym $mod+Shift+space floating toggle
 
 # change focus between tiling / floating windows
-bindsym $mod+space focus mode_toggle
+# bindsym $mod+space focus mode_toggle
 
 # focus the parent container
 bindsym $mod+a focus parent
@@ -207,7 +207,7 @@ bindsym $mod+Shift+minus move scratchpad
 bindsym $mod+Shift+plus scratchpad show
 
 # rofi - note, can use Shift+right to cycle through modes
-bindsym $mod+d exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
+bindsym $mod+space exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
 
 ############ Display and Music  ################################
 
