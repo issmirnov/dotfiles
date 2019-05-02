@@ -148,6 +148,11 @@ bindsym $mod+Shift+less move workspace to output left
 bindsym $mod+Shift+a exec "~/.dotfiles/i3/scripts/i3-rename"
 bindsym $mod+Shift+s exec "~/.dotfiles/i3/scripts/i3-move"
 
+# Movement through workspaces on a monitor. Bound to keys on layer 1 on ergodox.
+bindsym $mod+Shift+z workspace prev_on_output
+bindsym $mod+Shift+x workspace next_on_output
+
+
 ############ Meta Configuration and Modes  ################################
 
 # reload the configuration file
