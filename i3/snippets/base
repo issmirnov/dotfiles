@@ -1,8 +1,11 @@
-# Vania's i3 window manager config file.
-# Last updated: 3/7/2016
+# Ivan's i3 window manager config file.
 
-# set mod to Win key
+# Available modifiers can be seen with 'xmodmap' or 'xev -event keyboard'
+# Mapping:
+#  - mod1: Alt, Meta
+#  - mod4: Super (win key)
 set $mod Mod4
+set $alt Mod1
 
 
 ############ Look and Feel  ################################
