@@ -55,6 +55,9 @@ Plug 'https://github.com/justinmk/vim-sneak'
 " Open files from grep results
 Plug 'https://github.com/wsdjeg/vim-fetch'
 
+" map jk/kj to escape
+Plug 'zhou13/vim-easyescape'
+
 call plug#end()
 
 "" Basics
@@ -261,3 +264,9 @@ if has("autocmd")
     autocmd BufNewFile *.zsh 0r ~/.vim/templates/skeleton.zsh
   augroup END
 endif
+
+" Easy escape: https://github.com/zhou13/vim-easyescape/
+let g:easyescape_chars = { "j": 1, "k": 1 }
+let g:easyescape_timeout = 100
+cnoremap jk <ESC>
+cnoremap kj <ESC>
