@@ -70,7 +70,7 @@ set showmatch                   " automatically show matching brackets. works li
 set visualbell                          " turn on the "visual bell" - which is much quieter than the "audio blink"
 set ruler                       " show the cursor position all the time
 set backspace=indent,eol,start  " make that backspace key work the way it should
-set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
+" set clipboard=unnamed           " set clipboard to unnamed to access the system clipboard under windows
 
 
 "" Leader
@@ -86,8 +86,8 @@ nnoremap <Leader>w :w<CR>
 noremap <leader>q :q<cr>
 
 " system clipboard
-set clipboard=unnamedplus
-map <leader>y "+y
+" set clipboard=unnamedplus
+" map <leader>y "+y
 
 "" Colors
 colorscheme tender
