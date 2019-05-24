@@ -23,6 +23,7 @@ GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 # Check for symlinks to directories in bin and 
 # append them to the path. This is useful when linking in
 # a suite such as flutter or android SDK.
+local elem
 for elem in $USER_BIN/*; do
     if [[ -L "$elem" && -d "$elem" ]]
     then

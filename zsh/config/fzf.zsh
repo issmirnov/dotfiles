@@ -153,9 +153,9 @@ s(){
   preview_cmd+='line=$(echo $search | cut -d':' -f 2 ); ext=$(echo $file(:e));'
   preview_cmd+='tail -n +$(( $(( $line - $margin )) > 0 ? $(($line-$margin)) : 0)) $file | head -n $(($margin*2+1)) |'
   preview_cmd+='bat --paging=never --color=always --style=plain --language=$ext --highlight-line $(($margin+1))'
-  full=$(ag "$*" \
+  local full=$(ag "$*" \
     | fzf --select-1 --exit-0 --preview-window up:$(($margin*2+1)) --height=60%  --preview $preview_cmd)
-  file="$(echo $full | awk -F: '{print $1}')"
-  line="$(echo $full | awk -F: '{print $2}')"
+  local file="$(echo $full | awk -F: '{print $1}')"
+  local line="$(echo $full | awk -F: '{print $2}')"
   [ -n "$file" ] && vim "$file" +$line
 }

@@ -12,22 +12,23 @@
   - [bat cache --build, Updating bat syntax cache]
 
 - link:
-    ~/.gitconfig: git/config
+    ~/.config/bat: bat
     ~/.config/htop/htoprc: htop/htoprc
+    ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
+    ~/.dotfiles/.git/hooks/post-commit: git/hooks/post-commit
+    ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
+    ~/.gitconfig: git/config
+    ~/.grc: grc
+    ~/.gdbinit: gdb/gdbinit
     ~/.nanorc: nano/nanorc
     ~/.taskrc: taskwarrior/taskrc
     ~/.tmux.conf: tmux/tmux.conf
-    ~/.grc: grc
     ~/.toprc : top/toprc
-    ~/.vimrc: vim/vimrc
     ~/.vim/autoload: vim/autoload
     ~/.vim/templates: vim/templates
+    ~/.vimrc: vim/vimrc
     ~/.zshrc: zsh/zshrc
-    ~/.dotfiles/.git/hooks/post-checkout: git/hooks/post-checkout
-    ~/.dotfiles/.git/hooks/post-merge: git/hooks/post-merge
-    ~/.dotfiles/.git/hooks/post-commit: git/hooks/post-commit
     ~/bin/tm: tmux/tmux-menu
-    ~/.config/bat: bat
 
 - shell:
   - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]
