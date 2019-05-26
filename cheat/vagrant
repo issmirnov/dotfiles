@@ -31,3 +31,9 @@ vboxmanage list runningvms
 # Delete VM (includes backing files)
 vboxmanage unregistervm YourVMName --delete
 vagrant destroy VMName
+
+# List all VM's
+vagrant global-status
+
+# Delete orphans
+vagrant global-status --prune
