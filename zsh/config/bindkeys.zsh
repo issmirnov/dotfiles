@@ -16,6 +16,10 @@ bindkey "^E" vi-end-of-line
 # bindkey -rpM viins '^['
 # bindkey -rpM vicmd '^['
 
+# Easier history access
+bindkey -M vicmd -r "o"
+bindkey -M vicmd 'o' up-history
+
 # remove default binds that I don't like
 bindkey -r "gUU"
 bindkey -r "gg"
@@ -38,6 +42,8 @@ zle -N _fzf-cd-insert
 
 zle -N fzf-history-widget
 bindkey -M vicmd '/' fzf-history-widget
+bindkey -M vicmd 'r' fzf-history-widget
+
 bindkey -M vicmd -r '\-'
 bindkey -M vicmd '\-' _fzf-cd-insert
 
