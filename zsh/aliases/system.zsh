@@ -11,8 +11,6 @@ else
   colorflag="-G"
 fi
 
-# Copy output of last command to clipboard
-alias copylast="fc -e - | pbcopy"
 
 # clear shortcuts
 alias cds="cd && clear && ls"
@@ -53,6 +51,8 @@ elif [[ $OSTYPE == darwin* ]]; then
     alias paste='pbpaste'
 fi
 
+# Copy output of last command to clipboard
+alias copylast="fc -e - | copy" # using copy alias defined above
 
 alias ta='tmux attach -t '
 
