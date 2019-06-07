@@ -78,9 +78,9 @@ chunkc set focused_border_skip_floating  0
 #       if chunkc plugin_dir is not set, the absolutepath is necessary.
 #
 
-chunkc core::load border.so
-chunkc core::load tiling.so
-#chunkc core::load ffm.so
+# chunkc core::load border.so
+# chunkc core::load tiling.so
+chunkc core::load ffm.so
 
 #
 # NOTE: shell commands require escaped quotes
