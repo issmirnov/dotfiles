@@ -11,3 +11,4 @@
     ~/bin/lock: bin/osx_lock
     ~/.khdrc: khd/khdrc
     ~/.chunkwmrc: chunkwm/chunkwmrc
+    ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
