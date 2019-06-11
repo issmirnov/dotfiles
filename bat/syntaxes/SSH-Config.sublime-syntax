@@ -1,5 +1,6 @@
 %YAML 1.2
 ---
+# NOTE: to trigger this syntax, add `# -*- mode: ssh-config -*-` to the top of your SSH config.
 # https://www.sublimetext.com/docs/3/syntax.html
 # http://man7.org/linux/man-pages/man5/ssh_config.5.html
 name: SSH Config
