@@ -2,6 +2,9 @@
 ansible your_host -m shell -a 'echo $TERM'
 ansible your_group -i inventory -a "whoami" -s
 
+# reboot fleet
+ansible -m shell -a 'reboot' all
+
 # Install role to current dir
 ansible-galaxy install --roles-path . nameof.role
 
