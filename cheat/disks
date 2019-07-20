@@ -6,3 +6,6 @@ blkid
 
 # list mounts
 findmnt
+
+# macOS
+diskutil list # list all devices, even if unmounted.
