@@ -5,6 +5,9 @@ ansible your_group -i inventory -a "whoami" -s
 # reboot fleet
 ansible -m shell -a 'reboot' all
 
+# install package on all machines
+ansible -m shell -a 'DEBIAN_FRONTEND=noninteractive apt install -y mosh' all
+
 # Install role to current dir
 ansible-galaxy install --roles-path . nameof.role
 
