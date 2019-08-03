@@ -1,0 +1,5 @@
+# Check available entropy
+cat /proc/sys/kernel/random/entropy_avail
+
+# Install entropy generator
+sudo apt install rng-tools
