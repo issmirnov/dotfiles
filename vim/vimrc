@@ -269,10 +269,11 @@ if has("autocmd")
 endif
 
 " Easy escape: https://github.com/zhou13/vim-easyescape/
-let g:easyescape_chars = { "j": 1, "k": 1 }
-let g:easyescape_timeout = 100
-cnoremap jk <ESC>
-cnoremap kj <ESC>
-
+if has("python3")
+  let g:easyescape_chars = { "j": 1, "k": 1 }
+  let g:easyescape_timeout = 100
+  cnoremap jk <ESC>
+  cnoremap kj <ESC>
+endif
 " rainbow parens ('luochen1990/rainbow')
 let g:rainbow_active = 1 "set to 0 if you want to enable it later via :RainbowToggle
