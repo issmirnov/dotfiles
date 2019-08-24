@@ -40,7 +40,7 @@
     amend = commit --amend --no-edit
     wip = !git add --all && git commit -am 'wip'
     popwip = !git log -1 --pretty=%B | grep -q '^wip$' && git reset HEAD^ || echo 'HEAD is not a wip commit'
-
+    pt = !git tag -l | xargs git tag -d && git fetch -t # prune tags.
 
     
 
