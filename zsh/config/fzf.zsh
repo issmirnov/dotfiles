@@ -37,7 +37,7 @@ source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
 # TODO convert to Z
 function zz() {
   local dir
-  dir="$(fasd -Rdl "$1" | fzf --query="$*" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
+  dir="$(fasd -Rdl "$*" | fzf --query="$*" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
 }
 
 # does global file search, shows selected file in bat
