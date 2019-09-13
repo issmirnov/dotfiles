@@ -2,3 +2,7 @@
 ## View DNS resolvers
 cat /etc/resolv.conf
 nmcli dev show | grep DNS
+
+# MacOS
+## Reset DNS cache on MacOS
+sudo killall -HUP mDNSResponder # Useful if dig/nslookup work but curl fails
