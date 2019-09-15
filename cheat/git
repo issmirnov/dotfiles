@@ -71,3 +71,7 @@ git diff > name.patch
 
 # apply patch
 git apply name.patch
+
+# delete a tag
+git push --delete origin tagName
+git tag -d tagName
