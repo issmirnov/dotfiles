@@ -16,4 +16,5 @@
     ~/.config/terminator/config: terminator/config
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
+    ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
     ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
