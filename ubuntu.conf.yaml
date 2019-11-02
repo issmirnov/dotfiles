@@ -18,3 +18,8 @@
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
     ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
+    ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
+    ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
+
+- shell:
+    - [fc-cache -f -v, "Regenerate font cache."]
