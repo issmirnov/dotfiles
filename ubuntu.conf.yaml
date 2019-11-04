@@ -22,4 +22,4 @@
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
 
 - shell:
-    - [fc-cache -f -v, "Regenerate font cache."]
+    - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate font cache."]
