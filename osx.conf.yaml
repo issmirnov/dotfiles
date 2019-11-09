@@ -6,9 +6,10 @@
 - clean: ['~']
 
 - link:
+    "~/Library/Application Support/Übersicht/widgets" : ubersicht
+    ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
+    ~/.skhdrc : skhd/skhdrc
+    ~/.yabairc : yabai/yabairc
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/Library/Fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
     ~/bin/lock: bin/osx_lock
-    ~/.khdrc: khd/khdrc
-    ~/.chunkwmrc: chunkwm/chunkwmrc
-    ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
