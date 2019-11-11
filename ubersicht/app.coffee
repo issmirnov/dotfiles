@@ -1,4 +1,4 @@
-command: "date +\"%a, %b %d %H:%M\""
+command: "/usr/local/bin/yabai -m query --windows --space | /usr/local/bin/jq -r '.[] | select(.focused==1) | [.app,.title] | @tsv'"
 
 refreshFrequency: 100
 
@@ -17,8 +17,10 @@ style: """
   color: #aaa
   z-index: 1
   top: 7px
-  right: 60px
-  font-weight: 700
+  left: 20px
+  right: 20px
   display: inline-block
-  text-align: right
+  margin: 0 auto;
+  font-weight: 700
+  text-align: center
 """
