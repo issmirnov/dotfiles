@@ -1,9 +1,7 @@
-command: "/usr/local/bin/yabai -m query --windows --space | /usr/local/bin/jq -r '.[] | select(.focused==1) | [.app,.title] | @tsv'"
+command: "/usr/local/bin/yabai -m query --windows --space | /usr/local/bin/jq -r '.[] | select(.focused==1) | [.app] | @tsv'"
+# command: "/usr/local/bin/yabai -m query --windows --space | /usr/local/bin/jq -r '.[] | select(.focused==1) | [.app,.title] | @tsv'"
 
 refreshFrequency: 100
-
-# date: () ->
-#   return @run("date")
 
 render: (output) ->
   htmlString = """

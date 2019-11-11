@@ -1,0 +1,8 @@
+# These settings all require SIP disabled and the scripting injection enabled
+# This lives in a separate file, since there is a dynamic loader that will generate
+# the skhd config depending on SIP status.
+
+
+# fast switch spaces without animations
+ctrl - left: yabai -m space --focus prev
+ctrl - right: yabai -m space --focus next
