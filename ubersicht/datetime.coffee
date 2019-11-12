@@ -1,6 +1,6 @@
 command: "date +\"%a, %b %d %H:%M\""
 
-refreshFrequency: 100
+refreshFrequency: 30000
 
 # date: () ->
 #   return @run("date")
