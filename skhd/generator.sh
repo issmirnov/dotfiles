@@ -6,9 +6,12 @@ if [[ $OSTYPE != darwin* ]]; then
     exit 0
 fi
 
+# set script dir location, since we get invoked from the git hook
+ROOT="$HOME/.dotfiles/skhd"
+
 # Prepare base config.
-rm skhdrc
-cat base > skhdrc
+rm $ROOT/skhdrc 2> /dev/null
+cat $ROOT/base > $ROOT/skhdrc
 
 # list of systems that have SIP disabled
 # I considered using the CLI to get this dynamically, but csrutil has
@@ -17,7 +20,7 @@ cat base > skhdrc
 host="$(hostname -s)"
 if [ "$host" = "carbon" ] || [ "$host" = "flume" ];then
     echo "Found whitelisted host with System Integrity Disabled, adding in SIP commands in skhdrc."
-    cat sip >> skhdrc
+    cat $ROOT/sip >> $ROOT/skhdrc
 fi
 
 # Pick up new changes
