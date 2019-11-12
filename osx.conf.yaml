@@ -4,6 +4,8 @@
       create: true
       force: true
 - clean: ['~']
+- shell:
+  - [skhd/generator.sh, "Generating skhd config"]
 
 - link:
     "~/Library/Application Support/Übersicht/widgets" : ubersicht
