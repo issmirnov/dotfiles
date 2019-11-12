@@ -34,6 +34,6 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
     check_run i3 "~/.dotfiles/i3/genconf"
 elif [[ $OSTYPE == darwin* ]]; then
     # restart OSX window managers
-    check_run skhdrc "skhd --reload"
     check_run yabai "brew services restart yabai"
+    check_run skhd "~/.dotfiles/skhd/generator.sh"
 fi
