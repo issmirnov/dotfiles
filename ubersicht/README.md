@@ -24,3 +24,4 @@ If the widgets don't appear, check http://localhost:41416/ for the status of the
 tell application "Übersicht" to reload
 tell application "Übersicht" to refresh
 ```
+

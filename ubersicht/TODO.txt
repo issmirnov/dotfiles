@@ -1,9 +1,7 @@
-Set up inline icons and useful tooltips
-Look into powerline bars and better graphics
+- swap out fonts. make them bigger and cleaner
+- convert status script to be a little more intelligent
+- add divider indicator for the two screens (left side indicator)
+- add docs about powerline fonts
+- `brew cask install font-fontawesome` and embed fonts for icons
 
-
-Explore viability of space refreshing widget
-```
-yabai -m signal --add event=space_changed \
-    action="osascript -e 'tell application \"Übersicht\" to refresh widget id \"spaces-coffee\"'"
-```
+- set top bar to red as ell, when past bedtime. clock blends in too easily.
