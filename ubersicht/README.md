@@ -1,26 +1,15 @@
-# Übersicht config
+# powerbar
+[Übersicht](https://github.com/felixhageloh/uebersicht) widget status bar in Powerline style with chunkwm support.
+
+## Screenshoot
+![img](./screenshot.png)
 
 ## Installation
 
-See https://github.com/felixhageloh/uebersicht
+1. Clone this repo to your Übersicht widgets directory.
 
+```bash
+$ git clone https://github.com/ajdnik/powerbar $HOME/Library/Application\ Support/Übersicht/widgets/powerbar
 ```
-brew cask install ubersicht
-open /Applications/Übersicht.app
-```
 
-## Details
-
-This folder is linked to "~/Library/Application Support/Übersicht/widgets".
-Übersicht will automatically live reload any changes.
-
-## Troubleshooting
-
-If the widgets don't appear, check http://localhost:41416/ for the status of the server.
-
-## Commands
-
-```applescript
-tell application "Übersicht" to reload
-tell application "Übersicht" to refresh
-```
+2. Make sure you've got [chunkwm](https://koekeishiya.github.io/chunkwm/) installed if you wish to use desktop support.
