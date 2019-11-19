@@ -1,5 +1,11 @@
 import { container, arrow, arrowLight, content } from './style.jsx';
 
+
+export const buttonClick = ({event}) => {
+        console.log('Button was clicked!')
+  console.log(`event: ${event}`)
+}
+
 const renderDesktop = (d) => {
   let index = d.index;
   let visible = d.visible == 1;
@@ -18,7 +24,7 @@ const renderDesktop = (d) => {
       // TODO - do something cool if it's focused. maybe underline?
       // TODO - add click handlers (not SUPER needed...)
   return (
-      <span>
+      <span onClick={buttonClick}>
         <div style={contentStyle}>
         {index}
         </div>

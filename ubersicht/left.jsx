@@ -8,7 +8,7 @@ export const refreshFrequency = 10000
 export const command = '/usr/local/bin/yabai -m query --spaces'
 
 export const render = ({output}) => {
-  console.log(`Left bar output: ${output}`);
+  // console.log(`Left bar output: ${output}`);
   const data = parse(output);
   if (typeof data === 'undefined') {
     return (
@@ -27,7 +27,7 @@ export const render = ({output}) => {
     )
   }
 
-  console.log(`left data: ${data}`)
+  // console.log(`left data: ${data}`)
   // react - farm out to child.
   return (
     <div style={leftSide}>

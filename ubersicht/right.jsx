@@ -12,7 +12,7 @@ export const refreshFrequency = 150
 export const command = './status-right.sh'
 
 export const render = ({output}) => {
-  console.log(`Right bar output: ${output}`);
+  // console.log(`Right bar output: ${output}`);
   const data = parse(output);
   if (typeof data === 'undefined') {
     return (
