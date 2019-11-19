@@ -90,8 +90,9 @@ LOAD_AVERAGE=$(sysctl -n vm.loadavg | awk '{print $2}')
 VOLUME=$(osascript -e 'output volume of (get volume settings)')
 IS_MUTED=$(osascript -e 'output muted of (get volume settings)')
 
-MEMORY_FREE=$(memory_pressure | grep "Pages free" | grep -o -E '[0-9]+')
-MEMORY_TOTAL=$(memory_pressure | grep system | awk -F" " '{print $5}' | grep -o -E '[0-9]+')
+MEMORY_FREE=$(memory_pressure | grep "System-wide" | grep -o -E '[0-9]+')
+# MEMORY_FREE=$(memory_pressure | grep "Pages free" | grep -o -E '[0-9]+')
+# MEMORY_TOTAL=$(memory_pressure | grep system | awk -F" " '{print $5}' | grep -o -E '[0-9]+')
 
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
 # TODO: set this to null on desktop
@@ -115,7 +116,6 @@ echo $(cat <<-EOF
 	  "muted": $IS_MUTED
   },
   "memory": {
-	  "total": $MEMORY_TOTAL,
 	  "free": $MEMORY_FREE
   },
   "wifi": {

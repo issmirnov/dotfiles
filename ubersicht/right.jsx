@@ -7,7 +7,7 @@ import Error from './lib/Error/index.jsx';
 import { rightSide } from './lib/style.jsx';
 import parse from './lib/parse.jsx';
 
-export const refreshFrequency = 15000
+export const refreshFrequency = 150
 
 export const command = './status-right.sh'
 
