@@ -3,6 +3,7 @@ import Battery from './lib/Battery/index.jsx';
 import Cpu from './lib/Cpu/index.jsx';
 import Memory from './lib/Memory/index.jsx';
 import Wifi from './lib/Wifi/index.jsx';
+import Weather from './lib/Weather/index.jsx';
 import Error from './lib/Error/index.jsx';
 import { rightSide } from './lib/style.jsx';
 import parse from './lib/parse.jsx';
@@ -26,6 +27,7 @@ export const render = ({output}) => {
 			<Wifi output={data.wifi}/>
 			<Memory output={data.memory}/>
 			<Cpu output={data.cpu}/>
+			<Weather output={data.weather}/>
       <Battery output={data.battery}/>
       <DateTime output={data.datetime}/>
     </div>

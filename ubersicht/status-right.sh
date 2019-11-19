@@ -94,6 +94,8 @@ MEMORY_FREE=$(memory_pressure | grep "System-wide" | grep -o -E '[0-9]+')
 # MEMORY_FREE=$(memory_pressure | grep "Pages free" | grep -o -E '[0-9]+')
 # MEMORY_TOTAL=$(memory_pressure | grep system | awk -F" " '{print $5}' | grep -o -E '[0-9]+')
 
+WEATHER=$(curl --silent 'wttr.in/?mQ0&format=%c%t&period=60')
+
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
 # TODO: set this to null on desktop
 
@@ -117,6 +119,9 @@ echo $(cat <<-EOF
   },
   "memory": {
 	  "free": $MEMORY_FREE
+  },
+  "weather": {
+	  "forecast": "$WEATHER"
   },
   "wifi": {
 	  "ssid": "$WIFI_SSID"
