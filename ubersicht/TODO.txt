@@ -1,0 +1,6 @@
+- add weather (wttr in)
+- swap out fonts. make them bigger and cleaner
+- float bar, like on master branch
+- convert status script to be a little more intelligent
+- add divider indicator for the two screens (left side indicator)
+- add docs about powerline fonts
