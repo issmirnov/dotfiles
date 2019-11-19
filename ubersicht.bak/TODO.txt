@@ -1,0 +1,9 @@
+Set up inline icons and useful tooltips
+Look into powerline bars and better graphics
+
+
+Explore viability of space refreshing widget
+```
+yabai -m signal --add event=space_changed \
+    action="osascript -e 'tell application \"Übersicht\" to refresh widget id \"spaces-coffee\"'"
+```
