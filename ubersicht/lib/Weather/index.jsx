@@ -6,7 +6,7 @@ const render = ({output}) => {
     <div style={container}>
       <div style={arrow}/>
       <div style={content}>
-        &nbsp;{output.forecast}
+       {output.forecast}
       </div>
     </div>
   )

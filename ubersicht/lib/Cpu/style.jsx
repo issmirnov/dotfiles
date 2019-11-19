@@ -10,8 +10,8 @@ export const arrow = {
   height: '0',
   width: '0',
   borderTop: '10px solid transparent',
-  borderBottom: '10px solid transparent', 
-  borderRight:'10px solid rgba(235, 239, 243, 1)', 
+  borderBottom: '10px solid transparent',
+  borderRight:'10px solid rgba(235, 239, 243, 1)',
   position: 'absolute',
   left: '0px'
 }

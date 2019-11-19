@@ -5,3 +5,6 @@
 - add divider indicator for the two screens (left side indicator)
 - add docs about powerline fonts
 - `brew cask install font-fontawesome` and embed fonts for icons
+
+- play nicer with wttr API, don't spam it every 5 seconds
+- come up with reasonable refresh interval for the right bar. 30 seconds?

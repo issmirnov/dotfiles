@@ -8,7 +8,7 @@ import Error from './lib/Error/index.jsx';
 import { rightSide } from './lib/style.jsx';
 import parse from './lib/parse.jsx';
 
-export const refreshFrequency = 150
+export const refreshFrequency = 5000
 
 export const command = './status-right.sh'
 
@@ -25,9 +25,9 @@ export const render = ({output}) => {
   return (
     <div style={rightSide}>
 			<Wifi output={data.wifi}/>
-			<Memory output={data.memory}/>
-			<Cpu output={data.cpu}/>
+			{/* <Memory output={data.memory}/> */}
 			<Weather output={data.weather}/>
+			<Cpu output={data.cpu}/>
       <Battery output={data.battery}/>
       <DateTime output={data.datetime}/>
     </div>

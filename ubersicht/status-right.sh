@@ -86,6 +86,9 @@ elif [ "$BATTERY_STATUS" == "AC" ]; then
 fi
 
 LOAD_AVERAGE=$(sysctl -n vm.loadavg | awk '{print $2}')
+NUM_CPU=$(sysctl hw.physicalcpu | grep -o -E '[0-9]+')
+CPU_TOTAL=$(ps -axro pcpu | awk '{sum+=$1} END {print sum}')
+CPU_USAGE=$(echo "$CPU_TOTAL / $NUM_CPU" | bc)
 
 VOLUME=$(osascript -e 'output volume of (get volume settings)')
 IS_MUTED=$(osascript -e 'output muted of (get volume settings)')
@@ -111,7 +114,7 @@ echo $(cat <<-EOF
     "charging": $BATTERY_CHARGING
   },
   "cpu": {
-    "loadAverage": $LOAD_AVERAGE
+    "loadAverage": "${CPU_USAGE}%"
   },
   "volume": {
 	  "volume": $VOLUME,
