@@ -19,21 +19,18 @@ const displayIcon = (batteryPercentage, isCharging) => {
 const updateStyling = (batteryPercentage, isCharging) => {
   let contentStyle = JSON.parse(JSON.stringify(content));
   let arrowStyle = JSON.parse(JSON.stringify(arrow));
+  contentStyle.color = 'rgba(76, 86, 106, 1)';
   if (isCharging === true) {
     contentStyle.background = 'rgba(163, 189, 140, 1)';
-    contentStyle.color = 'rgba(76, 86, 106, 1)';
     arrowStyle.borderRight = '10px solid rgba(163, 189, 140, 1)';
   } else if (batteryPercentage < 60) {
     contentStyle.background = 'rgba(235, 203, 139, 1)';
-    contentStyle.color = 'rgba(76, 86, 106, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 203, 139, 1)';
   } else if (batteryPercentage < 40) {
     contentStyle.background = 'rgba(208, 135, 113, 1)';
-    contentStyle.color = 'rgba(76, 86, 106, 1)';
     arrowStyle.borderRight = '10px solid rgba(208, 135, 113, 1)';
   } else if (batteryPercentage < 20) {
     contentStyle.background = 'rgba(191, 97, 106, 1)';
-    contentStyle.color = 'rgba(76, 86, 106, 1)';
     arrowStyle.borderRight = '10px solid rgba(191, 97, 106, 1)';
   }
   return { contentStyle, arrowStyle };

@@ -7,8 +7,7 @@ const render = ({output}) => {
       <div style={arrow}/>
       <div style={content}>
         <i class="fas fa-calendar-alt"/>&nbsp;{output.date}&nbsp;
-
-          <i class="fas fa-clock"/>&nbsp;{output.time}
+        <i class="fas fa-clock"/>&nbsp;{output.time}
       </div>
     </div>
   )
