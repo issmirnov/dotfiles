@@ -94,7 +94,9 @@ MEMORY_FREE=$(memory_pressure | grep "Pages free" | grep -o -E '[0-9]+')
 MEMORY_TOTAL=$(memory_pressure | grep system | awk -F" " '{print $5}' | grep -o -E '[0-9]+')
 
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
+# TODO: set this to null on desktop
 
+# TODO: use jq to build dynamic json, rather than hardcoding it in a heredoc.
 echo $(cat <<-EOF
 {
   "datetime": {
