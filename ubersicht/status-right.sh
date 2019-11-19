@@ -114,7 +114,7 @@ echo $(cat <<-EOF
     "charging": $BATTERY_CHARGING
   },
   "cpu": {
-    "loadAverage": "${CPU_USAGE}%"
+    "loadAverage": "${CPU_USAGE}"
   },
   "volume": {
 	  "volume": $VOLUME,
