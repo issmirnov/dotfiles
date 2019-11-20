@@ -21,7 +21,7 @@ export const leftSide = {
   left: '0px',
   top: '0px',
   fontFamily: 'Roboto Mono For Powerline',
-  fontSize: '8pt',
+  fontSize: '10pt',
   lineHeight: '20px',
   color: 'rgba(216, 222, 232, 1)'
 }
@@ -35,7 +35,7 @@ export const rightSide = {
   right: '0px',
   top: '0px',
   fontFamily: 'Roboto Mono For Powerline',
-  fontSize: '8pt',
+  fontSize: '10pt',
   lineHeight: '20px',
   color: 'rgba(216, 222, 232, 1)'
 }
