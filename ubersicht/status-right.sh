@@ -70,6 +70,8 @@ export LC_TIME="en_US.UTF-8"
 TIME=$(date +"%H:%M")
 DATE=$(date +"%a %m/%d")
 
+
+BATT_INSTALLED=$(system_profiler SPPowerDataType | grep -cE "Battery Installed: Yes")
 BATTERY_PERCENTAGE=$(pmset -g batt | egrep '([0-9]+\%).*' -o --colour=auto | cut -f1 -d'%')
 # patch battery on desktop
 if [[ $BATTERY_PERCENTAGE -eq "" ]];then
@@ -100,6 +102,7 @@ MEMORY_FREE=$(memory_pressure | grep "System-wide" | grep -o -E '[0-9]+')
 WEATHER=$(curl --silent 'wttr.in/?mQ0&format=%c%t&period=60')
 
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
+WIFI_DISABLED=$(networksetup -getairportnetwork en0 | grep -cE "All Wi-Fi network services are disabled.")
 # TODO: set this to null on desktop
 
 # TODO: use jq to build dynamic json, rather than hardcoding it in a heredoc.
@@ -111,7 +114,8 @@ echo $(cat <<-EOF
   },
   "battery": {
     "percentage": $BATTERY_PERCENTAGE,
-    "charging": $BATTERY_CHARGING
+    "charging": $BATTERY_CHARGING,
+    "installed" : $BATT_INSTALLED
   },
   "cpu": {
     "loadAverage": "${CPU_USAGE}"
@@ -127,7 +131,8 @@ echo $(cat <<-EOF
 	  "forecast": "$WEATHER"
   },
   "wifi": {
-	  "ssid": "$WIFI_SSID"
+	  "ssid": "$WIFI_SSID",
+	  "disabled" : $WIFI_DISABLED
   }
 }
 EOF

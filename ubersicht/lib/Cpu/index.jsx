@@ -18,9 +18,9 @@ const updateStyling = (cpuUsage) => {
   if (cpuUsage < 20) { // white
     contentStyle.background = 'rgba(235, 239, 243, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 239, 243, 1)';
-  } else if (20 <= cpuUsage < 40) { // green
-    contentStyle.background = 'rgba(163, 189, 140, 1)';
-    arrowStyle.borderRight = '10px solid rgba(163, 189, 140, 1)';
+  // } else if (20 <= cpuUsage < 40) { // green
+  //   contentStyle.background = 'rgba(163, 189, 140, 1)';
+  //   arrowStyle.borderRight = '10px solid rgba(163, 189, 140, 1)';
   } else if (40 <= cpuUsage < 60) { // yellow
     contentStyle.background = 'rgba(235, 203, 139, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 203, 139, 1)';

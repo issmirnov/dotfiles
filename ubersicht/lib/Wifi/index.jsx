@@ -2,7 +2,8 @@ import { container, arrow, content } from './style.jsx';
 
 const render = ({output}) => {
   if (typeof output === 'undefined') return null;
-	return (
+  if (output.disabled == 1) return null;
+  return (
     <div style={container}>
       <div style={arrow}/>
       <div style={content}>

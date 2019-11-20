@@ -24,12 +24,12 @@ export const render = ({output}) => {
   }
   return (
     <div style={rightSide}>
-			<Wifi output={data.wifi}/>
-			{/* <Memory output={data.memory}/> */}
-			<Weather output={data.weather}/>
-			<Cpu output={data.cpu}/>
-      <Battery output={data.battery}/>
-      <DateTime output={data.datetime}/>
+	<Wifi output={data.wifi}/>
+	{/* <Memory output={data.memory}/> */}
+	<Battery output={data.battery}/>
+	<Cpu output={data.cpu}/>
+	<Weather output={data.weather}/>
+	<DateTime output={data.datetime}/>
     </div>
   )
 }

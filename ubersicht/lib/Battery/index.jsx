@@ -38,6 +38,7 @@ const updateStyling = (batteryPercentage, isCharging) => {
 
 const render = ({output}) => {
   if (typeof output === 'undefined') return null;
+  if (output.installed == 0) return null;
   const batteryIcon = displayIcon(output.percentage, output.charging);
   const iconClasses = `fas ${batteryIcon}`;
   const { contentStyle, arrowStyle } = updateStyling(output.percentage, output.charging);
