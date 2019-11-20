@@ -10,13 +10,13 @@ const updateStyling = (cpuUsage) => {
   // orange: (208, 135, 113, 1)
   // green: (163, 189, 140, 1)
   // red: (191, 97, 106, 1)
-  
+
   // console.log(`cpu usage: ${cpuUsage}`)
   // let derp = 112 < 20;
   // let derp = 60 <= 112;
   // console.log(`derp: ${derp}`)
 
-  if (cpuUsage < 20) { // white
+  if (cpuUsage < 40) { // white
     contentStyle.background = 'rgba(235, 239, 243, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 239, 243, 1)';
   // } else if (20 <= cpuUsage < 40) { // green
