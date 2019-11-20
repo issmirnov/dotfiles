@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-set -ex
-FILE=weather
+# set -ex
 
-#url=$1
+FILE=forecast
 url='wttr.in/?mQ0&format=%c%t&period=60'
 
-command="curl --silent $url  > $FILE"
+command="curl --silent \"$url\"  > $FILE"
 
-if [ ! -a "$FILE" ];then
+if [[ ! -a "$FILE" ]];then
     echo "file not found, running command"
     eval "${command}"
     exit 0
@@ -15,9 +14,9 @@ fi
 
 mtime=$(stat -f "%m" $FILE)
 now=$(date +'%s')
-lifespan=10 # 600 # 10 minutes.
+lifespan=600 # 10 minutes.
 
 if (( $(echo "$now > ($mtime + $lifespan)" | bc) ));then
     echo "file is old, refreshing"
-    ${!command}
+    eval "${command}"
 fi
