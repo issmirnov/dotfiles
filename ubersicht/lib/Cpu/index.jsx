@@ -10,19 +10,23 @@ const updateStyling = (cpuUsage) => {
   // orange: (208, 135, 113, 1)
   // green: (163, 189, 140, 1)
   // red: (191, 97, 106, 1)
+  console.log(`cpu usage: ${cpuUsage}`)
+  // let derp = 112 < 20;
+  let derp = 60 <= 112;
+  console.log(`derp: ${derp}`)
+
   if (cpuUsage < 20) { // white
     contentStyle.background = 'rgba(235, 239, 243, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 239, 243, 1)';
-  } else if (20 < cpuUsage < 40) { // green
+  } else if (20 <= cpuUsage < 40) { // green
     contentStyle.background = 'rgba(163, 189, 140, 1)';
     arrowStyle.borderRight = '10px solid rgba(163, 189, 140, 1)';
-  } else if (40 < cpuUsage < 60) { // yellow
+  } else if (40 <= cpuUsage < 60) { // yellow
     contentStyle.background = 'rgba(235, 203, 139, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 203, 139, 1)';
-  } else if (60 < cpuUsage) { // red
+  } else if (60 <= cpuUsage) { // red
     contentStyle.background = 'rgba(191, 97, 106, 1)';
     arrowStyle.borderRight = '10px solid rgba(191, 97, 106, 1)';
-
   }
   return { contentStyle, arrowStyle };
 }
