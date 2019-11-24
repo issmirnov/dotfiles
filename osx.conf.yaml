@@ -5,13 +5,13 @@
       force: true
 - clean: ['~']
 - shell:
-  - [skhd/generator.sh, "Generating skhd config"]
+    - [skhd/generator.sh, "Generating skhd config"]
 
 - link:
-    "~/Library/Application Support/Übersicht/widgets" : ubersicht
+    "~/Library/Application Support/Übersicht/widgets": ubersicht
     ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
-    ~/.skhdrc : skhd/skhdrc
-    ~/.yabairc : yabai/yabairc
+    ~/.skhdrc: skhd/skhdrc.generated
+    ~/.yabairc: yabai/yabairc
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/Library/Fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
     ~/bin/lock: bin/osx_lock
