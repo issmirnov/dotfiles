@@ -3,3 +3,5 @@
 - add divider indicator for the two screens (left side indicator)
 - add docs about powerline fonts
 - `brew cask install font-fontawesome` and embed fonts for icons
+
+- set top bar to red as ell, when past bedtime. clock blends in too easily.
