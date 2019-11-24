@@ -4,3 +4,6 @@
 [submodule "zsh/zgen"]
 	path = zsh/zgen
 	url = https://github.com/tarjoilija/zgen.git
+[submodule "cheat/community"]
+	path = cheat/community
+	url = https://github.com/cheat/cheatsheets
