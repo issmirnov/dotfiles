@@ -11,7 +11,7 @@ ROOT="$HOME/.dotfiles/skhd"
 
 # Prepare base config.
 rm $ROOT/skhdrc 2> /dev/null
-cat $ROOT/base > $ROOT/skhdrc
+cat $ROOT/base > $ROOT/skhdrc.generated
 
 # list of systems that have SIP disabled
 # I considered using the CLI to get this dynamically, but csrutil has
@@ -20,7 +20,7 @@ cat $ROOT/base > $ROOT/skhdrc
 host="$(hostname -s)"
 if [ "$host" = "carbon" ] || [ "$host" = "flume" ];then
     echo "Found whitelisted host with System Integrity Disabled, adding in SIP commands in skhdrc."
-    cat $ROOT/sip >> $ROOT/skhdrc
+    cat $ROOT/sip >> $ROOT/skhdrc.generated
 fi
 
 # Pick up new changes
