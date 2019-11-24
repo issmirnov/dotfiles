@@ -49,8 +49,12 @@ alt - right : yabai -m space --create && \
                 index="$(yabai -m query --spaces --display | jq 'map(select(."native-fullscreen" == 0))[-1].index')" && \
                 yabai -m space --focus "${index}"
 
+# create desktop
+alt + shift - n : yabai -m space --create
+
 # destroy desktop
 cmd + shift - q : yabai -m space --destroy
+alt + shift - x : yabai -m space --destroy && yabai -m space --focus last
 
 # fast focus desktop
 cmd + alt - x : yabai -m space --focus recent
