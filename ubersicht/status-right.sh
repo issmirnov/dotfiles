@@ -99,9 +99,9 @@ MEMORY_FREE=$(memory_pressure | grep "System-wide" | grep -o -E '[0-9]+')
 # MEMORY_FREE=$(memory_pressure | grep "Pages free" | grep -o -E '[0-9]+')
 # MEMORY_TOTAL=$(memory_pressure | grep system | awk -F" " '{print $5}' | grep -o -E '[0-9]+')
 
-./lib/Weather/curl.sh
+~/.dotfiles/ubersicht/lib/Weather/curl.sh
 # WEATHER=$(curl --silent 'wttr.in/?mQ0&format=%c%t&period=60')
-WEATHER=$(cat ./lib/Weather/forecast)
+WEATHER=$(cat ~/.dotfiles/ubersicht/lib/Weather/forecast)
 
 WIFI_SSID=$(networksetup -getairportnetwork en0 | cut -c 24-)
 WIFI_DISABLED=$(networksetup -getairportnetwork en0 | grep -cE "All Wi-Fi network services are disabled.")

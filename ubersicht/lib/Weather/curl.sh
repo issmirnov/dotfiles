@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # set -ex
 
-FILE=forecast
+FILE=~/.dotfiles/ubersicht/lib/Weather/forecast
 url='wttr.in/?mQ0&format=%c%t&period=60'
 
 command="curl --silent \"$url\"  > $FILE"
