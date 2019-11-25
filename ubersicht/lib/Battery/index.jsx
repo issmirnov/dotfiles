@@ -32,7 +32,7 @@ const updateStyling = (batteryPercentage, isCharging) => {
   } else if (batteryPercentage < 60) {
     contentStyle.background = 'rgba(235, 203, 139, 1)';
     arrowStyle.borderRight = '10px solid rgba(235, 203, 139, 1)';
-  } else if (batteryPercentage < 100) {
+  } else if (batteryPercentage <= 100) {
     contentStyle.background = 'rgba(163, 189, 140, 1)';
     arrowStyle.borderRight = '10px solid rgba(163, 189, 140, 1)';
   }
