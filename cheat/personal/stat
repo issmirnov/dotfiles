@@ -1,0 +1,5 @@
+# Show octal permissions
+stat -c '%a' .ssh
+
+# Show user:group ownershiip
+stat -c '%U:%G' .ssh
