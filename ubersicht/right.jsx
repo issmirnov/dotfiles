@@ -1,14 +1,14 @@
 import DateTime from './lib/DateTime/index.jsx';
 import Battery from './lib/Battery/index.jsx';
 import Cpu from './lib/Cpu/index.jsx';
-import Memory from './lib/Memory/index.jsx';
+// import Memory from './lib/Memory/index.jsx';
 import Wifi from './lib/Wifi/index.jsx';
 import Weather from './lib/Weather/index.jsx';
 import Error from './lib/Error/index.jsx';
 import { rightSide } from './lib/style.jsx';
 import parse from './lib/parse.jsx';
 
-export const refreshFrequency = 100
+export const refreshFrequency = 2000
 
 export const command = './status-right.sh'
 
