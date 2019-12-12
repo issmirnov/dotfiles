@@ -40,4 +40,9 @@ yabai -m config left_padding                 20
 yabai -m config right_padding                20
 yabai -m config window_gap                   10
 
+
+# performance optimization
+yabai -m signal --add event=space_changed \
+    action="osascript -e 'tell application \"Übersicht\" to refresh widget id \"left-jsx\"'"
+
 echo "yabai configuration loaded.."
