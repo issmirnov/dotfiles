@@ -6,3 +6,11 @@ brew cask outdated | xargs brew cask reinstall
 
 # Fix ownership on /usr/local
 sudo chown -R `whoami`:admin /usr/local
+
+# List deps tree
+brew deps --tree --installed
+
+# List packages by size
+brew list -f1 | xargs -n1 -P8 -I {} \
+    sh -c "brew info {} | egrep '[0-9]* files, ' | sed 's/^.*[0-9]* files, \(.*\)).*$/{} \1/'" | \
+    sort -h -r -k2 - | column -t
