@@ -148,3 +148,10 @@ alt - p : yabai -m window --toggle sticky;\
 # change layout of desktop
 ctrl + alt - a : yabai -m space --layout bsp
 ctrl + alt - d : yabai -m space --layout float
+
+
+# application specific bindings
+cmd - t [
+    *             ~
+    "path finder"      : yabai -m window --focus first
+]
