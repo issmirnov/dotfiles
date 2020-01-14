@@ -42,7 +42,10 @@
     popwip = !git log -1 --pretty=%B | grep -q '^wip$' && git reset HEAD^ || echo 'HEAD is not a wip commit'
     pt = !git tag -l | xargs git tag -d && git fetch -t # prune tags.
 
-    
+    unstage = reset HEAD --
+    recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
+    today = !git log --all --since=00:00:00 --oneline --no-merges --author=${1-$(git config user.email)}
+
 
 [branch]
 	autosetupmerge = true
@@ -50,7 +53,7 @@
 
 [browser "google-chrome-stable"]
 	cmd = "/usr/bin/google-chrome-stable"
-	
+
 [color]
 	ui = true
 	pager = true
@@ -86,7 +89,7 @@
 	untracked = blue bold
 	branch = green bold
 	nobranch = red
-	
+
 [diff]
 	renames = copies
 	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
@@ -94,7 +97,7 @@
 
 [grep]
 	lineNumber = true
-	
+
 [merge]
     stat = true
     tool = vimdiff
@@ -125,7 +128,7 @@
 
 [web]
 	browser = google-chrome-stable
-	
+
 # Allow local customizations in the .gitconfig_local file
 [include]
 	path = ~/.gitconfig_local
