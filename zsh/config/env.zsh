@@ -18,3 +18,6 @@ fi
 # Customize github.com/djui/alias-tips
 export ZSH_PLUGINS_ALIAS_TIPS_REVEAL=1
 export ZSH_PLUGINS_ALIAS_TIPS_REVEAL_EXCLUDES="(_ ll vi)"
+
+# XDG config location
+export XDG_CONFIG_HOME="$HOME/.config"

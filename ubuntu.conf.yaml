@@ -20,6 +20,7 @@
     ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
     ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
+    ~/.config/user-dirs.conf: xdg/user-dirs.conf
 
 - shell:
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate font cache."]
