@@ -1,5 +1,5 @@
 [global_config]
-  title_font = Source Code Pro 9
+  title_font = Source Code Pro 18
   title_hide_sizetext = True
   title_use_system_font = False
 [keybindings]
@@ -56,7 +56,8 @@
 [plugins]
 [profiles]
   [[default]]
-    font = Inconsolata 12
+    cursor_color = "#aaaaaa"
+    font = Inconsolata 18
     scrollback_infinite = True
     show_titlebar = False
     urgent_bell = True
