@@ -59,3 +59,6 @@ exec --no-startup-id "xset dpms 300 0 0"
 
 # start gnome keyring
 exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
+
+# start unity setting for gtk support
+exec --no-startup-id "unity-settings-daemon"
