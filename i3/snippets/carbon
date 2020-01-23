@@ -18,12 +18,6 @@ workspace 8 output $right
 workspace 9 output $right
 workspace 10 output $right
 
-
-
-# fill up backgrounds
-exec feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper
-
-
 #  App Bindings ########
 assign [class="^Standard Notes$"] notes
 
@@ -45,7 +39,7 @@ exec glipper
 # update mouse speed
 exec 'xset m 1/2 8'
 
-## feh override
+## set background wallpaper
 exec --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper"
 
 # redshift
