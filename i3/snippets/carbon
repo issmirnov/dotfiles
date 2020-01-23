@@ -62,3 +62,6 @@ exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,
 
 # start unity setting for gtk support
 exec --no-startup-id "unity-settings-daemon"
+
+# load Xresources
+exec --no-startup-id "xrdb ~/.Xresources"
