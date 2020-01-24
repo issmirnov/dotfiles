@@ -36,11 +36,12 @@ exec ssh-agent
 exec glipper
 
 
+# Map Print Screeen Key to flameshot
+bindsym Print exec "flameshot gui"
+
 # update mouse speed
 exec 'xset m 1/2 8'
 
-## set background wallpaper
-exec --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper"
 
 # redshift
 exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r
@@ -59,3 +60,7 @@ exec --no-startup-id "unity-settings-daemon"
 
 # load Xresources
 exec --no-startup-id "xrdb ~/.Xresources"
+
+## set background wallpaper
+exec_always --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"
+
