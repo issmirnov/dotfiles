@@ -36,17 +36,18 @@ exec ssh-agent
 exec glipper
 
 
+# Map Print Screeen Key to flameshot
+bindsym Print exec "flameshot gui"
+
 # update mouse speed
 exec 'xset m 1/2 8'
 
-## set background wallpaper
-exec --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper"
 
 # redshift
 exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r
 
 # DPI override
-exec --no-startup-id "xrandr --dpi 137"
+exec_always --no-startup-id "xrandr --dpi 137"
 
 # screen timeouts. 5 mins for monitor, no sleep and no halt.
 exec --no-startup-id "xset dpms 300 0 0"
@@ -55,7 +56,10 @@ exec --no-startup-id "xset dpms 300 0 0"
 exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
 
 # start unity setting for gtk support
-exec --no-startup-id "unity-settings-daemon"
+exec_always --no-startup-id "unity-settings-daemon"
 
 # load Xresources
-exec --no-startup-id "xrdb ~/.Xresources"
+exec_always --no-startup-id "xrdb ~/.Xresources"
+
+## set background wallpaper
+exec_always --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"

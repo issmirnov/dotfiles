@@ -26,3 +26,6 @@ function shot(){
     echo "Done! Saved to ~/Pictures/$sn.png"
 }
 fi
+
+# Gracefully shut down chrome. Use this before reboot/poweroff
+alias stopchrome='pkill --oldest chrome'
