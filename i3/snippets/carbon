@@ -49,6 +49,9 @@ exec --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
 # DPI override
 exec_always --no-startup-id "xrandr --dpi 137"
 
+# enable x lock on screen off
+exec_always --no-startup-id "xss-lock -- gnome-screensaver-command --lock"
+
 # screen timeouts. 5 mins for monitor, no sleep and no halt.
 exec_always --no-startup-id "xset dpms 0 0 300"
 
