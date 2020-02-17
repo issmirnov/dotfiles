@@ -56,6 +56,7 @@ exec_always --no-startup-id "xset dpms 0 0 300"
 exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
 
 # start unity setting for gtk support
+# Note: this appears to override the wallpaper preferences by feh, as well as DPI settings.
 exec_always --no-startup-id "unity-settings-daemon"
 
 # load Xresources
