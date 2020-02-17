@@ -44,13 +44,13 @@ exec 'xset m 1/2 8'
 
 
 # redshift
-exec --no-startup-id redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r
+exec --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
 
 # DPI override
 exec_always --no-startup-id "xrandr --dpi 137"
 
 # screen timeouts. 5 mins for monitor, no sleep and no halt.
-exec --no-startup-id "xset dpms 300 0 0"
+exec_always --no-startup-id "xset dpms 0 0 300"
 
 # start gnome keyring
 exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
