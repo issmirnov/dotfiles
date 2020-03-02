@@ -18,3 +18,6 @@ dpkg --listfiles package-name
 
 # Find out which package owns file
 dpkg -S /path/to/file
+
+# Purge packages in a bad state
+dpkg -P --force-all package-name
