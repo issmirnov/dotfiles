@@ -9,3 +9,6 @@ findmnt
 
 # macOS
 diskutil list # list all devices, even if unmounted.
+
+# get single mount without grep, using systemd
+findmnt --target /tmp 
