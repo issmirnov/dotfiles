@@ -35,7 +35,7 @@ exec_always ssh-agent
 exec_always glipper
 
 # Audio: show volume channels in tray
-exec_always --no-startup-id "pasystray"
+exec --no-startup-id "pasystray"
 
 for_window [class="^Pavucontrol$"] move window to scratchpad
 exec_always --no-startup-id pavucontrol
