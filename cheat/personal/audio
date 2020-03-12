@@ -1,0 +1,15 @@
+# To list volumes with CLI
+alsamixer
+
+# To control sinks and input more granularly
+pavucontrol
+
+# Run applet in menu bar to allow easys switching
+pasystray
+
+# Note: in gene
+
+
+# To rename a device:
+pactl list short sinks # list sinks
+pacmd 'update-sink-proplist alsa_output.foo_bar device.description="Headphones"' # rename the device

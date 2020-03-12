@@ -30,16 +30,18 @@ assign [class="^TelegramDesktop$"] telegram
 workspace telegram output $right
 
 # startup apps
-exec --no-startup-id nm-applet
-exec ssh-agent
-exec glipper
+exec_always --no-startup-id nm-applet
+exec_always ssh-agent
+exec_always glipper
 
+# Audio: show volume channels in tray
+exec_always --no-startup-id "pasystray"
 
 # Map Print Screeen Key to flameshot
 bindsym Print exec "flameshot gui"
 
 # update mouse speed
-exec 'xset m 1/2 8'
+exec_always 'xset m 1/2 8'
 
 # redshift
 exec_always --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
