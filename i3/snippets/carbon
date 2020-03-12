@@ -31,7 +31,6 @@ workspace telegram output $right
 
 # startup apps
 exec --no-startup-id nm-applet
-exec fluxgui
 exec ssh-agent
 exec glipper
 
@@ -42,28 +41,29 @@ bindsym Print exec "flameshot gui"
 # update mouse speed
 exec 'xset m 1/2 8'
 
-
 # redshift
-exec --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
+exec_always --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
 
-# DPI override
-exec_always --no-startup-id "xrandr --dpi 137"
+# # enable x lock on screen off
+# exec_always --no-startup-id "xss-lock -- gnome-screensaver-command --lock"
 
-# enable x lock on screen off
-exec_always --no-startup-id "xss-lock -- gnome-screensaver-command --lock"
-
-# screen timeouts. 5 mins for monitor, no sleep and no halt.
-exec_always --no-startup-id "xset dpms 0 0 300"
 
 # start gnome keyring
-exec --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
+exec_always --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
 
 # start unity setting for gtk support
 # Note: this appears to override the wallpaper preferences by feh, as well as DPI settings.
 exec_always --no-startup-id "unity-settings-daemon"
 
+# screen timeouts. 5 mins for monitor, no sleep and no halt.
+exec_always --no-startup-id "xset dpms 0 0 300"
+
+# DPI override
+exec_always --no-startup-id "xrandr --dpi 137"
+
 # load Xresources
 exec_always --no-startup-id "xrdb ~/.Xresources"
 
-## set background wallpaper
-exec_always --no-startup-id "feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"
+# set background wallpaper
+# enable sleep, so that unity daemon sets wallpaper and then we set it properly
+exec_always --no-startup-id "sleep 3 && feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"

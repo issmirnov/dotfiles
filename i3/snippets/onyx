@@ -5,6 +5,5 @@ assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 
 # startup apps
 exec --no-startup-id nm-applet
-exec fluxgui
 exec ssh-agent
 exec glipper

@@ -269,8 +269,8 @@ exec --no-startup-id xmodmap -e 'keycode 135 = Super_R' && xset -r 135
 exec xset r rate 280 40
 
 # music
-for_window [title="^cmus$"] move window to scratchpad
-exec --no-startup-id terminator -T cmus -e cmus
+# for_window [title="^cmus$"] move window to scratchpad
+# exec --no-startup-id terminator -T cmus -e cmus
 
 ### user apps
 exec $browser
