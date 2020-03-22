@@ -28,6 +28,7 @@ workspace studio output $left
 # Telegram
 assign [class="^TelegramDesktop$"] telegram
 workspace telegram output $right
+exec "/home/vania/bin/Telegram"
 
 # startup apps
 exec_always --no-startup-id nm-applet
@@ -48,7 +49,7 @@ bindsym Print exec "flameshot gui"
 exec_always 'xset m 1/2 8'
 
 # redshift
-exec_always --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
+exec --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
 
 # # enable x lock on screen off
 # exec_always --no-startup-id "xss-lock -- gnome-screensaver-command --lock"
