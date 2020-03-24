@@ -109,6 +109,7 @@ ctrl + alt - l : yabai -m window --insert east
 
 # rotate tree
 alt - r : yabai -m space --rotate 90
+alt + shift - r: yabai -m window --toggle split
 
 # mirror tree y-axis
 alt - y : yabai -m space --mirror y-axis
