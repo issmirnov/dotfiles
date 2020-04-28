@@ -25,3 +25,10 @@ tell application "Übersicht" to reload
 tell application "Übersicht" to refresh
 ```
 
+## Yabai Control
+
+If Yabai is not updating space indicators:
+
+1. Open "Script Editor", then 
+2. Try `osascript -e 'tell application "Übersicht" to refresh widget id "left-jsx"'` to verify that the applescript dictionary is loaded
+3. Restart Yabai and grant all access prompts. `sr yabai`
