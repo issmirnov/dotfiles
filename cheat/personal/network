@@ -12,3 +12,8 @@ sudo dhclient -r; sudo dhclient $iface
 
 # tweak OSX wifi join priority
 sudo /System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport prefs joinMode=Strongest
+
+# Wake on Lan
+arp -a # get all devices
+ins net-tools # for ether-wake
+ether-wake de:ad:be:ef # wake up machine
