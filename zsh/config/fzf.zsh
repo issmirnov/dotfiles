@@ -44,29 +44,36 @@ function zz() {
 function show() {
     local file
     file=$(locate / | fzf --query="$*" --select-1 --exit-0)
-    [ -n "$file" ] && bat "$file"
+    [ ! -n "$file" ] && echo "no results found" && return -1
+    [ -f "$file" ] && bat "$file"
+    [ -d "$file" ] && cd "$file"
 }
 
 # does local file search, from current directory, displays file in bat
 function showl() {
     local file
-    file=$(fzf --query="$*"\
-      --select-1 --exit-0)
-    [ -n "$file" ] && bat "$file"
+    file=$(fzf --query="$*" --select-1 --exit-0)
+    [ ! -n "$file" ] && echo "no results found" && return -1
+    [ -f "$file" ] && bat "$file"
+    [ -d "$file" ] && cd "$file"
 }
 
 # global file search -> vim
 function vf() {
   local file;
   file="$(locate / | fzf --query="$*" --select-1 --exit-0)";
-  [ -n "$file" ] && vim "$file";
+  [ ! -n "$file" ] && echo "no results found" && return -1
+  [ -f "$file" ] && vim "$file"
+  [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
 }
 
 # Pick file to edit
 function vfl() {
   local file
   file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0)
-  [ -n "$file" ] && vim "$file"
+  [ ! -n "$file" ] && echo "no results found" && return -1
+  [ -f "$file" ] && vim "$file"
+  [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
 }
 
 # Search through all files with ag, then open file at location
