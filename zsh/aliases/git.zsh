@@ -15,6 +15,8 @@ alias grm="git status | grep deleted | awk '{print \$3}' | xargs git rm"
 alias gacm='git add -A; git commit -m '
 alias g-='git checkout -' # quickly switch between branches.
 
+# clonet git repos when bare link is pasted into shell
+alias -s git="git clone" # this is a suffix alias.
 
 alias gj='open `git config remote.origin.url`'
 # Uses git's autocompletion for inner commands. Assumes an install of git's
