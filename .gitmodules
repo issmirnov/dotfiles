@@ -7,3 +7,6 @@
 [submodule "cheat/community"]
 	path = cheat/community
 	url = https://github.com/cheat/cheatsheets
+[submodule "tmux/plugins/tmux-yank"]
+	path = tmux/plugins/tmux-yank
+	url = https://github.com/tmux-plugins/tmux-yank
