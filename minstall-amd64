@@ -2,7 +2,7 @@
 # Minimal install script for: AMD64
 
 # install core tools
-sudo apt install -y zsh vim fzf fasd tmux silversearcher-ag python locate
+sudo apt install -y zsh vim fzf fasd tmux silversearcher-ag python locate tree
 
 # install bat
 wget https://github.com/sharkdp/bat/releases/download/v0.15.4/bat_0.15.4_amd64.deb && sudo dpkg -i bat*.deb
