@@ -9,7 +9,10 @@ wget https://github.com/sharkdp/bat/releases/download/v0.15.4/bat_0.15.4_amd64.d
 
 
 # install cheat
-wget https://github.com/cheat/cheat/releases/download/4.0.2/cheat-linux-amd64.gz && dpkg -i c
+wget https://github.com/cheat/cheat/releases/download/4.0.2/cheat-linux-amd64.gz
+gzip -d cheat-linux-amd64.gz
+mv cheat-linux-amd64 ~/bin/cheat && chmod +x ~/bin/cheat
+
 
 
 # manually clone fzf
