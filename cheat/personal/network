@@ -17,3 +17,6 @@ sudo /System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources
 arp -a # get all devices
 ins net-tools # for ether-wake
 ether-wake de:ad:be:ef # wake up machine
+
+# Determine geographic location of a machine
+curl -s https://ipvigilante.com/$(curl -s https://ipinfo.io/ip) | jq .
