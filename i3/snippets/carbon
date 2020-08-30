@@ -66,10 +66,10 @@ exec_always --no-startup-id "unity-settings-daemon"
 exec_always --no-startup-id "xset dpms 0 0 300"
 
 # DPI override
-exec_always --no-startup-id "xrandr --dpi 137"
+# exec_always --no-startup-id "xrandr --dpi 137"
 
 # load Xresources
-exec_always --no-startup-id "xrdb ~/.Xresources"
+exec_always --no-startup-id "xrdb -merge ~/.Xresources"
 
 # set background wallpaper
 # enable sleep, so that unity daemon sets wallpaper and then we set it properly
