@@ -16,3 +16,4 @@ zsh is installed, and that it is the default shell.
 ## Plugin Manager
 
 We use https://github.com/tarjoilija/zgen for loading plugins.
+You can see the list of plugins used in the `zshrc` file in this directory.
