@@ -12,3 +12,7 @@ contain handy functions.
 
 The `setup` script is called by the `install` script one level up. It checks that
 zsh is installed, and that it is the default shell.
+
+## Plugin Manager
+
+We use https://github.com/tarjoilija/zgen for loading plugins.
