@@ -1,8 +1,16 @@
 [global_config]
-  title_font = Source Code Pro 18
   title_hide_sizetext = True
   title_use_system_font = False
+  title_font = Source Code Pro 14
 [keybindings]
+[profiles]
+  [[default]]
+    urgent_bell = True
+    cursor_color = "#aaaaaa"
+    font = Inconsolata 14
+    show_titlebar = False
+    scrollback_infinite = True
+    use_system_font = False
 [layouts]
   [[default]]
     [[[child1]]]
@@ -54,11 +62,3 @@
       profile = default
       type = Terminal
 [plugins]
-[profiles]
-  [[default]]
-    cursor_color = "#aaaaaa"
-    font = Inconsolata 18
-    scrollback_infinite = True
-    show_titlebar = False
-    urgent_bell = True
-    use_system_font = False
