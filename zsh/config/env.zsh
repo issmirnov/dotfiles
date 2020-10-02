@@ -6,7 +6,7 @@ export TERM=xterm-256color
 
 # Core config
 export EDITOR=vim
-
+export VISUAL=vim # editor for crontab
 
 # OS-dependent locations
 if [[ $OSTYPE == 'linux-gnu' ]]; then
