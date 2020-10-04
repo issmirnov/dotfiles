@@ -13,14 +13,14 @@ elif [[ $OSTYPE == darwin* ]]; then
 fi
 
 # additional autocompletions
-fpath=($HOME/.dotfiles/zsh/config/fpath $fpath)
+fpath=($HOME/.dotfiles/zsh/config/fpath /usr/local/share/zsh/site-functions /usr/share/zsh/vendor-completions $fpath)
 
 # Go Definitions
 export GOPATH=$HOME/go
 GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 
 
-# Check for symlinks to directories in bin and 
+# Check for symlinks to directories in bin and
 # append them to the path. This is useful when linking in
 # a suite such as flutter or android SDK.
 local elem
