@@ -1,10 +1,10 @@
 ## gnome indicators
 
 # DPI
-exec --no-startup-id /usr/libexec/gsd-xsettings
+exec_always --no-startup-id  /usr/libexec/gsd-xsettings
 
 # Sound support.
 # exec --no-startup-id /usr/libexec/gsd-sound
 
 # SSH and file support
-exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+exec_always --no-startup-id /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
