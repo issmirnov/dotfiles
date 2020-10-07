@@ -1,7 +1,7 @@
 [global_config]
   title_hide_sizetext = True
   title_use_system_font = False
-  title_font = Source Code Pro 14
+  title_font = Source Code Pro 16
 [keybindings]
 [profiles]
   [[default]]

@@ -1,8 +1,10 @@
 ## gnome indicators
-exec --no-startup-id gnome-settings-daemon
-exec --no-startup-id gnome-sound-applet
+
+# DPI
+exec --no-startup-id /usr/libexec/gsd-xsettings
+
+# Sound support.
+# exec --no-startup-id /usr/libexec/gsd-sound
+
+# SSH and file support
 exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
-
-# lock the screen
-bindsym $MOD+l exec "gnome-screensaver-command --lock && sleep 1 && xset dpms force off"
-
