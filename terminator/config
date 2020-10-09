@@ -7,7 +7,7 @@
   [[default]]
     urgent_bell = True
     cursor_color = "#aaaaaa"
-    font = Inconsolata 14
+    font = Inconsolata 18
     show_titlebar = False
     scrollback_infinite = True
     use_system_font = False
