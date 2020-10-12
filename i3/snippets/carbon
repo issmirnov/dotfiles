@@ -84,3 +84,6 @@ bindsym $MOD+l exec "(xsecurelock) && sleep 1 && xset dpms force off"
 
 # xsecurelock + hibernate
 bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
+
+# xss-lock will respond to DPMS events to lock the screen
+exec_always --no-startup-id "xss-lock -- xsecurelock"
