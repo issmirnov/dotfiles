@@ -1,0 +1,28 @@
+# To set up a proper chroot for ubuntu
+
+# 1. Create mount points
+sudo mkdir -p /mnt/ubuntu
+
+# 2. Mount target partition
+sudo mount /dev/mapper/vg1-ubuntu /mnt/ubuntu
+
+
+# 3. Set up bind mounts
+sudo mount --bind /dev /mnt/dev &&
+sudo mount --bind /dev/pts /mnt/dev/pts &&
+sudo mount --bind /proc /mnt/proc &&
+sudo mount --bind /sys /mnt/sys
+sudo mount --bind /run /mnt/ubuntu/run
+
+# 4. Set up boot mounts, so that you can update grub
+# You can get these with 'lsblk' + 'blkid'
+sudo mount /dev/sdxy /mnt/ubuntu/boot
+sudo mount /dev/sdxz /mnt/ubuntu/boot/efi
+
+# 5. Chroot in
+sudo chroot /mnt/ubuntu
+
+# 6. Optional: update etc/fstab or reinstall grub
+cat /etc/fstab
+sudo update-grub2
+sudo update-initramfs -c -k all
