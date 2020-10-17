@@ -74,3 +74,16 @@ exec_always --no-startup-id "xrdb -merge ~/.Xresources"
 # set background wallpaper
 # enable sleep, so that unity daemon sets wallpaper and then we set it properly
 exec_always --no-startup-id "sleep 3 && feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"
+
+
+# Load SSH agent
+exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+
+# Lock screens and sleep displays
+bindsym $MOD+l exec "(xsecurelock) && sleep 1 && xset dpms force off"
+
+# xsecurelock + hibernate
+bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
+
+# xss-lock will respond to DPMS events to lock the screen
+exec_always --no-startup-id "xss-lock -- xsecurelock"

@@ -19,3 +19,6 @@ alias vup='vagrant up'
 
 # docker
 alias ubuntu='docker run -ti ubuntu:bionic sh'
+
+# terraform
+alias tf=terraform

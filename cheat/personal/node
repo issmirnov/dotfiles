@@ -1,0 +1,3 @@
+# Run adhoc node command through docker
+# Container will be named: npm-install-app, command will be "npm install"
+docker run -it --rm --name npm-install-app -v "$PWD":/usr/src/app -w /usr/src/app node:10 npm install
