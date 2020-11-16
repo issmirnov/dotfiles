@@ -1,0 +1,13 @@
+## Cheatsheet for macos defaults
+
+
+# Open browset to giant reference
+open https://macos-defaults.com/
+
+# List domains
+defaults domains
+
+# Search for entries
+defaults search foo
+
+
