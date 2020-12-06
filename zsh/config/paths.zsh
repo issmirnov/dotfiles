@@ -4,7 +4,7 @@
 DOT_BIN="$HOME/.dotfiles/bin"
 USER_BIN="$HOME/bin"
 SYSTEM="/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
-
+PYTHON="$HOME/.local/bin" # pip install target.
 # OS-dependent  paths.
 if [[ $OSTYPE == 'linux-gnu' ]]; then
   TEX="/usr/texbin"
@@ -32,4 +32,4 @@ for elem in $USER_BIN/*; do
 done
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
