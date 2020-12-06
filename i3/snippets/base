@@ -248,12 +248,17 @@ bindsym $mod+z exec $browser
 bindsym $mod+x exec $filemanager
 bindsym $mod+Return exec i3-sensible-terminal
 
-# App Bindings
+# App Bindings: use 'xprop | grep WM_CLASS' to get names.
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 assign [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] hangouts
 assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
 
+# IDE binds.
+assign[class="^jetbrains-goland$"] goland
+assign[class="^jetbrains-idea$"] idea
+
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
+
 
 ###### startup applications #####
 
