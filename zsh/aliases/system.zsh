@@ -79,7 +79,7 @@ alias i3c='vim ~/.i3/config'
 
 # find files fast
 unalias ff
-unalias fd
+# unalias fd
 function ff () {
     find . -iname "*$@*" ;
 }
