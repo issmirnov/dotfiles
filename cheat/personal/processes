@@ -1,0 +1,11 @@
+# List process using port 5000
+lsof -i:5000
+
+# List process usning port 5000
+netstat -tulpn | grep 5000
+
+# Kill process by name
+pkill nginx
+
+# Search processes
+ps -aux | grep foo
