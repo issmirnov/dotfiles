@@ -265,6 +265,8 @@ if has("autocmd")
   augroup templates
     autocmd BufNewFile *.sh 0r ~/.vim/templates/skeleton.sh
     autocmd BufNewFile *.zsh 0r ~/.vim/templates/skeleton.zsh
+    autocmd BufNewFile docker-compose.yml 0r ~/.vim/templates/skeleton-docker-compose.yml
+    autocmd BufNewFile README.md 0r ~/.vim/templates/skeleton-README.md
   augroup END
 endif
 
