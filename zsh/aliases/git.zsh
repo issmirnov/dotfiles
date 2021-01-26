@@ -12,6 +12,7 @@ alias gco='git checkout'
 alias gb='git branch'
 alias gs='git status -sb' # upgrade your git if -sb breaks for you. it's fun.
 alias grm="git status | grep deleted | awk '{print \$3}' | xargs git rm"
+alias gac='git add -A; git commit'
 alias gacm='git add -A; git commit -m '
 alias g-='git checkout -' # quickly switch between branches.
 
