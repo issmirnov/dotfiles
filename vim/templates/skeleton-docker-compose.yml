@@ -1,0 +1,25 @@
+version: '3.4'
+
+services:
+  myname:
+    container_name: svc_name
+    # hostname: foo # optional, usually not needed
+    image: "foo/bar"
+    ports:
+      - "2000:7080"
+      - "3000:5050"
+      - 8100/udp # expose only UDP on 8100
+    environment:
+      # for registrator (consul -> nginx)
+      - SERVICE_7080_NAME=svc_name # use internal port name to catch it
+      - SERVICE_TAGS=devtools,nginx
+      - SERVICE_3000_IGNORE=1 # exlude 3000 port from registrator
+      - TZ: 'America/Los_Angeles'
+      # If support, mask internal user gid/uid to avoid permissions issues.
+      - "PUID=1000"
+      - "PGID=1000"
+
+    volumes:
+       - './data:/data'
+       - '/some/file/path:/config'
+    restart: unless-stopped # or 'always'
