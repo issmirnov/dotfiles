@@ -27,6 +27,13 @@ else
   echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
 fi
 
+# Set FZF fzf-file-widget to use the same options
+# Other available overrides: 
+# fzf-file-widget: FZF_CTRL_T_COMMAND, FZF_CTRL_T_OPTS
+# fzf-cd-widget: FZF_ALT_C_COMMAND, FZF_ALT_C_OPTS
+# fzf-history-widget: FZF_CTRL_R_OPTS
+export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
+
 # Auto-completion
 [[ $- == *i* ]] && source "$FZF_PREFIX/fzf/shell/completion.zsh" 2> /dev/null
 
