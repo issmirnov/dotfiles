@@ -1,0 +1,13 @@
+name: emails
+parent: default
+
+matches:
+  - trigger: ":sig"
+    replace: |
+      Best,
+      Ivan
+  - trigger: ":van"
+    replace: vaniaspeedy@gmail.com
+
+  - trigger: ":isg"
+    replace: isgsmirnov@gmail.com
