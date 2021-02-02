@@ -9,19 +9,20 @@
     - [i3/genconf, "Generating i3 config"]
 
 - link:
+    ~/.Xresources: x/Xresources
+    ~/.config/espanso: espanso
+    ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
+    ~/.config/terminator/config: terminator/config
+    ~/.config/user-dirs.conf: xdg/user-dirs.conf
+    ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
+    ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
+    ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
+    ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
     ~/.i3/config: i3/config
     ~/.i3blocks.conf: i3/i3blocks.conf
+    ~/.xbindkeysrc: xbindkeys/xbindkeysrc
     ~/bin/hop: i3/scripts/hop
     ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
-    ~/.config/terminator/config: terminator/config
-    ~/.xbindkeysrc: xbindkeys/xbindkeysrc
-    ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
-    ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
-    ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
-    ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
-    ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
-    ~/.config/user-dirs.conf: xdg/user-dirs.conf
-    ~/.Xresources: x/Xresources
 
 - shell:
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate font cache."]
