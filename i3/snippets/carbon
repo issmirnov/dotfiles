@@ -42,7 +42,7 @@ for_window [class="^Pavucontrol$"] move window to scratchpad
 exec_always --no-startup-id pavucontrol
 
 
-# Map Print Screeen Key to flameshot
+# Map Print Screeen Key to flameshot for screenshots (instead of maim / slop )
 bindsym Print exec "flameshot gui"
 
 # update mouse speed
