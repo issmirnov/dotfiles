@@ -12,12 +12,12 @@ jobs:
     working_directory: ~/.dotfiles
     steps:
       - checkout
-      - run: sudo apt install curl zsh # install curl and zsh
+      - run: apt install curl zsh # install curl and zsh
       - run: mkdir -p ~/.i3 # make i3 dir for linking targets
       - run: mkdir -p ~/.config # make dir for terminator
       - run: U=$(curl https://github.cache.smirnov.cloud/repos/sharkdp/bat/releases/latest | jq -r -c 'first(.assets[] | select(.browser_download_url | contains("amd64"))) | .browser_download_url')
       - run: wget $U # download bat.deb
-      - run: sudo dpkg -i $(basename $U) # install bat.
+      - run: dpkg -i $(basename $U) # install bat.
       - run: ./install # test install script - vim, bat, etc
       - run: cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1;fi # zsh linter
 workflows:
