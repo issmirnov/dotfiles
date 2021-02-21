@@ -12,6 +12,7 @@ jobs:
     working_directory: ~/.dotfiles
     steps:
       - checkout
+      - run: apt update
       - run: apt install curl zsh # install curl and zsh
       - run: mkdir -p ~/.i3 # make i3 dir for linking targets
       - run: mkdir -p ~/.config # make dir for terminator
