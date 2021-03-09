@@ -134,3 +134,7 @@
 	path = ~/.gitconfig_local
 [fetch]
 	prune = true
+[remote "origin"]
+	tagopt = --tags
+[remote "upstream"]
+	tagopt = --tags
