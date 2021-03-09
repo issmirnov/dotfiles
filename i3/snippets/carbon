@@ -42,7 +42,7 @@ for_window [class="^Pavucontrol$"] move window to scratchpad
 exec_always --no-startup-id pavucontrol
 
 
-# Map Print Screeen Key to flameshot
+# Map Print Screeen Key to flameshot for screenshots (instead of maim / slop )
 bindsym Print exec "flameshot gui"
 
 # update mouse speed
@@ -87,3 +87,6 @@ bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 
 # xss-lock will respond to DPMS events to lock the screen
 exec_always --no-startup-id "xss-lock -- xsecurelock"
+
+# Special: while using 27's, use native chrome scale
+set $browser "google-chrome --force-device-scale-factor=1.00"

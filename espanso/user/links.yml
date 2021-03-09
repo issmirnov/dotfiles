@@ -1,0 +1,6 @@
+name: links
+parent: default
+
+matches:
+  - trigger: ":srt"
+    replace: https://smirnov.link/roadtrip

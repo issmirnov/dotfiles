@@ -1,6 +1,6 @@
 # vim:ft=zsh
-# alias: ip ~ Get my current global IP address
-alias ip="dig +short myip.opendns.com @resolver1.opendns.com"
+# alias: myip ~ Get my current global IP address
+alias myip="dig +short myip.opendns.com @resolver1.opendns.com"
 
 # alias: localip ~ Get my locally-set IP address
 alias localip="ipconfig getifaddr en1"

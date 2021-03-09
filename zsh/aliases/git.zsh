@@ -16,7 +16,10 @@ alias gac='git add -A; git commit'
 alias gacm='git add -A; git commit -m '
 alias g-='git checkout -' # quickly switch between branches.
 
-# clonet git repos when bare link is pasted into shell
+export forgit_checkout_branch=gcob # move wfxr/forgit 'gco' to 'gcob'
+alias gcb='git checkout -b'
+
+# clone git repos when bare link is pasted into shell
 alias -s git="git clone" # this is a suffix alias.
 
 alias gj='open `git config remote.origin.url`'

@@ -1,13 +1,13 @@
 [global_config]
   title_hide_sizetext = True
   title_use_system_font = False
-  title_font = Source Code Pro 16
+  title_font = Source Code Pro 14
 [keybindings]
 [profiles]
   [[default]]
     urgent_bell = True
     cursor_color = "#aaaaaa"
-    font = Inconsolata 18
+    font = Inconsolata 16
     show_titlebar = False
     scrollback_infinite = True
     use_system_font = False

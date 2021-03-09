@@ -112,13 +112,24 @@
 	shorter = %C(auto)%D %C(black)--%C(bold black)%gD%N %ad by %C(white)%cn%C(reset)
 	vtree = %C(bold blue)%h%C(reset)+%C(bold black)(%cr)%C(reset)+%C(auto)%D%C(reset)++\n+++       %C(bold black)%an%C(reset)%C(black):%C(reset) %s
 
+[fetch]
+    # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
+    prune = true
+
 [pull]
-        rebase = false
+    # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
+	rebase = true
 
 # https://mislav.net/2013/02/merge-vs-rebase/
 # TODO: Pick a merging model for my downstream projects.
 [rebase]
 	autoStash = false
+
+[remote "origin"]
+	tagopt = --tags
+
+[remote "upstream"]
+	tagopt = --tags
 
 [rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
 	enabled = true
@@ -132,9 +143,3 @@
 # Allow local customizations in the .gitconfig_local file
 [include]
 	path = ~/.gitconfig_local
-[fetch]
-	prune = true
-[remote "origin"]
-	tagopt = --tags
-[remote "upstream"]
-	tagopt = --tags
