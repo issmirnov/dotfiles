@@ -10,7 +10,7 @@ jobs:
     steps:
       - checkout
       - run: apt update
-      - run: apt install -y wget vim curl zsh jq # install curl and zsh
+      - run: apt install -y git wget vim curl zsh jq # install curl and zsh
       - run: mkdir -p ~/.i3 ~/.config # make i3 dir for linking targets
       - run: export U=$(curl https://github.cache.smirnov.cloud/repos/sharkdp/bat/releases/latest | jq -r -c 'first(.assets[] | select(.browser_download_url | contains("amd64"))) | .browser_download_url') && wget $U && dpkg -i $(basename $U) # install bat.
       - run: ./install # test install script - vim, bat, etc
