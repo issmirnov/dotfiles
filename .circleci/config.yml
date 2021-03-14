@@ -22,8 +22,7 @@ jobs:
       - run: ./install # test install script - vim, bat, etc
       - run: cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1;fi # zsh linter
 workflows:
-  # Name the workflow "welcome"
-  welcome:
-    # Run the welcome/run job in its own container
+  version: 2
+  run_wf:
     jobs:
       - run
