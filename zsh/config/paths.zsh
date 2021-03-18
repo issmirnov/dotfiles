@@ -4,7 +4,8 @@
 DOT_BIN="$HOME/.dotfiles/bin"
 USER_BIN="$HOME/bin"
 SYSTEM="/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
-PYTHON="$HOME/.local/bin" # pip install target.
+PYTHON="$HOME/.local/bin:$HOME/Library/Python/3.9/bin" # pip install target for linux and macos
+
 # OS-dependent  paths.
 if [[ $OSTYPE == 'linux-gnu' ]]; then
   TEX="/usr/texbin"
