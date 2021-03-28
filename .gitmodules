@@ -10,3 +10,6 @@
 [submodule "tmux/plugins/tmux-yank"]
 	path = tmux/plugins/tmux-yank
 	url = https://github.com/tmux-plugins/tmux-yank
+[submodule "ubersicht/simple-bar"]
+	path = ubersicht/simple-bar
+	url = https://github.com/Jean-Tinland/simple-bar
