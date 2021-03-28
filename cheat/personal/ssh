@@ -16,3 +16,7 @@ sshfs name@server:/path/to/folder /path/to/mount/point
 
 # Oneliner to upload pub key to server
 cat ~/.ssh/id_rsa.pub | ssh user@server 'dd of=.ssh/authorized_keys oflag=append conv=notrunc'
+
+# Visual guide to SSH tunnels
+open https://robotmoon.com/ssh-tunnels/
+
