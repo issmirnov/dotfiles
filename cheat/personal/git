@@ -76,5 +76,8 @@ git apply name.patch
 git push --delete origin tagName
 git tag -d tagName
 
+# Check out by date
+git checkout @{two.days.ago}
+
 # More hints
 https://devhints.io/git-log
