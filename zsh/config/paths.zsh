@@ -33,4 +33,4 @@ for elem in $USER_BIN/*; do
 done
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
