@@ -20,7 +20,7 @@
     whitespace = trailing-space,space-before-tab
     excludesfile = ~/.dotfiles/git/ignore
     editor = vim
-    pager = diff-so-fancy | less --tabs=4 -RFX
+    pager = delta
 
 #------------------------------------------------------------#
 # Less common config, will likely remain the same for years.
@@ -90,13 +90,26 @@
 	branch = green bold
 	nobranch = red
 
+[delta]
+    features = side-by-side line-numbers decorations
+    whitespace-error-style = 22 reverse
+
+[delta "decorations"]
+    commit-decoration-style = bold yellow box ul
+    file-style = bold yellow ul
+    file-decoration-style = none
+
 [diff]
 	renames = copies
 	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
 	tool = vimdiff
+    colorMoved = default
 
 [grep]
 	lineNumber = true
+
+[interactive]
+    diffFilter = delta --color-only
 
 [merge]
     stat = true
