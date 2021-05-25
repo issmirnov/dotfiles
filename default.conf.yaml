@@ -22,6 +22,7 @@
     ~/.gdbinit: gdb/gdbinit
     ~/.nanorc: nano/nanorc
     ~/.taskrc: taskwarrior/taskrc
+    ~/.tmate.conf: tmate/tmate.conf
     ~/.tmux.conf: tmux/tmux.conf
     ~/.toprc : top/toprc
     ~/.vim/autoload: vim/autoload
