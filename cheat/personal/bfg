@@ -1,0 +1,5 @@
+# Run https://rtyley.github.io/bfg-repo-cleaner/
+
+# Docker run
+wget https://repo1.maven.org/maven2/com/madgag/bfg/1.14.0/bfg-1.14.0.jar 
+docker run --rm -v "$PWD":/app -w /app openjdk:9 java -jar bfg-1.14.0.jar
