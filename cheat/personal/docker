@@ -42,3 +42,6 @@ docker rm $(docker ps -aq)
 
 # remove all images
 docker rmi $(docker images -q)
+
+# Launch docker compose in a fresh state
+docker-compose up --force-recreate --renew-anon-volumes
