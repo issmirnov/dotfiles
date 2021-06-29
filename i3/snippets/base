@@ -252,6 +252,7 @@ bindsym $mod+Return exec i3-sensible-terminal
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 assign [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] hangouts
 assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
+assign [class="^slack$"] slack
 
 # IDE binds.
 assign[class="^jetbrains-goland$"] goland
