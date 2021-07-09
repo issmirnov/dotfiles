@@ -253,6 +253,7 @@ assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
 assign [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] hangouts
 assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
 assign [class="^slack$"] slack
+assign [class="^discord$"] discord
 
 # IDE binds.
 assign[class="^jetbrains-goland$"] goland
