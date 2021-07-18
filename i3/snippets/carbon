@@ -80,7 +80,9 @@ exec_always --no-startup-id "sleep 3 && feh --recursive --randomize --bg-fill ~/
 exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
 
 # Lock screens and sleep displays
-bindsym $MOD+l exec "(xsecurelock) && sleep 1 && xset dpms force off"
+# Note: since we run xss-lock hook on the DPMS events, all we have to do is force
+# DPMS to off. Otherwise, we will have to enter the password twice upon unlock.
+bindsym $MOD+l exec "xset dpms force off"
 
 # xsecurelock + hibernate
 bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
