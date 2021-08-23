@@ -35,3 +35,9 @@ ffmpeg -ss 00:34:24.85 -t 10 -i path/to/file.mp4 -f mp3 pipe:play | ffplay -i pi
 
 ## Convert android sounds to iphone
 ffmpeg -i drops.ogg -c:a aac -b:a 128k drops.m4a
+
+# To record a video from the desktop
+# https://trac.ffmpeg.org/wiki/Capture/Desktop
+# This will grab the image from desktop, starting with the upper-left corner at x=100, 
+# y=200 with a width and height of 1024⨉768.
+ffmpeg -video_size 1024x768 -framerate 25 -f x11grab -i :0.0+100,200 output.mp4
