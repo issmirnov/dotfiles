@@ -81,3 +81,8 @@ git checkout @{two.days.ago}
 
 # More hints
 https://devhints.io/git-log
+
+# Count line deltas
+git log --numstat --pretty="%H" --author="Ivan Smirnov" old_commit..HEAD | awk 'NF==3 {plus+=$1; minus+=$2} END {printf("+%d, -%d\n", plus, minus)}'
+
+
