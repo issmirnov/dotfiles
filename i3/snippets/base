@@ -258,6 +258,7 @@ assign [class="^discord$"] discord
 # IDE binds.
 assign[class="^jetbrains-goland$"] goland
 assign[class="^jetbrains-idea$"] idea
+assign[class="^crx_kjgfgldnnfoeklkmfkjfagphfepbbdan$"] Google Meet
 
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
