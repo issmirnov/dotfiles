@@ -2,6 +2,7 @@
 # Fix potentially broken commands
 command -v md5sum > /dev/null || alias md5sum="md5"
 
+alias o='open'
 # Interactive write to file.
 function to {
 	if [[ -z "$1" ]]; then
