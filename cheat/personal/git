@@ -86,3 +86,6 @@ https://devhints.io/git-log
 git log --numstat --pretty="%H" --author="Ivan Smirnov" old_commit..HEAD | awk 'NF==3 {plus+=$1; minus+=$2} END {printf("+%d, -%d\n", plus, minus)}'
 
 
+# Create empty commit (useful for debugging triggers or CI/CD)
+git commit --allow-empty -m "Trigger CI CD"
+
