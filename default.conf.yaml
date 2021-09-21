@@ -29,6 +29,7 @@
     ~/.vim/templates: vim/templates
     ~/.vimrc: vim/vimrc
     ~/.zshrc: zsh/zshrc
+    ~/.zshenv: zsh/config/paths.zsh # for non interactive commands
     ~/bin/tm: tmux/tmux-menu
 
 - shell:
