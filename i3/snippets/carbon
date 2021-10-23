@@ -91,7 +91,7 @@ bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 exec_always --no-startup-id "xss-lock -- xsecurelock"
 
 # Special: while using 27's, use native chrome scale
-set $browser "google-chrome --force-device-scale-factor=1.00"
+# set $browser "google-chrome --force-device-scale-factor=1.00"
 
 # set up dual 27's while travelling
-exec_always --no-startup-id "/home/vania/.screenlayout/dual-27.sh"
+# exec_always --no-startup-id "/home/vania/.screenlayout/dual-27.sh"
