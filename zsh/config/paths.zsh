@@ -23,6 +23,9 @@ GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 # Ubuntu Snaps are installed to /snap/bin symlinks
 SNAP_BIN="/snap/bin"
 
+
+# Homebrew 3.0
+BREW="/opt/homebrew/bin"
 # Check for symlinks to directories in bin and
 # append them to the path. This is useful when linking in
 # a suite such as flutter or android SDK.
@@ -35,4 +38,4 @@ for elem in $USER_BIN/*; do
 done
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
