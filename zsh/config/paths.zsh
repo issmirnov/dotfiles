@@ -36,6 +36,8 @@ for elem in $USER_BIN/*; do
         USER_BIN=$USER_BIN:$elem
     fi
 done
+unset elem
+
 
 # export final result
 export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
