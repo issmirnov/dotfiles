@@ -6,7 +6,7 @@
 if [[ $OSTYPE == linux-* ]]; then
   export FZF_PREFIX=/opt
 elif [[ $OSTYPE == darwin* ]]; then
-  export FZF_PREFIX=/usr/local/opt
+  export FZF_PREFIX=/opt/homebrew/opt
 else
   # FZF not available
   return 0
@@ -28,7 +28,7 @@ else
 fi
 
 # Set FZF fzf-file-widget to use the same options
-# Other available overrides: 
+# Other available overrides:
 # fzf-file-widget: FZF_CTRL_T_COMMAND, FZF_CTRL_T_OPTS
 # fzf-cd-widget: FZF_ALT_C_COMMAND, FZF_ALT_C_OPTS
 # fzf-history-widget: FZF_CTRL_R_OPTS
