@@ -14,7 +14,7 @@ elif [[ $OSTYPE == darwin* ]]; then
 fi
 
 # additional autocompletions
-fpath=($HOME/.dotfiles/zsh/config/fpath /usr/local/share/zsh/site-functions /usr/share/zsh/vendor-completions $fpath)
+fpath=($HOME/.dotfiles/zsh/config/fpath /opt/homebrew/share/zsh/site-functions /usr/local/share/zsh/site-functions /usr/share/zsh/vendor-completions $fpath)
 
 # Go Definitions
 export GOPATH=$HOME/go
