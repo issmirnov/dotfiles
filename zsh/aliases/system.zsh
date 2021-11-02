@@ -108,6 +108,11 @@ function ram() {
     fi
 }
 
+# jump to obsidian
+function o..(){
+  cd ~/Data/obsidian
+}
+
 # jump to dotfiles
 function d..(){
   cd ~/.dotfiles
