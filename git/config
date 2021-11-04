@@ -155,3 +155,5 @@
 # Allow local customizations in the .gitconfig_local file
 [include]
 	path = ~/.gitconfig_local
+[merge "ours"]
+	driver = true
