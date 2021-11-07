@@ -28,7 +28,7 @@ export DISABLE_AUTO_UPDATE="true" # disable OMZ auto update prompt
 if ! zgen saved; then
   	zgen oh-my-zsh
 
-  	plugins=(git git-extras history brew common-aliases osx tmux)
+  	plugins=(git git-extras history brew common-aliases macos tmux)
 	plugins+=(z extract adb vagrant )
   	for p in ${(@s' ')plugins}; do
   		zgen oh-my-zsh plugins/$p
