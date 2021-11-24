@@ -18,7 +18,7 @@ cat $ROOT/base > $ROOT/skhdrc.generated
 # no useful interfaces, and it was cleaner to just hardcode my 2 hosts
 # https://linuxize.com/post/how-to-compare-strings-in-bash/
 host="$(hostname -s)"
-if [ "$host" = "carbon" ] || [ "$host" = "flume-disabled" ];then
+if [ "$host" = "carbon" ] || [ "$host" = "jodium" ];then
     echo "Found whitelisted host with System Integrity Disabled, adding in SIP commands in skhdrc."
     cat $ROOT/sip >> $ROOT/skhdrc.generated
 fi
