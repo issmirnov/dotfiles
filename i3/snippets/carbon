@@ -90,6 +90,11 @@ bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 # xss-lock will respond to DPMS events to lock the screen
 exec_always --no-startup-id "xss-lock -- xsecurelock"
 
+# start up discord and obsidiann
+exec_always --no-startup-id "/home/vania/bin/obsidian"
+exec_always --no-startup-id "discord"
+
+
 # Special: while using 27's, use native chrome scale
 # set $browser "google-chrome --force-device-scale-factor=1.00"
 
