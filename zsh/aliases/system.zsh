@@ -38,7 +38,7 @@ elif [[ $OSTYPE == darwin* ]]; then
     alias ll='ls -lha'
     function upgrade() {
         # check for permissions
-        if [[ "$(stat -f '%u' /usr/local/Homebrew)" != "$(id -u)" || "$(stat -f '%u' /usr/local/bin)" != "$(id -u)"  ]];then
+        if [[ "$(stat -f '%u' $(brew --prefix))" != "$(id -u)" || "$(stat -f '%u' /usr/local/bin)" != "$(id -u)"  ]];then
             echo "$(brew --prefix)/* is not owned by $(whoami)"
             sudo chown -R $(whoami):admin $(brew --prefix)/*
         fi
