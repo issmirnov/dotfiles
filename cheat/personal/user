@@ -1,0 +1,8 @@
+# Create group
+sudo groupadd foo
+
+# Add user to group
+sudo usermod -aG foo $USER
+
+# force group change without new login
+newgrp foo
