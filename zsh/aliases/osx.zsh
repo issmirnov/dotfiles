@@ -51,3 +51,6 @@ function ss(){
   brew services list | grep $1 | highlight green started | highlight red stopped
 }
 fi
+
+# unalias buf as we use buf.build
+unalias buf

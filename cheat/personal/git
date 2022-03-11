@@ -2,7 +2,7 @@
 git commit --amend
 
 # To stage last commit
-git reset HEAD~ 
+git reset HEAD~
 
 # To remove untracked files
 git clean -f -d
@@ -84,8 +84,8 @@ https://devhints.io/git-log
 
 # Count line deltas
 git log --numstat --pretty="%H" --author="Ivan Smirnov" old_commit..HEAD | awk 'NF==3 {plus+=$1; minus+=$2} END {printf("+%d, -%d\n", plus, minus)}'
+git log --shortstat --since "10 days ago"  | grep "files changed" | awk '{files+=$1; inserted+=$4; deleted+=$6} END {print "files changed", files, "lines inserted:", inserted, "lines deleted:", deleted}'
 
 
 # Create empty commit (useful for debugging triggers or CI/CD)
 git commit --allow-empty -m "Trigger CI CD"
-
