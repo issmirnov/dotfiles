@@ -89,3 +89,15 @@ git log --shortstat --since "10 days ago"  | grep "files changed" | awk '{files+
 
 # Create empty commit (useful for debugging triggers or CI/CD)
 git commit --allow-empty -m "Trigger CI CD"
+
+# View changed files
+git diff-tree -r --name-only --no-commit-id HEAD@{1} HEAD
+# Alternatively, you can use the standard syntax to diff named refs:
+git diff-tree -r --name-only --no-commit-id base myfeature
+
+## Monorepo sparse checkout
+git clone --no-checkout --filter=blob:none https://my.repo/monorepo.git
+cd monorepo
+git sparse-checkout init --cone
+git sparse-checkout set /mypath/ /some/other/path/
+git read-tree -mu HEAD
