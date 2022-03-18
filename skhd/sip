@@ -3,6 +3,8 @@
 # the skhd config depending on SIP status.
 
 
-# fast switch spaces without animations
+# # fast switch spaces without animations
+# requires correctv install of scripting addon
+# https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)#macos-big-sur-and-monterey---automatically-load-scripting-addition-on-startup
 ctrl - left: yabai -m space --focus prev
 ctrl - right: yabai -m space --focus next
