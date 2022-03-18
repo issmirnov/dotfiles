@@ -64,11 +64,12 @@ yabai -m signal --add event=window_destroyed action="osascript -e 'tell applicat
 
 
 ## Name spaces ##
-yabai -m space 1 --label "1 main"
-yabai -m space 2 --label "2 productivity"
-yabai -m space 3 --label "3 messaging"
-yabai -m space 4 --label "4 project"
-yabai -m space 5 --label "5 terminal"
-yabai -m space 6 --label "6 research"
+# Unused, as I move spaces around all the time
+# yabai -m space 1 --label "1 main"
+# yabai -m space 2 --label "2 productivity"
+# yabai -m space 3 --label "3 messaging"
+# yabai -m space 4 --label "4 project"
+# yabai -m space 5 --label "5 terminal"
+# yabai -m space 6 --label "6 research"
 
 echo "yabai configuration loaded.."
