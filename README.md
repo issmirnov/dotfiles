@@ -54,7 +54,28 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
   config, which gets spliced in dynamically on every pull.
 - The [vim](vim/) directory is relatively standalone, and contains my attempt
   at building a sane vim config that isn't complex enough to launch nukes when
-  your cat sneezes on the keyboard. 
+  your cat sneezes on the keyboard.
+
+## Macos Window manager stack
+
+I've been getting a lot of questions about my MacOS window management. Here's the full stack:
+
+- https://github.com/koekeishiya/yabai is used to tile my windows.
+  - the `yabai` folder has general config - setting border colors, focus rules, etc.
+  - NOTE: The top two lines are for SIP patched machines. See the inline comment.
+- https://github.com/koekeishiya/skhd is a hoteky daeemon, used to interact with yabai.
+  - Config folder `skhd` - note the dynamic generator. You can just copy `base` to your `.skhd`
+  - This is where all the shortcuts are set up. See the inline comments for examples
+  - NOTE: A lot of the shortcuts require extensive finger yoga on traditiona keyboards.
+    I use a custom mechanical keyboard running QMK (https://github.com/issmirnov/qmk-keebs)
+    with home row mods (https://precondition.github.io/home-row-mods), so I have a dedicated
+    "Navigation" layer that has single button combos for all the crazy shortcuts.
+- https://tracesof.net/uebersicht/
+  - Config folder `ubersicht`
+  - This sets up a custom status bar with useful indicators (https://ivans.io/better-status-bar-for-macos/)
+- https://contexts.co/ - fast window switcher, activated with Ctrl+Space. I disabled the sidebar and only use the switcher.
+- https://www.alfredapp.com/ - drop in replacement for spotlight. I generally only use it to lock
+  my screen or open apps. If you want to go deeper, check out: https://wiki.nikitavoloboev.xyz/macos/macos-apps/alfred
 
 ## A Note about the License & Copyright:
 
