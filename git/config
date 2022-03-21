@@ -42,6 +42,7 @@
     popwip = !git log -1 --pretty=%B | grep -q '^wip$' && git reset HEAD^ || echo 'HEAD is not a wip commit'
     pt = !git tag -l | xargs git tag -d && git fetch -t # prune tags.
 
+    rd = !git fetch origin development:development | git rebase development
     unstage = reset HEAD --
     recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
     today = !git log --all --since=00:00:00 --oneline --no-merges --author=${1-$(git config user.email)}
