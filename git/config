@@ -31,6 +31,7 @@
 	pushNonFastForward = false
 
 # source: https://blog.scottnonnenberg.com/better-git-configuration/
+# Guide: https://diamantidis.github.io/2018/11/10/save-time-with-git-aliases
 [alias]
     prune = fetch --prune
     undo = reset --soft HEAD^
