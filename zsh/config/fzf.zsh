@@ -173,3 +173,7 @@ s(){
   local line="$(echo $full | awk -F: '{print $2}')"
   [ -n "$file" ] && vim "$file" +$line
 }
+
+# If you want other awesome navigation shortcuts, check out:
+# https://github.com/agkozak/zsh-z
+# It's one of my most used commands.
