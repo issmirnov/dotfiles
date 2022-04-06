@@ -37,8 +37,8 @@ export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
 # Auto-completion
 [[ $- == *i* ]] && source "$FZF_PREFIX/fzf/shell/completion.zsh" 2> /dev/null
 
-# Key bindings
-source "$FZF_PREFIX/fzf/shell/key-bindings.zsh"
+# Load Key bindings. Fallback to load alpine keybinds
+source "$FZF_PREFIX/fzf/shell/key-bindings.zsh" || source "/usr/share/fzf/key-bindings.zsh"
 
 # better zz from fasd
 # TODO convert to Z
