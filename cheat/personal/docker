@@ -45,3 +45,6 @@ docker rmi $(docker images -q)
 
 # Launch docker compose in a fresh state
 docker-compose up --build --force-recreate --renew-anon-volumes
+
+# Restart all doocker containers
+docker restart $(docker ps -q)
