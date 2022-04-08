@@ -23,15 +23,36 @@ function mdc() {
 }
 ## some OS dependent aliases ##
 if [[ $OSTYPE == linux-* ]]; then
-    alias update='sudo apt update'
-    alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
-    alias ins='sudo apt install'
-    alias rem='sudo apt remove'
+
+    # get OS name and add some hyper os specific aliases
+    # mostly related to package management
+    OSNAME=$(grep '^ID=' /etc/os-release | cut -d'=' -f 2)
+    if [[ $OSNAME == ubuntu ]]; then
+        alias update='sudo apt update'
+        alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
+        alias ins='sudo apt install'
+        alias rem='sudo apt remove'
+    elif [[ $OSNAME == alpine ]]; then
+        alias update='apk update'
+        alias upgrade='apk upgrade'
+        alias ins='apk add'
+        alias rem='apk del'
+    elif [[ $OSNAME == centos ]]; then
+        alias update='sudo yum update'
+        alias upgrade='sudo yum upgrade'
+        alias ins='sudo yum install'
+        alias rem='sudo yum erase'
+    else
+        echo "OS type not known, system.zsh will not load some common aliases"
+    fi
+
+    # generic linux aliases
     alias open='xdg-open'
     alias ll='ls -lha --color'
     alias cpuhogs='ps -Ao pcpu,pmem,comm,comm,pid --sort=-pcpu | head -n 6'
     alias copy='xclip -sel clip'
     alias paste='xclip -sel clip -o'
+
 elif [[ $OSTYPE == darwin* ]]; then
     alias update='brew update'
     alias ins="osx_ins"
