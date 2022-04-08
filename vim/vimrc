@@ -267,6 +267,7 @@ if has("autocmd")
     autocmd BufNewFile *.zsh 0r ~/.vim/templates/skeleton.zsh
     autocmd BufNewFile docker-compose.yml 0r ~/.vim/templates/skeleton-docker-compose.yml
     autocmd BufNewFile README.md 0r ~/.vim/templates/skeleton-README.md
+    autocmd BufNewFile Makefile 0r ~/.vim/templates/skeleton.Makefile
   augroup END
 endif
 
