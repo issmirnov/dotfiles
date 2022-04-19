@@ -28,6 +28,16 @@ regexp=default
 colours=on_blue
 -
 
+# MTU
+regexp=mtu
+colours=black bold on_yellow
+
+-
+# MTU
+regexp=1500
+colours=red bold on_green
+-
+
 # ip range size
 regexp=/\d{1,2}
 colours=red
@@ -41,4 +51,3 @@ colours=bold red
 # "src"
 regexp=src \S+
 colours=on_magenta
-
