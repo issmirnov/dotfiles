@@ -15,6 +15,7 @@
 
 [init]
 	templatedir = ~/.dotfiles/git/template
+	defaultBranch = master
 
 [core]
     whitespace = trailing-space,space-before-tab
