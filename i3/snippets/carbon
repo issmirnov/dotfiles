@@ -93,6 +93,7 @@ exec_always --no-startup-id "xss-lock -- xsecurelock"
 # start up discord and obsidiann
 exec_always --no-startup-id "/home/vania/bin/obsidian"
 exec_always --no-startup-id "discord"
+exec_always --no-startup-id "slack"
 
 
 # Special: while using 27's, use native chrome scale
