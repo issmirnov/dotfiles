@@ -263,7 +263,17 @@ assign[class="^crx_kjgfgldnnfoeklkmfkjfagphfepbbdan$"] Google Meet
 
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
+# Bind monitors
+set $monitor_left DisplayPort-0
+set $monitor_right DisplayPort-1
 
+workspace obsidian output $monitor_right
+workspace discord output $monitor_right
+workspace slack output $monitor_right
+workspace telegram output $monitor_right
+workspace meet output $monitor_right
+
+workspace goland output $monitor_left
 ###### startup applications #####
 
 
