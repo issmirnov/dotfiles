@@ -260,6 +260,7 @@ assign [class="^obsidian$"] obsidian
 assign[class="^jetbrains-goland$"] goland
 assign[class="^jetbrains-idea$"] idea
 assign[class="^crx_kjgfgldnnfoeklkmfkjfagphfepbbdan$"] Google Meet
+assign[class="^zoom$"] zoom
 
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
@@ -272,6 +273,7 @@ workspace discord output $monitor_right
 workspace slack output $monitor_right
 workspace telegram output $monitor_right
 workspace meet output $monitor_right
+workspace zoom output $monitor_right
 
 workspace goland output $monitor_left
 ###### startup applications #####
