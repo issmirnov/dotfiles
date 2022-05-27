@@ -1,0 +1,11 @@
+# TIP
+aws eks --region us-west-1 update-kubeconfig --name tip-ii9q2p-eks --profile tip
+
+# DEV
+aws eks --region us-west-1 update-kubeconfig --name development-lwc6p7-eks --profile development
+
+# STAGE
+aws eks --region us-west-1 update-kubeconfig --name staging-geox3v-eks --profile staging
+
+# PROD Green
+aws eks --region us-west-1 update-kubeconfig --name prod-green-1klfx5-eks --profile prod-green
