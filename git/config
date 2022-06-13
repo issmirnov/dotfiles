@@ -48,6 +48,7 @@
     unstage = reset HEAD --
     recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
     today = !git log --all --since=00:00:00 --oneline --no-merges --author=${1-$(git config user.email)}
+	alias = ! git config --get-regexp ^alias\\. | sed -e s/^alias\\.// -e s/\\ /\\ =\\ /
 
 [branch]
 	sort = authordate
