@@ -10,6 +10,7 @@
 
 - link:
     ~/.Xresources: x/Xresources
+    ~/.config/greenclip.toml: greenclip/greenclip.toml
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
     ~/.config/terminator/config: terminator/config

@@ -217,6 +217,9 @@ bindsym $mod+Shift+plus scratchpad show
 # rofi - note, can use Shift+right to cycle through modes
 bindsym $mod+space exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
 
+# Clipboard manager: https://github.com/erebe/greenclip
+bindsym $mod+Control+c "exec rofi -modi clipboard:'greenclip print' -show clipboard -run-command '{cmd}'"
+
 ############ Display and Music  ################################
 
 # Screen brightness controls
