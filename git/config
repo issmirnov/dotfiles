@@ -144,8 +144,9 @@
 [remote "origin"]
 	tagopt = --tags
 
-[remote "upstream"]
-	tagopt = --tags
+# remove upstream, as it seems to be randomly added
+# [remote "upstream"]
+# 	tagopt = --tags
 
 [rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
 	enabled = true

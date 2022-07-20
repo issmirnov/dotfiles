@@ -27,5 +27,5 @@ function shot(){
 }
 fi
 
-# Gracefully shut down chrome. Use this before reboot/poweroff
-alias stopchrome='pkill --oldest chrome'
+# kill chrome when it inevitably freezes yet again
+alias stopchrome='pkill --oldest chrome; pkill --oldest chrome' # have to run it twice for some reason
