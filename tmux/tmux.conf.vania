@@ -1,0 +1,74 @@
+# set history to 100k lines
+set -g history-limit 100000
+
+# set window and pane index to 1 (0 by default)
+set-option -g base-index 1
+setw -g pane-base-index 1
+
+# renumber windows sequentially after closing any of them
+set -g renumber-windows on
+
+# Make things more responsive
+set -g repeat-time 0
+set -s escape-time 0
+
+# reload ~/.tmux.conf using PREFIX r
+bind r source-file ~/.tmux.conf \; display "Reloaded!"
+
+## add more convenient split shortcuts
+bind | split-window -h
+bind - split-window -v
+
+# set status bar
+set -g status-bg black
+set -g status-fg white
+set -g status-left-length 30
+set -g status-left '#[fg=green, bright]S: #S #[fg=black, bright]| #[fg=red, bright]H: #H'
+set -g status-right '#[fg=yellow,bg=default, bright] #(date +"%a %b %d, %H:%M")'
+set -g status-justify centre
+
+# set colors of active window
+setw -g window-status-current-style bg=red,fg=white,bright
+
+# set the color of the window list
+setw -g window-status-style fg=cyan,bg=default,bright
+
+# Set window notifications
+setw -g monitor-activity on
+set -g visual-activity on
+
+# make active pane more distinct
+#set -g pane-border-fg colour245
+#set -g pane-border-bg colour245
+set -g pane-active-border-style fg=yellow,bg=default
+
+# Rather than constraining window size to the maximum size of any client
+# connected to the *session*, constrain window size to the maximum size of any
+# client connected to *that window*. Much more reasonable.
+setw -g aggressive-resize on
+
+# disable autonaming of panes
+set-option -g allow-rename off
+
+# fixing scrolling issue
+set -g default-terminal screen-256color
+
+# New windows/pane in $PWD
+bind c new-window -c "#{pane_current_path}"
+
+# Enable mouse
+set -g mouse on
+
+# Fix mouse scrolling in scholl mode (Prefix+"[")
+bind -n WheelUpPane if-shell -Ft= '#{?pane_in_mode,1,#{mouse_any_flag}}' \
+        'send -Mt=' 'if-shell -Ft= "#{alternate_on}" \
+        "send -t= Up" "copy-mode -et="'
+bind -n WheelDownPane if-shell -Ft = '#{?pane_in_mode,1,#{mouse_any_flag}}' \
+        'send -Mt=' 'if-shell -Ft= "#{alternate_on}" \
+        "send -t= Down" "send -Mt="'
+
+# enable yanking to remote clipboards.
+# https://github.com/tmux-plugins/tmux-yank#controlling-yank-behavior
+run-shell ~/.dotfiles/tmux/plugins/tmux-yank/yank.tmux
+set -g @override_copy_command 'cat | head -c -1 | nc -q1 localhost 2224'
+set -g @yank_with_mouse on # or 'on'

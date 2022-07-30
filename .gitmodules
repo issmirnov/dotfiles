@@ -13,3 +13,6 @@
 [submodule "ubersicht/simple-bar"]
 	path = ubersicht/simple-bar
 	url = https://github.com/Jean-Tinland/simple-bar
+[submodule "tmux/gpakosz-tmux"]
+	path = tmux/gpakosz-tmux
+	url = https://github.com/gpakosz/.tmux.git

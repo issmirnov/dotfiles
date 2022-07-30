@@ -7,6 +7,7 @@
 
 - shell:
     - [i3/genconf, "Generating i3 config"]
+    - [mkdir -p ~/.config/fontconfig/conf.d/, "making fontconfig folder"]
 
 - link:
     ~/.Xresources: x/Xresources
@@ -19,6 +20,8 @@
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
     ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
+    ~/.fonts/PowerlineSymbols.otf: fonts/PowerlineSymbols.otf
+    ~/.config/fontconfig/conf.d/10-powerline-symbols.conf: fonts/10-powerline-symbols.conf
     ~/.i3/config: i3/config
     ~/.i3blocks.conf: i3/i3blocks.conf
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc
