@@ -102,3 +102,6 @@ cd monorepo
 git sparse-checkout init --cone
 git sparse-checkout set /mypath/ /some/other/path/
 git read-tree -mu HEAD
+
+## Find common ancestor commit
+git merge-base branchA branchB
