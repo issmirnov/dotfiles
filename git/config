@@ -44,6 +44,7 @@
     popwip = !git log -1 --pretty=%B | grep -q '^wip$' && git reset HEAD^ || echo 'HEAD is not a wip commit'
     pt = !git tag -l | xargs git tag -d && git fetch -t # prune tags.
 
+    root = rev-parse --show-toplevel
     rt = !git fetch origin tip:tip | git rebase tip
     unstage = reset HEAD --
     recent = for-each-ref --count=10 --sort=-committerdate refs/heads/ --format="%(refname:short)"
@@ -119,6 +120,9 @@
     tool = vimdiff
     conflictstyle = diff3
 
+[merge "ours"]
+	driver = true
+
 [mergetool]
     prompt = false
 
@@ -135,6 +139,23 @@
 [pull]
     # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
 	rebase = true
+
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+
+## Custom git identies based on project path
+[includeIf "gitdir:/mnt/Spark/Projects/elude/"]
+  path = ~/.dotfiles/git/config-elude
+
+# Does not work due to symlinks.
+; [includeIf "gitdir:~/Projects/elude/"]
+;   path = ~/.dotfiles/git/config-elude
+
+; [includeIf "gitdir:~/work/"]
+;   path = .gitconfig-work
 
 # https://mislav.net/2013/02/merge-vs-rebase/
 # TODO: Pick a merging model for my downstream projects.
@@ -160,10 +181,3 @@
 # Allow local customizations in the .gitconfig_local file
 [include]
 	path = ~/.gitconfig_local
-[merge "ours"]
-	driver = true
-[filter "lfs"]
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
