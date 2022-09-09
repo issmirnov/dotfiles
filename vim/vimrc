@@ -19,10 +19,14 @@ Plug 'godlygeek/tabular'
 " additional file types
 "Plug 'fatih/vim-nginx'
 
+Plug 'yoheimuta/vim-protolint'
+
 " Expand region - press v repeatedly
 Plug 'terryma/vim-expand-region'
 
 Plug 'w0rp/ale'
+
+Plug 'ThePrimeagen/git-worktree.nvim'
 
 " start screen plugin.
 Plug 'https://github.com/mhinz/vim-startify'
@@ -247,13 +251,23 @@ let g:sneak#use_ic_scs = 1
 " AlE config
 " errors on airline
 let g:airline#extensions#ale#enabled = 1
+
+" linters
+let g:ale_linters = {
+\   'proto': ['protolint'],
+\}
+
 " fixers
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
 \   'javascript': ['eslint'],
+\   'proto': ['ale#fixers#protolint#Fix'],
 \}
 " fix files when you save them.
 let g:ale_fix_on_save = 1
+
+" proto files
+let g:ale_lint_on_text_changed = 'never'
 
 map ^[OA <up>
 map ^[OB <down>
