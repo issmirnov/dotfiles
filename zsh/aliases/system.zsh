@@ -27,7 +27,7 @@ if [[ $OSTYPE == linux-* ]]; then
     # get OS name and add some hyper os specific aliases
     # mostly related to package management
     OSNAME=$(grep '^ID=' /etc/os-release | cut -d'=' -f 2)
-    if [[ $OSNAME == ubuntu ]]; then
+    if [[ $OSNAME == ubuntu || $OSNAME == debian ]]; then
         alias update='sudo apt update'
         alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
         alias ins='sudo apt install'
