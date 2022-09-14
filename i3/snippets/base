@@ -268,8 +268,8 @@ assign[class="^zoom$"] zoom
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
 # Bind monitors
-set $monitor_left DisplayPort-0
-set $monitor_right DisplayPort-1
+set $monitor_left DisplayPort-1
+set $monitor_right DisplayPort-2
 
 workspace obsidian output $monitor_right
 workspace discord output $monitor_right
