@@ -1,8 +1,8 @@
 ### carbon config ###
 
 # monitor layout is [1][2]
-set $left DisplayPort-0
-set $right DisplayPort-1
+set $left DisplayPort-1
+set $right DisplayPort-2
 exec xrandr --output $right --right-of $left
 
 # workspace layout
