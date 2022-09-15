@@ -29,7 +29,7 @@ if ! zgen saved; then
   	zgen oh-my-zsh
 
   	plugins=(git git-extras history brew common-aliases macos tmux)
-	plugins+=(z extract adb vagrant )
+	plugins+=(z extract adb vagrant kubectl)
   	for p in ${(@s' ')plugins}; do
   		zgen oh-my-zsh plugins/$p
   	done
