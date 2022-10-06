@@ -29,7 +29,7 @@ lvcreate --name root --size 8G vg0
 
 # Extend LV size
 lvextend --size 16G vg0/root
-lvextend --resizefs --size +1G /dev/vg1/ubuntu 
+lvextend --resizefs --size +1G /dev/vg1/ubuntu
 
 # Reduce LV size, FS must be resized first!
 lvreduce --size 8G vg0/root
@@ -55,3 +55,9 @@ lvcreate --name root --size 8G --stripes 2 --stripesize 4 vg0
 3> dracut -H -f /boot/initramfs-$(uname -r).img $(uname -r)
 4> Reboot the node
 5> uname -r to verify the correct initrd image
+
+# mount LVM from live CD
+sudo vgscan
+sudo vgchange -ay
+sudo lvdisplay
+sudo mount /dev/mapper/$vg-$lv /mnt
