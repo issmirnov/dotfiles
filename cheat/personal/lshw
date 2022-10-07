@@ -1,0 +1,2 @@
+# Print network devices
+lshw -class network -businfo
