@@ -1,0 +1,103 @@
+### carbon config ###
+
+# monitor layout is [1][2]
+set $left DP-1
+set $right DP-2
+exec xrandr --output $right --right-of $left
+
+# workspace layout
+workspace 1 output $left
+workspace 2 output $left
+workspace 3 output $left
+workspace 4 output $left
+workspace 5 output $left
+
+workspace 6 output $right
+workspace 7 output $right
+workspace 8 output $right
+workspace 9 output $right
+workspace 10 output $right
+
+#  App Bindings ########
+assign [class="^Standard Notes$"] notes
+
+# Studio
+assign [class="^jetbrains-studio$"] studio
+workspace studio output $left
+
+# Telegram
+assign [class="^TelegramDesktop$"] telegram
+workspace telegram output $right
+exec "/home/vania/bin/Telegram"
+
+# startup apps
+exec_always --no-startup-id nm-applet
+exec_always ssh-agent
+exec_always glipper
+
+# Audio: show volume channels in tray
+exec --no-startup-id "pasystray"
+
+for_window [class="^Pavucontrol$"] move window to scratchpad
+exec_always --no-startup-id pavucontrol
+
+
+# Map Print Screeen Key to flameshot for screenshots (instead of maim / slop )
+bindsym Print exec "flameshot gui"
+
+# update mouse speed
+exec_always 'xset m 1/2 8'
+
+# redshift
+exec --no-startup-id "redshift -m randr -l 40.021719:-105.2602 -t 5700:3300 -r"
+
+# # enable x lock on screen off
+# exec_always --no-startup-id "xss-lock -- gnome-screensaver-command --lock"
+
+
+# start gnome keyring
+exec_always --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=pkcs11,secrets,ssh"
+
+# start unity setting for gtk support
+# Note: this appears to override the wallpaper preferences by feh, as well as DPI settings.
+exec_always --no-startup-id "unity-settings-daemon"
+
+# screen timeouts. 5 mins for monitor, no sleep and no halt.
+exec_always --no-startup-id "xset dpms 0 0 300"
+
+# DPI override
+# exec_always --no-startup-id "xrandr --dpi 137"
+
+# load Xresources
+exec_always --no-startup-id "xrdb -merge ~/.Xresources"
+
+# set background wallpaper
+# enable sleep, so that unity daemon sets wallpaper and then we set it properly
+exec_always --no-startup-id "sleep 3 && feh --recursive --randomize --bg-fill ~/Pictures/4k-wallpaper; eval `cat ~/.fehbg`"
+
+
+# Load SSH agent
+exec /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1
+
+# Lock screens and sleep displays
+# Note: since we run xss-lock hook on the DPMS events, all we have to do is force
+# DPMS to off. Otherwise, we will have to enter the password twice upon unlock.
+bindsym $MOD+l exec "xset dpms force off"
+
+# xsecurelock + hibernate
+bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
+
+# xss-lock will respond to DPMS events to lock the screen
+exec_always --no-startup-id "xss-lock -- xsecurelock"
+
+# start up discord and obsidiann
+exec_always --no-startup-id "/home/vania/bin/obsidian"
+exec_always --no-startup-id "discord"
+exec_always --no-startup-id "slack"
+
+
+# Special: while using 27's, use native chrome scale
+# set $browser "google-chrome --force-device-scale-factor=1.00"
+
+# set up dual 27's while travelling
+# exec_always --no-startup-id "/home/vania/.screenlayout/dual-27.sh"

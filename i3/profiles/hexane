@@ -1,0 +1,2 @@
+snippets=(hexane gnome)
+source $ROOT/profiles/_builder
