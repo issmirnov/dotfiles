@@ -1,0 +1,2 @@
+# print system info
+inxi -Fx
