@@ -91,7 +91,7 @@ bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 exec_always --no-startup-id "xss-lock -- xsecurelock"
 
 # start up discord and obsidiann
-exec_always --no-startup-id "/ust/bin/obsidian"
+exec_always --no-startup-id "/usr/bin/obsidian"
 exec_always --no-startup-id "discord"
 exec_always --no-startup-id "slack"
 
