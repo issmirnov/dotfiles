@@ -1,8 +1,8 @@
 ### hexane config ###
 
 # monitor layout is [1][2]
-set $left DP-1-1
-set $right DP-1-2
+set $left DP-0
+set $right DP-2
 exec xrandr -d :0 --output $right --auto --output $left --auto --output $right --right-of $left
 
 # layout
