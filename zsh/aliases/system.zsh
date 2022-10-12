@@ -32,6 +32,11 @@ if [[ $OSTYPE == linux-* ]]; then
         alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
         alias ins='sudo apt install'
         alias rem='sudo apt remove'
+    elif [[ $OSNAME == arch ]]; then
+        alias update='yay -Sy'
+        alias upgrade='yay -Syu'
+        alias ins='yay -S'
+        alias rem='yay -R'
     elif [[ $OSNAME == alpine ]]; then
         alias update='apk update'
         alias upgrade='apk upgrade'
