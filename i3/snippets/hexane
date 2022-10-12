@@ -1,11 +1,11 @@
-### carbon config ###
+### hexane config ###
 
 # monitor layout is [1][2]
 set $left DP-1-1
 set $right DP-1-2
-exec xrandr --output $right --right-of $left
+exec xrandr -d :0 --output $right --auto --output $left --auto --output $right --right-of $left
 
-# workspace layout
+# layout
 workspace 1 output $left
 workspace 2 output $left
 workspace 3 output $left
@@ -91,10 +91,12 @@ bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 exec_always --no-startup-id "xss-lock -- xsecurelock"
 
 # start up discord and obsidiann
-exec_always --no-startup-id "/home/vania/bin/obsidian"
+exec_always --no-startup-id "/ust/bin/obsidian"
 exec_always --no-startup-id "discord"
 exec_always --no-startup-id "slack"
 
+# override browser name as we use "google-chrome-stable" on arch
+# set $browser google-chrome-stable
 
 # Special: while using 27's, use native chrome scale
 # set $browser "google-chrome --force-device-scale-factor=1.00"
