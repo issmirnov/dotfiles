@@ -20,3 +20,6 @@ ether-wake de:ad:be:ef # wake up machine
 
 # Determine geographic location of a machine
 curl -s https://ipvigilante.com/$(curl -s https://ipinfo.io/ip) | jq .
+
+# Get active interface
+echo $(ip -o -4 route get 8.8.8.8 | sed -nr 's/.*dev ([^\ ]+).*/\1/p')
