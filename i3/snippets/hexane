@@ -1,8 +1,8 @@
 ### hexane config ###
 
 # monitor layout is [1][2]
-set $left DP-0
-set $right DP-2
+set $left DP-2
+set $right DP-0
 exec xrandr -d :0 --output $right --auto --output $left --auto --output $right --right-of $left
 
 # layout
@@ -106,4 +106,4 @@ exec_always --no-startup-id "slack"
 #
 
 # Secondary xrandr trigger as first one seems to faile
-exec xrandr --output DP-2 --auto --output DP-0 --auto --output DP-2 --right-of DP-0
+exec xrandr --output $left --auto --output $right --auto --output $right --right-of $left
