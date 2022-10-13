@@ -103,3 +103,7 @@ exec_always --no-startup-id "slack"
 
 # set up dual 27's while travelling
 # exec_always --no-startup-id "/home/vania/.screenlayout/dual-27.sh"
+#
+
+# Secondary xrandr trigger as first one seems to faile
+exec xrandr --output DP-2 --auto --output DP-0 --auto --output DP-2 --right-of DP-0
