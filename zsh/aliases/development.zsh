@@ -17,9 +17,5 @@ alias pap='ANSIBLE_CALLBACK_WHITELIST="profile_roles, profile_tasks, timer" ap'
 # vagrant
 alias vup='vagrant up'
 
-# docker
-alias ubuntu='docker run -ti ubuntu:bionic sh'
-alias docker-top='docker run --rm -it --name=ctop --volume /var/run/docker.sock:/var/run/docker.sock:ro quay.io/vektorlab/ctop:latest'
-
 # terraform
 alias tf=terraform
