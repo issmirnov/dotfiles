@@ -1,0 +1,5 @@
+# Resize image to 50%
+convert -resize 50% foo.jpg foo.jpg
+
+# Resize to specific size
+convert -resize 200x100 foo.jpg foo.jpg
