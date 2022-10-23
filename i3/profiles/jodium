@@ -1,0 +1,2 @@
+snippets=(laptop gnome jodium)
+source $ROOT/profiles/_builder
