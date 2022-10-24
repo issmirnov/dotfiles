@@ -1,0 +1,15 @@
+# from zgen
+zmodule djui/alias-tips
+zmodule wfxr/forgit
+
+plugins=(git git-extras history brew common-aliases macos tmux)
+plugins+=(z extract adb vagrant kubectl)
+for p in ${(@s' ')plugins}; do
+    zmodule ohmyzsh/ohmyzsh --root plugins/$p
+done
+
+zmodule asciiship
+zmodule zsh-users/zsh-completions --fpath src
+zmodule completion
+zmodule zsh-users/zsh-syntax-highlighting
+zmodule zsh-users/zsh-autosuggestions

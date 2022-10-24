@@ -25,28 +25,43 @@ ZGEN_RESET_ON_CHANGE=(${HOME}/.zshrc ${HOME}/.zshrc.local ${HOME}/.dotfiles/zsh/
 export DISABLE_AUTO_UPDATE="true" # disable OMZ auto update prompt
 
 # create zgen init script if it doesn't exist
-if ! zgen saved; then
-  	zgen oh-my-zsh
+#if ! zgen saved; then
+#  	zgen oh-my-zsh
 
-  	plugins=(git git-extras history brew common-aliases macos tmux)
-	plugins+=(z extract adb vagrant kubectl)
-  	for p in ${(@s' ')plugins}; do
-  		zgen oh-my-zsh plugins/$p
-  	done
+#  	plugins=(git git-extras history brew common-aliases macos tmux)
+#	plugins+=(z extract adb vagrant kubectl)
+#  	for p in ${(@s' ')plugins}; do
+#  		zgen oh-my-zsh plugins/$p
+#  	done
 
-	zgen load ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
-	zgen load zsh-users/zsh-autosuggestions
-	zgen load zsh-users/zsh-completions
-	zgen load djui/alias-tips
-	zgen load wfxr/forgit
-	#zgen load romkatv/zsh-prompt-benchmark
+#	zgen load ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
+#	zgen load zsh-users/zsh-autosuggestions
+#	zgen load zsh-users/zsh-completions
+#	zgen load djui/alias-tips
+#	zgen load wfxr/forgit
+#	#zgen load romkatv/zsh-prompt-benchmark
 
-	# As per instructions, load this last so that it wraps ZLE widgets.
-	zgen load zsh-users/zsh-syntax-highlighting
+#	# As per instructions, load this last so that it wraps ZLE widgets.
+#	zgen load zsh-users/zsh-syntax-highlighting
 
-	# generate the init script from plugins above
-	zgen save
+#	# generate the init script from plugins above
+#	zgen save
+#fi
+
+## zimfw
+zstyle ':zim:zmodule' use 'degit'
+ZIM_HOME=~/.zim
+# Download zimfw plugin manager if missing.
+if [[ ! -e ${ZIM_HOME}/zimfw.zsh ]]; then
+  mkdir -p ${ZIM_HOME} && wget -nv -O ${ZIM_HOME}/zimfw.zsh \
+      https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
 fi
+# Install missing modules, and update ${ZIM_HOME}/init.zsh if missing or outdated.
+if [[ ! ${ZIM_HOME}/init.zsh -nt ${ZDOTDIR:-${HOME}}/.zimrc ]]; then
+  source ${ZIM_HOME}/zimfw.zsh init -q
+fi
+# Initialize modules.
+source ${ZIM_HOME}/init.zsh
 
 ########################################################
 # Load custom config last, so it can override plugins ##
