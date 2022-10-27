@@ -6,7 +6,12 @@ _grc_injector(){
         local f
 	for f in $(ls ~/.dotfiles/grc/conf*); do
 	    local prog=${f:e}
-	    if [[ "$BUFFER" =~ "(^|[/\w\.]+/|sudo\s+)$prog\s?" && ! "$BUFFER" =~ "grcat conf*" ]]; then
+	    # regex: match oneof:
+	    #  - start of line
+	    #  - whitespace
+	    #  - sudo
+	    # then check for existence of program (determined by grc file suffix) and make sure we don't infintely append to zsh BUFFER
+	    if [[ "$BUFFER" =~ "(^|[/\w\.]+/|sudo\s+)$prog(\s|$)\s?" && ! "$BUFFER" =~ "grcat conf*" ]]; then
 		BUFFER=$BUFFER" | grcat conf.$prog"
 		break
 	    fi
