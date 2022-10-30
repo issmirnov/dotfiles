@@ -28,7 +28,7 @@ workspace studio output $left
 # Telegram
 assign [class="^TelegramDesktop$"] telegram
 workspace telegram output $right
-exec "/home/vania/bin/Telegram"
+exec "/usr/bin/telegram-desktop"
 
 # startup apps
 exec_always --no-startup-id nm-applet
