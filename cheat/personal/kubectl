@@ -27,3 +27,6 @@ kubectl get events --sort-by='.metadata.creationTimestamp'
 
 # To restart all pods in namespace
 kubectl -n {NAMESPACE} rollout restart deploy
+
+# List all deployed things
+kubectl get deployment,statefulset,daemonset -A
