@@ -32,7 +32,7 @@ if [[ $OSTYPE == linux-* ]]; then
         alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
         alias ins='sudo apt install'
         alias rem='sudo apt remove'
-    elif [[ $OSNAME == arch ]]; then
+    elif [[ $OSNAME == arch || $OSNAME == archarm ]]; then
         alias update='yay -Sy'
         alias upgrade='sudo pacman -Syy && yay -Syu'
         alias ins='sudo pacman -Syy && yay -S'
