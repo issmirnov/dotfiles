@@ -56,7 +56,7 @@ if [[ $OSTYPE == linux-* ]]; then
     alias ll='ls -lha --color'
     alias cpuhogs='ps -Ao pcpu,pmem,comm,comm,pid --sort=-pcpu | head -n 6'
     alias copy='xclip -sel clip'
-    alias paste='xclip -sel clip -o'
+    # alias paste='xclip -sel clip -o'
 
 elif [[ $OSTYPE == darwin* ]]; then
     alias update='brew update'
@@ -74,7 +74,7 @@ elif [[ $OSTYPE == darwin* ]]; then
     }
     alias cpuhogs='ps -Aro pcpu,pmem,comm,comm,pid  | head -n 6'
     alias copy='pbcopy'
-    alias paste='pbpaste'
+    # alias paste='pbpaste'
 fi
 
 # Copy output of last command to clipboard
