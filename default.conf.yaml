@@ -30,6 +30,7 @@
     ~/.zshrc: zsh/zshrc
     ~/.zshenv: zsh/config/paths.zsh # for non interactive commands
     ~/bin/tm: tmux/tmux-menu
+    ~/bin/dotbin: bin # symlink whole bin folder, recursive fpath should pick up all files
 
 - shell:
   - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]
