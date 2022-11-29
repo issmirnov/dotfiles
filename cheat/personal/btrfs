@@ -1,0 +1,3 @@
+# View snapshot usage (takes a few mins to run)
+# Requires quota to be enabled: sudo btrfs quota enable /mnt/path
+sudo btrfs filesystem du -s /.snapshots/
