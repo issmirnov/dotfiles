@@ -30,3 +30,6 @@ kubectl -n {NAMESPACE} rollout restart deploy
 
 # List all deployed things
 kubectl get deployment,statefulset,daemonset -A
+
+# Patch finalizer to force deletion
+kubectl -n foo-ns patch some-type some-resource -p '{"metadata":{"finalizers": []}}' --type=merge
