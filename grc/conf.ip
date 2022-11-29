@@ -37,7 +37,10 @@ colours=black bold on_yellow
 regexp=1500
 colours=red bold on_green
 -
-
+# MTU
+regexp=9000
+colours=red bold on_blue
+-
 # ip range size
 regexp=/\d{1,2}
 colours=red
