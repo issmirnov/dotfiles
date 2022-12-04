@@ -9,3 +9,5 @@ alias docker-top='docker run --rm -it --name=ctop --volume /var/run/docker.sock:
 # docker compose
 alias dcup='docker compose up -d'
 alias dcupf='dcup --force-recreate'
+alias dcd='docker compose down'
+alias dcfl='docker compose logs --follow'
