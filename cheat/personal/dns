@@ -1,7 +1,12 @@
 # Linux
 ## View DNS resolvers
 cat /etc/resolv.conf
+
+# On desktops
 nmcli dev show | grep DNS
+
+# show per link and global DNS
+resolvectl status
 
 # MacOS
 ## Reset DNS cache on MacOS
