@@ -150,8 +150,8 @@
   path = ~/.dotfiles/git/config-elude
 
 # Does not work due to symlinks.
-; [includeIf "gitdir:~/Projects/elude/"]
-;   path = ~/.dotfiles/git/config-elude
+[includeIf "gitdir:~/Projects/elude/"]
+  path = ~/.dotfiles/git/config-elude
 
 ; [includeIf "gitdir:~/work/"]
 ;   path = .gitconfig-work
