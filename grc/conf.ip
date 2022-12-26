@@ -41,6 +41,14 @@ colours=red bold on_green
 regexp=9000
 colours=red bold on_blue
 -
+# UP status
+regexp=\sUP\s
+colours=green bold on_white
+-
+# DOWN status
+regexp=\sDOWN\s
+colours=red bold on_white
+-
 # ip range size
 regexp=/\d{1,2}
 colours=red

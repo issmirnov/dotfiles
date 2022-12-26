@@ -33,3 +33,6 @@ journalctl _UID=1000
 
 # To display the current disk usage of all journal files:
 journalctl --disk-usage
+
+# To clean up old logs
+journalctl --vacuum-time=2d
