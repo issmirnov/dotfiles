@@ -209,10 +209,10 @@ bar {
 
 # scratchpad for music and terminal.
 # Make the currently focused window a scratchpad
-bindsym $mod+Shift+minus move scratchpad
+# bindsym $mod+Shift+minus move scratchpad
 
 # Show the first scratchpad window
-bindsym $mod+Shift+plus scratchpad show
+# bindsym $mod+Shift+plus scratchpad show
 
 # rofi - note, can use Shift+right to cycle through modes
 bindsym $mod+space exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
