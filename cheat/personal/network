@@ -28,3 +28,4 @@ echo $(ip -o -4 route get 8.8.8.8 | sed -nr 's/.*dev ([^\ ]+).*/\1/p')
 networkctl status -a
 ethtool $nic
 cat /proc/net/$nic/$foo
+lshw -class network -businfo
