@@ -21,7 +21,6 @@
     whitespace = trailing-space,space-before-tab
     excludesfile = ~/.dotfiles/git/ignore
     editor = vim
-    pager = delta
 
 #------------------------------------------------------------#
 # Less common config, will likely remain the same for years.
