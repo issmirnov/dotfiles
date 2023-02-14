@@ -279,7 +279,7 @@ workspace telegram output $right
 workspace meet output $right
 workspace zoom output $right
 
-workspace goland output $left
+workspace goland output $right
 ###### startup applications #####
 
 
