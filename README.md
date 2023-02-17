@@ -77,6 +77,10 @@ I've been getting a lot of questions about my MacOS window management. Here's th
 - https://www.alfredapp.com/ - drop in replacement for spotlight. I generally only use it to lock
   my screen or open apps. If you want to go deeper, check out: https://wiki.nikitavoloboev.xyz/macos/macos-apps/alfred
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=issmirnov/dotfiles&type=Date)](https://star-history.com/#issmirnov/dotfiles&Date)
+
 ## A Note about the License & Copyright:
 
 Unless attributed otherwise, everything is under the MIT license (see LICENSE
