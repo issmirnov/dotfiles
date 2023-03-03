@@ -18,6 +18,7 @@ Plug 'godlygeek/tabular'
 
 " additional file types
 "Plug 'fatih/vim-nginx'
+Plug 'chr4/nginx.vim'
 
 Plug 'yoheimuta/vim-protolint'
 
