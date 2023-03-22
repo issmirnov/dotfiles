@@ -11,3 +11,6 @@ resolvectl status
 # MacOS
 ## Reset DNS cache on MacOS
 sudo killall -HUP mDNSResponder # Useful if dig/nslookup work but curl fails
+
+## Show DNS
+scutil --dns
