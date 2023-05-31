@@ -22,12 +22,10 @@ alt + ctrl - f: yabai -m window --focus east || yabai -m display --focus east
 
 # # From https://github.com/koekeishiya/yabai/issues/526
 # Move windows around and follow focus. Can jump across displays but not spaces
-alt + shift - left : yabai -m window --swap west || $(yabai -m window --display west; yabai -m display --focus west)
-# alt + shift + ctl - d : yabai -m window --swap west || $(yabai -m window --display west; yabai -m display --focus west)
-alt + shift - down : yabai -m window --swap south || $(yabai -m window --display south; yabai -m display --focus south)
-alt + shift - up : yabai -m window --swap north || $(yabai -m window --display north; yabai -m display --focus north)
-alt + shift - right : yabai -m window --swap east || $(yabai -m window --display east; yabai -m display --focus east)
-# alt + shift + ctrl - f  : yabai -m window --swap east || $(yabai -m window --display east; yabai -m display --focus east)
+cmd + shift - left : yabai -m window --swap west || $(yabai -m window --display west; yabai -m display --focus west)
+cmd + shift - down : yabai -m window --swap south || $(yabai -m window --display south; yabai -m display --focus south)
+cmd + shift - up : yabai -m window --swap north || $(yabai -m window --display north; yabai -m display --focus north)
+cmd + shift - right : yabai -m window --swap east || $(yabai -m window --display east; yabai -m display --focus east)
 
 # # balance size of windows
 alt - space : yabai -m space --balance
