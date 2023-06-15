@@ -10,5 +10,6 @@ if [ $(basename $SHELL) == "zsh" ]; then
     # already zsh
     echo 'shell already zsh, no changes needed'
 else
-    chsh -s "$(which zsh)"
+    # Try with sudo, fallback to without if needed.
+    sudo chsh -s $(which zsh) $(whoami) || chsh -s $(which zsh) $(whoami)
 fi
