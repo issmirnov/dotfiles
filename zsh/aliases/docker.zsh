@@ -11,3 +11,6 @@ alias dcup='docker compose up -d'
 alias dcupf='dcup --force-recreate'
 alias dcd='docker compose down'
 alias dcfl='docker compose logs --follow'
+
+# aliad docker-compose to "docker compose", as `docker-compose` is present and ancient on some systems
+alias docker-compose='docker compose'
