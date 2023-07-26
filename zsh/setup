@@ -3,7 +3,7 @@
 # setup script, called by dotbot
 
 # check if zsh is even installed
-hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; exit 0;}
+hash zsh 2>/dev/null || { echo >&2 "I require zsh but it's not installed.  Install it."; exit 1;}
 
 # change shell to zsh
 if [ $(basename $SHELL) == "zsh" ]; then
