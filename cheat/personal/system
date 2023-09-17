@@ -1,2 +1,5 @@
 # print system info
 inxi -Fx
+
+# Get RAM info
+sudo dmidecode --type 17
