@@ -3,3 +3,6 @@ inxi -Fx
 
 # Get RAM info
 sudo dmidecode --type 17
+
+# Get motherboard info
+sudo dmidecode -t 2
