@@ -48,3 +48,8 @@ docker-compose up --build --force-recreate --renew-anon-volumes
 
 # Restart all doocker containers
 docker restart $(docker ps -q)
+
+# Cleanup
+docker system prune -a # clean up everything
+docker image prune # clean up dangling images
+docker image prune -a # clean up all images not used by currently running processes
