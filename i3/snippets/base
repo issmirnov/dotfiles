@@ -261,10 +261,13 @@ assign [class="^discord$"] discord
 assign [class="^obsidian$"] obsidian
 
 # IDE binds.
+# Get these with `xprop` + click.
 assign[class="^jetbrains-goland$"] goland
 assign[class="^jetbrains-idea$"] idea
 assign[class="^crx_kjgfgldnnfoeklkmfkjfagphfepbbdan$"] Google Meet
 assign[class="^zoom$"] zoom
+assign[class="^lens$"] lens
+
 
 for_window [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] floating disable
 
@@ -278,6 +281,7 @@ workspace slack output $right
 workspace telegram output $right
 workspace meet output $right
 workspace zoom output $right
+workspace lens output $right
 
 workspace goland output $right
 ###### startup applications #####
