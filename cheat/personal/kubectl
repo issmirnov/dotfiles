@@ -33,3 +33,12 @@ kubectl get deployment,statefulset,daemonset -A
 
 # Patch finalizer to force deletion
 kubectl -n foo-ns patch some-type some-resource -p '{"metadata":{"finalizers": []}}' --type=merge
+
+# List number of pods per node
+kubectl get pods \
+  -A \
+  -o jsonpath='{range .items[?(@.spec.nodeName)]}{.spec.nodeName}{"\n"}{end}' \
+  | sort | uniq -c | sort -rn
+
+# List capacity of pods per node
+kubectl get nodes -o=custom-columns=NAME:.metadata.name,CAPACITY:.status.capacity.pods
