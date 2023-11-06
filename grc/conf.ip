@@ -37,18 +37,7 @@ colours=black bold on_yellow
 regexp=1500
 colours=red bold on_green
 -
-# MTU
-regexp=9000
-colours=red bold on_blue
--
-# UP status
-regexp=\sUP\s
-colours=green bold on_white
--
-# DOWN status
-regexp=\sDOWN\s
-colours=red bold on_white
--
+
 # ip range size
 regexp=/\d{1,2}
 colours=red
@@ -57,6 +46,26 @@ colours=red
 # "linkdown"
 regexp=linkdown
 colours=bold red
+-
+
+# "DOWN"
+regexp=DOWN
+colours=bold red
+-
+
+# "UP"
+regexp=\sUP\s
+colours=bold green
+
+-
+# "9000"
+regexp=9000
+colours=bold yellow
+-
+
+# "1500"
+regexp=1500
+colours=bold green
 -
 
 # "src"
