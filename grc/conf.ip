@@ -60,12 +60,12 @@ colours=bold green
 -
 # "9000"
 regexp=9000
-colours=bold yellow
+colours=bold green
 -
 
 # "1500"
 regexp=1500
-colours=bold green
+colours=bold yellow
 -
 
 # "src"
