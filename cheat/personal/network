@@ -29,3 +29,6 @@ networkctl status -a
 ethtool $nic
 cat /proc/net/$nic/$foo
 lshw -class network -businfo
+
+# Print routing table on macos
+netstat -nr -f inet
