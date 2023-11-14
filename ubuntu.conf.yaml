@@ -15,6 +15,7 @@
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
+    ~/.config/rofi: rofi
     ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf

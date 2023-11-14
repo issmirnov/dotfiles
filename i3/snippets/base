@@ -215,7 +215,9 @@ bar {
 # bindsym $mod+Shift+plus scratchpad show
 
 # rofi - note, can use Shift+right to cycle through modes
-bindsym $mod+space exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
+# bindsym $mod+space exec "rofi -combi-modi window,drun,run,Workspace:$HOME/bin/i3_switch_workspace.sh -show combi -modi combi"
+# bindsym $mod+space exec "~/.config/rofi/launchers/type-4/launcher.sh"
+bindsym $mod+space exec "~/.config/rofi/launchers/type-1/launcher.sh"
 
 # Clipboard manager: https://github.com/erebe/greenclip
 bindsym $mod+Control+c "exec rofi -modi clipboard:'greenclip print' -show clipboard -run-command '{cmd}'"
