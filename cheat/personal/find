@@ -48,3 +48,6 @@ find . -type f -exec chmod 644 {} \;
 
 # Count all lines recursively
 find . -type f -exec wc -l {} \; | awk '{total += $1} END{print total}'
+
+# Find and replace in directory
+find . -type f -print0 | xargs -0 sed -i 's/foo/bar/g'
