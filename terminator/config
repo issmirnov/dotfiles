@@ -1,12 +1,8 @@
 [global_config]
-  title_hide_sizetext = True
-  title_use_system_font = False
-  title_font = Source Code Pro 10
 [keybindings]
 [profiles]
   [[default]]
     urgent_bell = True
-    cursor_color = "#aaaaaa"
     font = Inconsolata 16
     show_titlebar = False
     scrollback_infinite = True
