@@ -70,7 +70,6 @@
 	current = magenta bold
 	local = blue bold
 	remote = white
-	upstream = green bold
 [color "diff"]
         plain = normal
         meta = yellow
@@ -163,10 +162,6 @@
 
 [remote "origin"]
 	tagopt = --tags
-
-# remove upstream, as it seems to be randomly added
-# [remote "upstream"]
-# 	tagopt = --tags
 
 [rerere] # See rerere docs at https://git-scm.com/blog/2010/03/08/rerere.html
 	enabled = true
