@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+ # Exit on error. Append "|| true" if you expect an error.
+set -o errexit
+# Exit on error inside any functions or subshells.
+set -o errtrace
+# Do not allow use of undefined vars. Use ${VAR:-} to use an undefined VAR
+set -o nounset
+# Catch the error in case command1 fails (but command2 succeeds) in `command1 |command2`
+set -o pipefail
+# Turn on traces, useful while debugging but commented out by default
+# set -o xtrace
+
+# Replace with your headphone's MAC address
+HEADPHONES_MAC="04:52:C7:79:8E:6B"
+
+# Start bluetoothctl, then get info of the device, and finally exit
+battery_level=$(bluetoothctl info ${HEADPHONES_MAC} | grep 'Battery Percentage' | cut -d '(' -f2 | cut -d ')' -f1)
+
+# Check if battery level info is available
+if [ -z "$battery_level" ]; then
+    echo "N/A"
+else
+    echo "$battery_level"
+fi
