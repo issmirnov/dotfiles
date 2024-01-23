@@ -4,6 +4,11 @@
 # Structure: common options at the top, less common at the bottom
 #------------------------------------------------------------------------------------------#
 
+[url "git@github.com:"]
+        insteadOf = https://github.com/
+[url "git@bitbucket.org:"]
+        insteadOf = https://bitbucket.org/
+
 [user]
 	name = Ivan Smirnov
 	email = isgsmirnov@gmail.com
@@ -171,6 +176,10 @@
 
 [web]
 	browser = google-chrome-stable
+
+# Include SSH overrides, saved in separate file so that we can easily toggle
+[include]
+	path = ~/.dotfiles/git/config-ssh-override
 
 # Allow local customizations in the .gitconfig_local file
 [include]
