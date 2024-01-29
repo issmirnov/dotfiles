@@ -1,4 +1,5 @@
 # purge old kernels
+# if command not found, install 'byobu'
 sudo purge-old-kernels
 sudo purge-old-kernels --keep 2
 
