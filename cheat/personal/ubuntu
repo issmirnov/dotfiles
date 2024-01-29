@@ -1,0 +1,5 @@
+# purge old kernels
+sudo purge-old-kernels
+sudo purge-old-kernels --keep 2
+
+# or run custom script from https://askubuntu.com/a/1315976
