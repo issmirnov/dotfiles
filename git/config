@@ -137,7 +137,7 @@
 [merge]
     stat = true
     tool = vimdiff
-    conflictstyle = zdiff3
+    conflictstyle = diff3
 
 [merge "ours"]
 	driver = true
