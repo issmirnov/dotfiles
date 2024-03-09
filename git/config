@@ -107,21 +107,37 @@
     file-decoration-style = none
 
 [diff]
-	renames = copies
+	algorithm = histogram
+	colorMoved = default
+	context = 10
 	mnemonicprefix = true # [i]ndex, [w]ork tree, [c]ommit, [o]bject
+	renames = copies
+	submodule = log
 	tool = vimdiff
-    colorMoved = default
+[fetch]
+    # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
+    prune = true
+	prunetags = true
+    fsckobjects = true
+
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
 
 [grep]
 	lineNumber = true
 
+[help]
+	autocorrect = immediate
 [interactive]
     diffFilter = delta --color-only
 
 [merge]
     stat = true
     tool = vimdiff
-    conflictstyle = diff3
+    conflictstyle = zdiff3
 
 [merge "ours"]
 	driver = true
@@ -135,19 +151,21 @@
 	shorter = %C(auto)%D %C(black)--%C(bold black)%gD%N %ad by %C(white)%cn%C(reset)
 	vtree = %C(bold blue)%h%C(reset)+%C(bold black)(%cr)%C(reset)+%C(auto)%D%C(reset)++\n+++       %C(bold black)%an%C(reset)%C(black):%C(reset) %s
 
-[fetch]
-    # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
-    prune = true
 
 [pull]
     # https://spin.atomicobject.com/2020/05/05/git-configurations-default/
 	rebase = true
 
-[filter "lfs"]
-	process = git-lfs filter-process
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
+[receive]
+	fsckObjects = true
+
+[status]
+	submoduleSummary = true
+
+[submodule]
+	recurse = true
+[transfer]
+	fsckobjects = true
 
 ## Custom git identies based on project path
 [includeIf "gitdir:/mnt/Spark/Projects/elude/"]
@@ -163,7 +181,8 @@
 # https://mislav.net/2013/02/merge-vs-rebase/
 # TODO: Pick a merging model for my downstream projects.
 [rebase]
-	autoStash = false
+	autoStash = true
+	autoSquash = true # use with 'git commit --fixup OLD_COMMIT_ID'
 
 [remote "origin"]
 	tagopt = --tags
