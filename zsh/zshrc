@@ -63,3 +63,8 @@ autoload -U compinit && compinit
 
 # Load local config if present, for final overrides.
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# LDA shell source
+if [ -f "$HOME/.lda/lda.sh" ]; then
+    source "$HOME/.lda/lda.sh"
+fi
