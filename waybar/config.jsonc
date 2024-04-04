@@ -8,13 +8,13 @@
     // Choose the order of the modules
     "modules-left": [
         "hyprland/workspaces",
-        "hyprland/window",
+//        "hyprland/window",
         "hyprland/submap",
         "custom/media"
     ],
-    "modules-center": [
-        "sway/window"
-    ],
+    // "modules-center": [
+      //"hyprland/window",
+    // ],
     "modules-right": [
         // "mpd",
         "idle_inhibitor",

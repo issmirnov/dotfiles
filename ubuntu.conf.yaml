@@ -10,6 +10,7 @@
 
 - link:
     ~/.Xresources: x/Xresources
+    ~/.config/alacritty: alacritty
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
     ~/.config/gammastep: gammastep
