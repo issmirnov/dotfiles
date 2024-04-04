@@ -9,6 +9,7 @@
     "modules-left": [
         "hyprland/workspaces",
 //        "hyprland/window",
+        "wlr/workspaces",
         "hyprland/submap",
         "custom/media"
     ],
@@ -70,16 +71,9 @@
       //   "code": "󰨞",
       // },
     },
-    "sway/mode": {
-        "format": "<span style=\"italic\">{}</span>"
-    },
-    "sway/scratchpad": {
-        "format": "{icon} {count}",
-        "show-empty": false,
-        "format-icons": ["", ""],
-        "tooltip": true,
-        "tooltip-format": "{app}: {title}"
-    },
+    "wlr/workspaces": {
+         "format": "{icon}",
+     },
     "mpd": {
         "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ⸨{songPosition}|{queueLength}⸩ {volume}% ",
         "format-disconnected": "Disconnected ",
