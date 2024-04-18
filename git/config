@@ -4,10 +4,11 @@
 # Structure: common options at the top, less common at the bottom
 #------------------------------------------------------------------------------------------#
 
-[url "git@github.com:"]
-        insteadOf = https://github.com/
-[url "git@bitbucket.org:"]
-        insteadOf = https://bitbucket.org/
+# Disable, as this breaks many initial clones
+# [url "git@github.com:"]
+#         insteadOf = https://github.com/
+# [url "git@bitbucket.org:"]
+#         insteadOf = https://bitbucket.org/
 
 [user]
 	name = Ivan Smirnov
