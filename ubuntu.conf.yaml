@@ -10,11 +10,15 @@
 
 - link:
     ~/.Xresources: x/Xresources
-    ~/.config/greenclip.toml: greenclip/greenclip.toml
+    ~/.config/alacritty: alacritty
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
+    ~/.config/gammastep: gammastep
+    ~/.config/greenclip.toml: greenclip/greenclip.toml
+    ~/.config/hypr: hypr
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
+    ~/.config/waybar: waybar
     ~/.fonts/FontAwesome.otf: fonts/FontAwesome.otf
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
@@ -24,6 +28,7 @@
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc
     ~/bin/hop: i3/scripts/hop
     ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
+
 
 - shell:
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate font cache."]
