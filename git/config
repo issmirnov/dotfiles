@@ -4,12 +4,6 @@
 # Structure: common options at the top, less common at the bottom
 #------------------------------------------------------------------------------------------#
 
-# Disable, as this breaks many initial clones
-# [url "git@github.com:"]
-#         insteadOf = https://github.com/
-# [url "git@bitbucket.org:"]
-#         insteadOf = https://bitbucket.org/
-
 [user]
 	name = Ivan Smirnov
 	email = isgsmirnov@gmail.com
@@ -197,9 +191,10 @@
 [web]
 	browser = google-chrome-stable
 
+# Disable, since this breaks zsh plugin managers
 # Include SSH overrides, saved in separate file so that we can easily toggle
-[include]
-	path = ~/.dotfiles/git/config-ssh-override
+#[include]
+#	path = ~/.dotfiles/git/config-ssh-override
 
 # Allow local customizations in the .gitconfig_local file
 [include]
