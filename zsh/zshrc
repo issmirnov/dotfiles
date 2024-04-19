@@ -19,34 +19,57 @@
 
 ####################################################
 # Load github.com/tarjoilija/zgen and initialize it.
-source "${HOME}/.dotfiles/zsh/zgen/zgen.zsh"
-ZGEN_RESET_ON_CHANGE=(${HOME}/.zshrc ${HOME}/.zshrc.local ${HOME}/.dotfiles/zsh/zshrc )
+# source "${HOME}/.dotfiles/zsh/zgen/zgen.zsh"
+# ZGEN_RESET_ON_CHANGE=(${HOME}/.zshrc ${HOME}/.zshrc.local ${HOME}/.dotfiles/zsh/zshrc )
+
+source "${HOME}/.dotfiles/zsh/antigen.zsh"
 
 export DISABLE_AUTO_UPDATE="true" # disable OMZ auto update prompt
 
-# create zgen init script if it doesn't exist
-if ! zgen saved; then
-  	zgen oh-my-zsh
+# antigen init
+antigen use oh-my-zsh
 
-  	plugins=(git git-extras history brew common-aliases macos tmux)
+plugins=(git git-extras history brew common-aliases macos tmux)
 	plugins+=(z extract adb vagrant kubectl)
   	for p in ${(@s' ')plugins}; do
-  		zgen oh-my-zsh plugins/$p
+  		antigen bundle $p
   	done
 
-	zgen load ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
-	zgen load zsh-users/zsh-autosuggestions
-	zgen load zsh-users/zsh-completions
-	zgen load djui/alias-tips
-	zgen load wfxr/forgit
+	source ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
+	antigen bundle zsh-users/zsh-autosuggestions
+	antigen bundle zsh-users/zsh-completions
+	antigen bundle djui/alias-tips
+	#zgen load wfxr/forgit
 	#zgen load romkatv/zsh-prompt-benchmark
 
 	# As per instructions, load this last so that it wraps ZLE widgets.
-	zgen load zsh-users/zsh-syntax-highlighting
+	antigen bundle zsh-users/zsh-syntax-highlighting
 
-	# generate the init script from plugins above
-	zgen save
-fi
+antigen apply
+
+# create zgen init script if it doesn't exist
+#if ! zgen saved; then
+#  	zgen oh-my-zsh
+
+#  	plugins=(git git-extras history brew common-aliases macos tmux)
+#	plugins+=(z extract adb vagrant kubectl)
+#  	for p in ${(@s' ')plugins}; do
+#  		zgen oh-my-zsh plugins/$p
+#  	done
+
+#	zgen load ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
+#	zgen load zsh-users/zsh-autosuggestions
+#	zgen load zsh-users/zsh-completions
+#	zgen load djui/alias-tips
+#	zgen load wfxr/forgit
+#	#zgen load romkatv/zsh-prompt-benchmark
+
+#	# As per instructions, load this last so that it wraps ZLE widgets.
+#	zgen load zsh-users/zsh-syntax-highlighting
+
+#	# generate the init script from plugins above
+#	zgen save
+#fi
 
 ########################################################
 # Load custom config last, so it can override plugins ##
