@@ -258,6 +258,7 @@ assign [instance="^crx_knipolnnllmklapflnccelgolnpehhpl$"] hangouts
 assign [instance="^crx_clhhggbfdinjmjhajaheehoeibfljjno$"] telegram
 assign [class="^slack$"] slack
 assign [class="^discord$"] discord
+assign [class="^webcord$"] discord
 assign [class="^obsidian$"] obsidian
 
 # IDE binds.

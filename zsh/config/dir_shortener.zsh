@@ -10,6 +10,7 @@
 typeset -A shortcuts # declare KV map
 shortcuts["$GOPATH/src/"]="(go)"
 shortcuts["/System/Library/Extensions"]="(S/L/E)"
+shortcuts["/home/vania/Projects/"]="(//projects)"
 
 
 function dir_head(){

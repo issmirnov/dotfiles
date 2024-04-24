@@ -92,7 +92,7 @@ exec_always --no-startup-id "xss-lock -- xsecurelock"
 
 # start up discord and obsidiann
 exec_always --no-startup-id "/usr/bin/obsidian"
-exec_always --no-startup-id "discord"
+exec_always --no-startup-id "webcord"
 exec_always --no-startup-id "slack"
 
 # override browser name as we use "google-chrome-stable" on arch
