@@ -12,6 +12,7 @@
     default = current
     followTags = true
     recurseSubmodules = check # See: https://stackoverflow.com/questions/5814319/git-submodule-push
+    autoSetupRemote = true # https://stackoverflow.com/questions/6089294/how-to-avoid-having-to-do-git-branch-set-upstream-and-instead-default-to-au
 
 [init]
 	templatedir = ~/.dotfiles/git/template
@@ -53,6 +54,7 @@
 [branch]
 	sort = authordate
 	autosetuprebase = always
+	autosetupmerge = always
 
 [browser "google-chrome-stable"]
 	cmd = "/usr/bin/google-chrome-stable"
