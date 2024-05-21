@@ -81,6 +81,10 @@ I've been getting a lot of questions about my MacOS window management. Here's th
 
 [![Star History Chart](https://api.star-history.com/svg?repos=issmirnov/dotfiles&type=Date)](https://star-history.com/#issmirnov/dotfiles&Date)
 
+## Repo analytics
+
+![Repobeats analytics](https://repobeats.axiom.co/api/embed/645bf89a101f204434c7e8a39c058cfcf7eb64c5.svg "Repobeats analytics image")
+
 ## A Note about the License & Copyright:
 
 Unless attributed otherwise, everything is under the MIT license (see LICENSE
