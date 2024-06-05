@@ -1,5 +1,6 @@
 #!/usr/bin/env zsh
 
+alias dit='docker run -it '
 # quick debug containers
 alias alpine='docker run -ti alpine'
 alias ubuntu='docker run -ti ubuntu:jammy sh'
