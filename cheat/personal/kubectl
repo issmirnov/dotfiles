@@ -45,3 +45,6 @@ kubectl get pods \
 
 # List capacity of pods per node
 kubectl get nodes -o=custom-columns=NAME:.metadata.name,CAPACITY:.status.capacity.pods
+
+# To delete everything in a namespace
+kubectl delete all -n <namespace-name> --all
