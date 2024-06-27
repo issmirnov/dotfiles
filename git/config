@@ -168,6 +168,9 @@
 [includeIf "gitdir:/mnt/Spark/Projects/elude/"]
   path = ~/.dotfiles/git/config-elude
 
+[includeIf "gitdir:/Users/vania/Projects/devzero/"]
+  path = ~/.dotfiles/git/config-devzero
+
 # Does not work due to symlinks.
 [includeIf "gitdir:~/Projects/elude/"]
   path = ~/.dotfiles/git/config-elude
