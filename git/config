@@ -206,3 +206,7 @@
 	path = ~/.gitconfig_local
 [safe]
 	directory = *
+[safe]
+	directory = /mnt/data1/Personal/Projects/
+	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/monorepo
+	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/elude-ios-app
