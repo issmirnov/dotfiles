@@ -68,3 +68,7 @@ autoload -U compinit && compinit
 if [ -f "$HOME/.lda/lda.sh" ]; then
     source "$HOME/.lda/lda.sh"
 fi
+# These lines setup the DevZero CLI completions.
+if test -x "/usr/local/bin/dzcmd"; then
+source <(/usr/local/bin/dzcmd dz completion zsh)
+fi

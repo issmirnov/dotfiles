@@ -94,6 +94,7 @@ exec_always --no-startup-id "xss-lock -- xsecurelock"
 exec_always --no-startup-id "/usr/bin/obsidian"
 exec_always --no-startup-id "webcord"
 exec_always --no-startup-id "slack"
+exec_always --no-startup-id "/usr/bin/whatsie"
 
 # override browser name as we use "google-chrome-stable" on arch
 # set $browser google-chrome-stable
