@@ -1,2 +1,4 @@
-[url "git@github.com:"]
+[url "git@github.com:devzero-inc/"]
+        insteadOf = https://github.com/devzero-inc/
+[url "git@github.com"]
         insteadOf = https://github.com/

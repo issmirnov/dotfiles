@@ -165,15 +165,14 @@
 	fsckobjects = true
 
 ## Custom git identies based on project path
-[includeIf "gitdir:/mnt/Spark/Projects/elude/"]
+[includeIf "gitdir:${GIT_PROJECTS_DIR}/elude/"]
   path = ~/.dotfiles/git/config-elude
 
-[includeIf "gitdir:/Users/vania/Projects/devzero/"]
+[includeIf "gitdir:${GIT_PROJECTS_DIR}/devzero/"]
   path = ~/.dotfiles/git/config-devzero
 
-# Does not work due to symlinks.
-[includeIf "gitdir:~/Projects/elude/"]
-  path = ~/.dotfiles/git/config-elude
+[includeIf "gitdir:/home/vania/Projects/2.Clients/devzero/"]
+  path = ~/.dotfiles/git/config-devzero
 
 ; [includeIf "gitdir:~/work/"]
 ;   path = .gitconfig-work
@@ -210,3 +209,9 @@
 	directory = /mnt/data1/Personal/Projects/
 	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/monorepo
 	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/elude-ios-app
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
