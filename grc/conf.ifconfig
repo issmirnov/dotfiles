@@ -31,6 +31,10 @@ colours=blue
 regexp=(?i)mtu(\s|\:)\d+
 colours=green
 =======
+# "1500"
+regexp=1500
+colours=bold yellow
+=======
 #errors
 regexp=errors(\s|\:)\d+
 colours=red
