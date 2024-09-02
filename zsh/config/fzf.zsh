@@ -43,6 +43,10 @@ export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
 [[ -f  "/usr/share/fzf/key-bindings.zsh" ]] && source "/usr/share/fzf/key-bindings.zsh"
 [[ -f  "/usr/share/fzf/completion.zsh" ]] && source "/usr/share/fzf/completion.zsh"
 
+
+# on new fzf versions, load baked in completions
+eval "$(fzf --zsh)" || true
+
 # better zz from fasd
 # TODO convert to Z
 function zz() {
