@@ -1,0 +1,7 @@
+# Debug webcam on linux
+
+## Check device is registered
+ls /dev/video*
+
+## Print out formats
+v4l2-ctl --list-formats-ext -d /dev/video0
