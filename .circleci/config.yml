@@ -13,7 +13,7 @@ jobs:
       - run: export DEBIAN_FRONTEND=noninteractive && ln -fs /usr/share/zoneinfo/America/Denver /etc/localtime && apt install -y tzdata && dpkg-reconfigure --frontend noninteractive tzdata
       - run: apt install -y python3 git wget vim curl zsh jq # install curl and zsh
       - run: mkdir -p ~/.i3 ~/.config # make i3 dir for linking targets
-      - run: export U=$(curl https://github.cache.smirnov.cloud/repos/sharkdp/bat/releases/latest | jq -r -c 'first(.assets[] | select(.browser_download_url | contains("amd64"))) | .browser_download_url') && wget $U && dpkg -i $(basename $U) # install bat.
+      - run: export U=$(curl https://api.github.com/repos/sharkdp/bat/releases/latest | jq -r -c 'first(.assets[] | select(.browser_download_url | contains("amd64"))) | .browser_download_url') && wget $U && dpkg -i $(basename $U) # install bat.
       - run: ./install # test install script - vim, bat, etc
       - run: cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1;fi # zsh linter
   check-zsh:

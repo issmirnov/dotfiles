@@ -19,3 +19,6 @@ alias vup='vagrant up'
 
 # terraform
 alias tf=terraform
+
+# tree -a to auto-list all hidden files
+alias tree='tree -a'
