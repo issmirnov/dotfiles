@@ -25,7 +25,7 @@ _grc_injector(){
 	    #  - whitespace
 	    #  - sudo
 	    # then check for existence of program (determined by grc file suffix) and make sure we don't infintely append to zsh BUFFER
-	    if [[ "$BUFFER" =~ "(^|[/\w\.]+/|sudo\s+)$progmatch(\s*|$)\s?" && ! "$BUFFER" =~ "grcat conf*" ]]; then
+	    if [[ "$BUFFER" =~ "(^|[/\w\.]+/|sudo\s+)\b$progmatch\b(\s*|$)" && ! "$BUFFER" =~ "grcat conf*" ]]; then
 		BUFFER=$(echo "$BUFFER" | sed ':a;N;$!ba;s/\n$//')" | grcat conf.$prog"
 		break
 	    fi
