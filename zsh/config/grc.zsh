@@ -3,13 +3,12 @@
 # vim:ft=zsh
 _grc_injector(){
     if (( ! ${+DISABLE_GRC} )); then
-        local f
-	for f in $(ls ~/.dotfiles/grc/conf*); do
-	    local prog=${f:e}
+	for f in ~/.dotfiles/grc/conf*; do
+	    local prog=${f##*.}
 
 	    # don't set this to local, so that we can update this inside the "if" block
 	    # we explicitly unset at the end of the function to clean up the env.
-	    progmatch=${f:e}
+	    progmatch=$prog
 
 	    # echo "PROG: $prog"
 	    # docker patch, so that "dockerpull" and "dockerimages" config files get picked up
