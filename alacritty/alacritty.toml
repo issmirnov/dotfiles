@@ -1,25 +1,9 @@
-# https://alacritty.org/config-alacritty.html
-
-###########
-# GENERAL #
-###########
-
-# Import additional configuration files
-import = []
-
-
-
-# Live config reload (changes require restart)
-live_config_reload = true  # Default: true
-
-# Offer IPC using alacritty msg (unix only)
-ipc_socket = true  # Default: true
 
 
 # Shell program and its arguments
 # Default for Linux/BSD/macOS is $SHELL or user's login shell
 # Default for Windows is "powershell"
-[shell]
+[terminal.shell]
 program = "/usr/bin/zsh"  # Example for Linux/BSD/macOS
 args = ["-l"]
 # Working directory
@@ -326,3 +310,21 @@ bindings = [
     # { key = "Key", mods = "Modifiers", chars = "Characters to send" },
     # ...
 ]
+
+[general]
+
+
+
+# Live config reload (changes require restart)
+live_config_reload = true  # Default: true
+
+# Offer IPC using alacritty msg (unix only)
+ipc_socket = true  # Default: true
+# https://alacritty.org/config-alacritty.html
+
+###########
+# GENERAL #
+###########
+
+# Import additional configuration files
+import = []
