@@ -1,6 +1,6 @@
 // -*- mode: jsonc -*-
 {
-    // "layer": "top", // Waybar at top layer
+    // "layer": "bottom", // Waybar at top layer
     // "position": "bottom", // Waybar position (top|bottom|left|right)
     "height": 30, // Waybar height (to be removed for auto height)
     // "width": 1280, // Waybar width
@@ -70,9 +70,13 @@
       //   "foot": "", // Windows that contain "foot" in either class or title. For optimization reasons, it will only match against a title if at least one other window explicitly matches against a title.
       //   "code": "󰨞",
       // },
+      // Set this up when we figure out wraparound logic
+      // "on-scroll-up": "hyprctl dispatch workspace -1",
+      // "on-scroll-down": "hyprctl dispatch workspace +1"
     },
     "wlr/workspaces": {
          "format": "{icon}",
+
      },
     "mpd": {
         "format": "{stateIcon} {consumeIcon}{randomIcon}{repeatIcon}{singleIcon}{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S}) ⸨{songPosition}|{queueLength}⸩ {volume}% ",
