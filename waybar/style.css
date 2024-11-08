@@ -52,10 +52,23 @@ button:hover {
     padding: 0 5px;
     background-color: transparent;
     color: #ffffff;
+    /* color: gold; */
+    /* text-shadow: 0 0 3px gold; /1* Gold shadow for workspace names *1/ */
+}
+
+#workspaces button.active {
+    /* background: rgba(0, 0, 0, 0.2); */
+    color: black;
+    background: gold;
+
 }
 
 #workspaces button:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background-color: #64727D;
+    box-shadow: inset 0 -3px #ffffff;
+    color: white;
+    /* color: red; */
+
 }
 
 #workspaces button.focused {
@@ -66,6 +79,17 @@ button:hover {
 #workspaces button.urgent {
     background-color: #eb4d4b;
 }
+
+/* Add a separator after each workspace button */
+/* #workspaces button::after { */
+/*     content: " • "; /1* Separator character *1/ */
+/*     color: #ffffff; /1* Separator color *1/ */
+/* } */
+
+/* /1* Remove the separator after the last workspace button *1/ */
+/* #workspaces button:last-child::after { */
+/*     content: ""; */
+/* } */
 
 #mode {
     background-color: #64727D;
