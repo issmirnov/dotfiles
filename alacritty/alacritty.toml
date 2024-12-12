@@ -95,6 +95,13 @@ italic = { style = "Italic" }  # Inherits family from normal, Default style: Ita
 # Bold Italic font style
 bold_italic = { style = "Bold Italic" }  # Inherits family from normal, Default style: Bold Italic
 
+# Fallback fonts for glyphs, coming from installed dotfiles fonts.
+# fallback = [
+#   "Font Awesome 6 Free Regular",
+#   "Font Awesome 6 Brands Regular",
+#   "Font Awesome 6 Free Solid"
+# ]
+
 # Font size in points
 size = 15  # Default: 11.25
 
