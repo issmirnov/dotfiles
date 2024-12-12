@@ -68,6 +68,7 @@
       "show-special" : true, // Display icons in special workspaces (like scratchpads or floating windows)
 
       // icons from https://fontawesome.com/icons
+      // List with `hyprctl -j clients | jq '.[].class'`
       "window-rewrite": {
         "title<.*youtube.*>": "", // Windows whose titles contain "youtube"
         "class<Google-chrome>": "", // Windows whose classes are "firefox"
@@ -77,6 +78,7 @@
         "class<jetbrains.*>": "",
         "class<Slack>": "",
         "class<obsidian>": "",
+        "class<WebCord>": "",
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
