@@ -21,7 +21,7 @@
         "idle_inhibitor",
         "pulseaudio",
         "power-profiles-daemon",
-        // "network", // static ip, not needed
+        "network", // static ip, not needed, but we want network manager.
         // "bluetooth", // long text due to mouse and bliss
         "cpu",
         "memory",
