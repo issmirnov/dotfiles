@@ -72,13 +72,16 @@
       "window-rewrite": {
         "title<.*youtube.*>": "", // Windows whose titles contain "youtube"
         "class<Google-chrome>": "", // Windows whose classes are "firefox"
-        "class<org.telegram.desktop>": "", // Windows whose classes are "firefox"
+        "class<org.telegram.desktop.*>": "", // Windows whose classes are "firefox"
         "class<Google-chrome> title<.*github.*>": "", // Windows whose class is "firefox" and title contains "github". Note that "class" always comes first.
         "class<Alacritty>": "",
         "class<jetbrains.*>": "",
         "class<Slack>": "",
         "class<obsidian>": "",
         "class<WebCord>": "",
+        "class<jetbrains-goland>": "",
+        "class<Lens>": "",
+        "class<nemo>": "",
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
