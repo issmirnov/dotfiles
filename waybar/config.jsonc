@@ -82,6 +82,7 @@
         "class<jetbrains-goland>": "",
         "class<Lens>": "",
         "class<nemo>": "",
+        "class<walc>": "",
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
