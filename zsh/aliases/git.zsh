@@ -15,6 +15,7 @@ alias grm="git status | grep deleted | awk '{print \$3}' | xargs git rm"
 alias gac='git add -A; git commit'
 alias gacm='git add -A; git commit -m '
 alias g-='git checkout -' # quickly switch between branches.
+alias gcoom='gco origin/main' # quickly revert files
 
 export forgit_checkout_branch=gcob # move wfxr/forgit 'gco' to 'gcob'
 alias gcb='git checkout -b'

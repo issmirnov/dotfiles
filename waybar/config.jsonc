@@ -83,6 +83,8 @@
         "class<Lens>": "",
         "class<nemo>": "",
         "class<walc>": "",
+        "class<Code>": "",
+        "class<Skype>": "",
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
