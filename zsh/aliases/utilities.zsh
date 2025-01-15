@@ -111,7 +111,7 @@ fi
 
 # Easily view config files. Removes all comments and displays actual live settings
 # Usage: "cat /file/with/hashtag/comments "
-alias -g prp='| grep -v "#" | sed "/^$/d"'
+alias -g prp='| grep -v "^#" | sed "/^$/d"'
 
 
 # Wrapper for cp, will mkdir if target doesn't exist. Useful when copying deep paths.
