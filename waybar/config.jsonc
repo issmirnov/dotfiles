@@ -85,6 +85,7 @@
         "class<walc>": "",
         "class<Code>": "",
         "class<Skype>": "",
+        "class<org.pulseaudio.pavucontrol>": "",
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
