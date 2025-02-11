@@ -38,6 +38,11 @@ fi
 # fzf-history-widget: FZF_CTRL_R_OPTS
 export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
 
+# prettier history view
+# history | fzf --tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '
+# export FZF_CTRL_R_OPTS="--tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '"
+
+
 # Auto-completion
 [[ $- == *i* ]] && source "$FZF_PREFIX/fzf/shell/completion.zsh" 2> /dev/null
 
