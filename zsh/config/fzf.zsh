@@ -169,10 +169,25 @@ fll() {
 
 # Search env variables
 fenv() {
+  local query="$1"  # Capture optional search term
+  local preview_cmd
   local out
-  out=$(env | fzf)
-  # echo $(echo $out | cut -d= -f2)
-  echo $(echo $out)
+
+  # Preview: Show the variable name at the top, then its value below
+  preview_cmd='var=$(echo {} | cut -d= -f1); echo -e "\033[1;32m$var\033[0m"; echo "--------------------"; printenv "$var"'
+
+  # Use fzf with optional query
+  out=$(env | fzf --query="$query" --preview "$preview_cmd" --preview-window=right:60%:wrap \
+    --height=60% --layout=reverse --border=rounded)
+
+  # If a variable was selected, print it nicely
+  if [[ -n "$out" ]]; then
+    local var_name=$(echo "$out" | cut -d= -f1)
+    local var_value=$(printenv "$var_name")
+
+    echo -e "\n\033[1;32m$var_name\033[0m="
+    echo "$var_value"
+  fi
 }
 
 
