@@ -110,14 +110,21 @@ function vaf(){
 # fa <dir> - Search dirs and cd to them
 fa() {
   local dir
-  dir=$(fd --type directory | fzf --no-multi --query="$*") &&
+  dir=$(fd --type directory --follow | fzf --no-multi --query="$*") &&
   cd "$dir"
 }
 
 # fah <dir> - Search dirs and cd to them (included hidden dirs)
 fah() {
+  local preview_cmd
+  if command -v exa > /dev/null; then
+    preview_cmd='exa -al --icons --color=always --group-directories-first {} 2>/dev/null | head -50'
+  else
+    preview_cmd='ls -A --color=always {} 2>/dev/null | head -50'
+  fi
+
   local dir
-  dir=$(fd --type directory --hidden --no-ignore | fzf --no-multi --query="$*") &&
+  dir=$(fd --type directory --hidden --follow --no-ignore | fzf --no-multi --query="$*" --preview "$preview_cmd" --preview-window=right:50%:wrap --height=60% --layout=reverse --border=rounded) &&
   cd $dir
 }
 
