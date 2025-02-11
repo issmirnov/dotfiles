@@ -106,16 +106,19 @@ function vaf(){
   [ -n "$file" ] && vim "$file"
 }
 
-# Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
-# fa <dir> - Search dirs and cd to them
-fa() {
-  local dir
-  dir=$(fd --type directory --follow | fzf --no-multi --query="$*") &&
-  cd "$dir"
-}
+# Common function for directory selection
+_fzf_cd() {
+  local fd_flags=("--type" "d" "--follow" "--strip-cwd-prefix")  # Base optimized flags
+  local query=()
 
-# fah <dir> - Search dirs and cd to them (included hidden dirs)
-fah() {
+  for arg in "$@"; do
+    if [[ "$arg" == "-hide" ]]; then
+      fd_flags+=("--hidden" "--no-ignore")
+    else
+      query+=("$arg")
+    fi
+  done
+
   local preview_cmd
   if command -v exa > /dev/null; then
     preview_cmd='exa -al --icons --color=always --group-directories-first {} 2>/dev/null | head -50'
@@ -124,9 +127,23 @@ fah() {
   fi
 
   local dir
-  dir=$(fd --type directory --hidden --follow --no-ignore | fzf --no-multi --query="$*" --preview "$preview_cmd" --preview-window=right:50%:wrap --height=60% --layout=reverse --border=rounded) &&
-  cd $dir
+  dir=$(fd "${fd_flags[@]}" "${query[@]}" 2>/dev/null | fzf --no-multi \
+    --preview "$preview_cmd" \
+    --preview-window=right:50%:wrap \
+    --height=60% --layout=reverse --border=rounded \
+    --query="${query[*]}") && cd "$dir"
 }
+
+# Regular directory search (ignores hidden dirs)
+fa() {
+  _fzf_cd "$@"
+}
+
+# Include hidden directories (except for .git)
+fah() {
+  _fzf_cd -hide "$@"
+}
+
 
 # global:  cd into the directory of the selected file
 # similar to 'zz', but this one does a full global file search
