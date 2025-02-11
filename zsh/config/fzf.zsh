@@ -18,13 +18,17 @@ export FZF_DEFAULT_OPTS='
   --exact
   --color fg:-1,bg:-1,hl:230,fg+:193,bg+:233,hl+:231
   --color info:150,prompt:110,spinner:150,pointer:167,marker:174
+  --tiebreak=pathname,length
+  --border=rounded
 '
 
-if command -v ag > /dev/null; then
+if command -v fd > /dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+elif command -v ag > /dev/null; then
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
 else
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || find . -path "*/\.*" -prune -o -type f -print -o -type l -print | sed s/^..//) 2> /dev/null'
-  echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
+  echo "[FZF Module]: 'ag' and 'fd'  not found, falling back to 'find' (no hidden files)"
 fi
 
 # Set FZF fzf-file-widget to use the same options
