@@ -61,7 +61,7 @@ function zz() {
 # does global file search, shows selected file in bat
 function show() {
     local file
-    file=$(locate / | fzf --query="$*" --select-1 --exit-0)
+    file=$(locate / | fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
@@ -70,7 +70,7 @@ function show() {
 # does local file search, from current directory, displays file in bat
 function showl() {
     local file
-    file=$(fzf --query="$*" --select-1 --exit-0)
+    file=$(fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
