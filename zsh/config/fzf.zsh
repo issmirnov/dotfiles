@@ -150,8 +150,12 @@ fah() {
 fl() {
   local file
   local dir
-  file=$(locate / | fzf +m -q "$*") && dir=$(dirname "$file") && cd "$dir"
-  ls
+
+  # Use fd to search from root `/`, ensuring it finds everything
+  file=$(fd . / --type f --follow --exclude /proc --exclude /sys --exclude /dev | \
+    fzf +m --query="$*" --height=60% --layout=reverse --border=rounded)
+
+  [[ -n "$file" ]] && dir=$(dirname "$file") && cd "$dir" && ls
 }
 
 # cd into the directory of the selected file
