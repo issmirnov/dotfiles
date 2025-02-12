@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 # Core ZSH config params
 #
-# Report CPU usage for commands running longer than 10 seconds
+# Report CPU usage for commands running longer than 130 seconds
 # Info: https://nuclearsquid.com/writings/reporttime-in-zsh/
-REPORTTIME=10
+REPORTTIME=30
 
 # Aliases in Zsh and Bash are normally only expanded for the first
 # word in a command. This means that your aliases will not normally

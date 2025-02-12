@@ -18,13 +18,17 @@ export FZF_DEFAULT_OPTS='
   --exact
   --color fg:-1,bg:-1,hl:230,fg+:193,bg+:233,hl+:231
   --color info:150,prompt:110,spinner:150,pointer:167,marker:174
+  --tiebreak=pathname,length
+  --border=rounded
 '
 
-if command -v ag > /dev/null; then
+if command -v fd > /dev/null; then
+  export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
+elif command -v ag > /dev/null; then
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || ag --hidden --ignore .git -g "") 2> /dev/null'
 else
   export FZF_DEFAULT_COMMAND='(git ls-tree -r --name-only HEAD || find . -path "*/\.*" -prune -o -type f -print -o -type l -print | sed s/^..//) 2> /dev/null'
-  echo "[FZF Module]: 'ag' not found, falling back to 'find' (no hidden files)"
+  echo "[FZF Module]: 'ag' and 'fd'  not found, falling back to 'find' (no hidden files)"
 fi
 
 # Set FZF fzf-file-widget to use the same options
@@ -33,6 +37,11 @@ fi
 # fzf-cd-widget: FZF_ALT_C_COMMAND, FZF_ALT_C_OPTS
 # fzf-history-widget: FZF_CTRL_R_OPTS
 export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
+
+# prettier history view
+# history | fzf --tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '
+# export FZF_CTRL_R_OPTS="--tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '"
+
 
 # Auto-completion
 [[ $- == *i* ]] && source "$FZF_PREFIX/fzf/shell/completion.zsh" 2> /dev/null
@@ -57,7 +66,7 @@ function zz() {
 # does global file search, shows selected file in bat
 function show() {
     local file
-    file=$(locate / | fzf --query="$*" --select-1 --exit-0)
+    file=$(locate / | fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
@@ -66,7 +75,7 @@ function show() {
 # does local file search, from current directory, displays file in bat
 function showl() {
     local file
-    file=$(fzf --query="$*" --select-1 --exit-0)
+    file=$(fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
@@ -102,28 +111,56 @@ function vaf(){
   [ -n "$file" ] && vim "$file"
 }
 
-# Navigation functions from https://github.com/nikitavoloboev/dotfiles/blob/master/zsh/functions/fzf-functions.zsh#L1
-# fa <dir> - Search dirs and cd to them
-fa() {
+# Common function for directory selection
+_fzf_cd() {
+  local fd_flags=("--type" "d" "--follow" "--strip-cwd-prefix")  # Base optimized flags
+  local query=()
+
+  for arg in "$@"; do
+    if [[ "$arg" == "-hide" ]]; then
+      fd_flags+=("--hidden" "--no-ignore")
+    else
+      query+=("$arg")
+    fi
+  done
+
+  local preview_cmd
+  if command -v exa > /dev/null; then
+    preview_cmd='exa -al --icons --color=always --group-directories-first {} 2>/dev/null | head -50'
+  else
+    preview_cmd='ls -A --color=always {} 2>/dev/null | head -50'
+  fi
+
   local dir
-  dir=$(fd --type directory | fzf --no-multi --query="$*") &&
-  cd "$dir"
+  dir=$(fd "${fd_flags[@]}" "${query[@]}" 2>/dev/null | fzf --no-multi \
+    --preview "$preview_cmd" \
+    --preview-window=right:50%:wrap \
+    --height=60% --layout=reverse --border=rounded \
+    --query="${query[*]}") && cd "$dir"
 }
 
-# fah <dir> - Search dirs and cd to them (included hidden dirs)
-fah() {
-  local dir
-  dir=$(fd --type directory --hidden --no-ignore | fzf --no-multi --query="$*") &&
-  cd $dir
+# Regular directory search (ignores hidden dirs)
+fa() {
+  _fzf_cd "$@"
 }
+
+# Include hidden directories (except for .git)
+fah() {
+  _fzf_cd -hide "$@"
+}
+
 
 # global:  cd into the directory of the selected file
 # similar to 'zz', but this one does a full global file search
 fl() {
   local file
   local dir
-  file=$(locate / | fzf +m -q "$*") && dir=$(dirname "$file") && cd "$dir"
-  ls
+
+  # Use fd to search from root `/`, ensuring it finds everything
+  file=$(fd . / --type f --follow --exclude /proc --exclude /sys --exclude /dev | \
+    fzf +m --query="$*" --height=60% --layout=reverse --border=rounded)
+
+  [[ -n "$file" ]] && dir=$(dirname "$file") && cd "$dir" && ls
 }
 
 # cd into the directory of the selected file
@@ -137,10 +174,25 @@ fll() {
 
 # Search env variables
 fenv() {
+  local query="$1"  # Capture optional search term
+  local preview_cmd
   local out
-  out=$(env | fzf)
-  # echo $(echo $out | cut -d= -f2)
-  echo $(echo $out)
+
+  # Preview: Show the variable name at the top, then its value below
+  preview_cmd='var=$(echo {} | cut -d= -f1); echo -e "\033[1;32m$var\033[0m"; echo "--------------------"; printenv "$var"'
+
+  # Use fzf with optional query
+  out=$(env | fzf --query="$query" --preview "$preview_cmd" --preview-window=right:60%:wrap \
+    --height=60% --layout=reverse --border=rounded)
+
+  # If a variable was selected, print it nicely
+  if [[ -n "$out" ]]; then
+    local var_name=$(echo "$out" | cut -d= -f1)
+    local var_value=$(printenv "$var_name")
+
+    echo -e "\n\033[1;32m$var_name\033[0m="
+    echo "$var_value"
+  fi
 }
 
 
