@@ -302,6 +302,8 @@ exec xset r rate 280 40
 # for_window [title="^cmus$"] move window to scratchpad
 # exec --no-startup-id terminator -T cmus -e cmus
 
+# noise supppression
+exec noisetorch
 ### user apps
 exec $browser
 exec $terminal
