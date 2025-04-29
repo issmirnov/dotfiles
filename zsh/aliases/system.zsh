@@ -42,7 +42,7 @@ if [[ $OSTYPE == linux-* ]]; then
         alias upgrade='apk upgrade'
         alias ins='apk add'
         alias rem='apk del'
-    elif [[ $OSNAME == centos ]]; then
+    elif [[ $OSNAME == centos || $OSNAME == amzn ]]; then
         alias update='sudo yum update'
         alias upgrade='sudo yum upgrade'
         alias ins='sudo yum install'
