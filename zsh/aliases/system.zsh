@@ -48,7 +48,7 @@ if [[ $OSTYPE == linux-* ]]; then
         alias ins='sudo yum install'
         alias rem='sudo yum erase'
     else
-        echo "OS type not known, system.zsh will not load some common aliases"
+        echo "OS type not known: ${OSNAME}, system.zsh will not load some common aliases"
     fi
 
     # generic linux aliases
