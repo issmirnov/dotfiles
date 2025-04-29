@@ -72,3 +72,7 @@ fi
 if test -x "/usr/local/bin/dzcmd"; then
 source <(/usr/local/bin/dzcmd dz completion zsh)
 fi
+
+# tabtab source for packages
+# uninstall by removing these lines
+[[ -f ~/.config/tabtab/__tabtab.zsh ]] && . ~/.config/tabtab/__tabtab.zsh || true

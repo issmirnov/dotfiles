@@ -174,6 +174,8 @@
 [includeIf "gitdir:/home/vania/Projects/2.Clients/devzero/"]
   path = ~/.dotfiles/git/config-devzero
 
+[includeIf "gitdir:/Users/vania/Projects/devzero/"]
+  path = ~/.dotfiles/git/config-devzero
 ; [includeIf "gitdir:~/work/"]
 ;   path = .gitconfig-work
 
