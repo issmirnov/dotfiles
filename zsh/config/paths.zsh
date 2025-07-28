@@ -23,6 +23,9 @@ GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
 # Ubuntu Snaps are installed to /snap/bin symlinks
 SNAP_BIN="/snap/bin"
 
+# npm global
+# set up with "mkdir -p ~/.npm-global" && "npm config set prefix '~/.npm-global'"
+NPM_PATH="$HOME/.npm-global/bin"
 
 # Homebrew 3.0
 BREW="/opt/homebrew/bin"
@@ -39,4 +42,4 @@ done
 unset elem
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
