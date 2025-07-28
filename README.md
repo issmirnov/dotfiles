@@ -1,5 +1,7 @@
 # Ivan's Dotfiles
 
+[![Ask DeepWiki about this repo](https://deepwiki.com/badge.svg)](https://deepwiki.com/issmirnov/dotfiles)
+
 >  Your dotfiles will most likely be the longest project you ever work on.
 
 Quote by Anish Athalye on his
