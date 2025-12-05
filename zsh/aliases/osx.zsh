@@ -19,7 +19,7 @@ function osx_ins() {
     echo "Package $1 not found in brew or cask."
 }
 
-alias dfh='df -H -l | awk -F" " '"'"'{ $6="";  $7=""; $8=""; $10=""; print}'"'"' | column -t'
+alias dfh='df -H -l | awk -F" " '"'"'{ $6="";  $7=""; $8=""; $10=""; print}'"'"' | column -t | grcat conf.df'
 
 
 # Browse chrome history with fzf
