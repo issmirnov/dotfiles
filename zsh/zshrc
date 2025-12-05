@@ -29,7 +29,7 @@ if ! zgen saved; then
   	zgen oh-my-zsh
 
   	plugins=(git git-extras history brew common-aliases macos tmux)
-	plugins+=(z extract kubectl)
+	plugins+=(z extract kubectl ollama ollama_zsh_completion)
   	for p in ${(@s' ')plugins}; do
   		zgen oh-my-zsh plugins/$p
   	done
@@ -39,6 +39,7 @@ if ! zgen saved; then
 	zgen load zsh-users/zsh-completions
 	zgen load djui/alias-tips
 	zgen load wfxr/forgit
+	zgen load ocodo/ollama_zsh_completion
 	#zgen load romkatv/zsh-prompt-benchmark
 
 	# As per instructions, load this last so that it wraps ZLE widgets.
@@ -76,3 +77,8 @@ fi
 # tabtab source for packages
 # uninstall by removing these lines
 [[ -f ~/.config/tabtab/__tabtab.zsh ]] && . ~/.config/tabtab/__tabtab.zsh || true
+
+. "$HOME/.langflow/uv/env"
+export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
+export PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH"
+export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
