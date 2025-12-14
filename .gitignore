@@ -7,3 +7,9 @@
 
 # generated config
 i3/config
+
+# benchmark generated files
+benchmarks/test-data/
+benchmarks/results-*.md
+benchmarks/results-*.log
+benchmarks/comparison/
