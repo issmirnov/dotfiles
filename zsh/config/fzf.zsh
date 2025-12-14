@@ -15,11 +15,17 @@ fi
 # use spectrum_ls to list all ansi colors
 # https://github.com/junegunn/fzf/wiki/Color-schemes
 export FZF_DEFAULT_OPTS='
-  --exact
+  # Search behavior
+  --exact                          # Exact match by default
+  --scheme=path                    # Prioritize filename matches for file searches
+  --tiebreak=pathname,length       # Rank by filename first, then path length
+
+  # Visual style
+  --border=rounded                 # Rounded border style
+
+  # Color scheme (custom)
   --color fg:-1,bg:-1,hl:230,fg+:193,bg+:233,hl+:231
   --color info:150,prompt:110,spinner:150,pointer:167,marker:174
-  --tiebreak=pathname,length
-  --border=rounded
 '
 
 if command -v fd > /dev/null; then
@@ -38,9 +44,9 @@ fi
 # fzf-history-widget: FZF_CTRL_R_OPTS
 export FZF_CTRL_T_COMMAND=$FZF_DEFAULT_COMMAND
 
-# prettier history view
-# history | fzf --tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '
-# export FZF_CTRL_R_OPTS="--tac --wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '"
+# Enhanced history view with line wrapping (v0.54.0+)
+# Wrap long commands and toggle with Ctrl-/
+export FZF_CTRL_R_OPTS="--wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '"
 
 
 # Auto-completion
@@ -66,7 +72,10 @@ function zz() {
 # does global file search, shows selected file in bat
 function show() {
     local file
-    file=$(locate / | fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
+    file=$(locate / | fzf --query="$*" --select-1 --exit-0 \
+        --ghost "Type to search files globally..." \
+        --gap \
+        --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
@@ -75,7 +84,10 @@ function show() {
 # does local file search, from current directory, displays file in bat
 function showl() {
     local file
-    file=$(fzf --query="$*" --select-1 --exit-0 --preview="bat --color=always --style=full {}")
+    file=$(fzf --query="$*" --select-1 --exit-0 \
+        --ghost "Type to search files locally..." \
+        --gap \
+        --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
     [ -d "$file" ] && cd "$file"
@@ -84,7 +96,9 @@ function showl() {
 # global file search -> vim
 function vf() {
   local file;
-  file="$(locate / | fzf --query="$*" --select-1 --exit-0)";
+  file="$(locate / | fzf --query="$*" --select-1 --exit-0 \
+    --ghost "Type filename to edit..." \
+    --gap)";
   [ ! -n "$file" ] && echo "no results found" && return -1
   [ -f "$file" ] && vim "$file"
   [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
@@ -93,7 +107,9 @@ function vf() {
 # Pick file to edit
 function vfl() {
   local file
-  file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0)
+  file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0 \
+    --ghost "Type filename to edit locally..." \
+    --gap)
   [ ! -n "$file" ] && echo "no results found" && return -1
   [ -f "$file" ] && vim "$file"
   [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
@@ -107,7 +123,9 @@ function vaf(){
     exit 1
   fi
   local file
-  file=$(ag -U $* | fzf --select-1 | cut -d':' -f -2)
+  # Use --accept-nth to extract file:line instead of piping to cut
+  file=$(ag -U $* | fzf --select-1 --delimiter : --accept-nth '{1}:{2}' \
+    --ghost "Select match to edit...")
   [ -n "$file" ] && vim "$file"
 }
 
@@ -133,6 +151,8 @@ _fzf_cd() {
 
   local dir
   dir=$(fd "${fd_flags[@]}" "${query[@]}" 2>/dev/null | fzf --no-multi \
+    --ghost "Type directory name..." \
+    --gap \
     --preview "$preview_cmd" \
     --preview-window=right:50%:wrap \
     --height=60% --layout=reverse --border=rounded \
@@ -158,7 +178,10 @@ fl() {
 
   # Use fd to search from root `/`, ensuring it finds everything
   file=$(fd . / --type f --follow --exclude /proc --exclude /sys --exclude /dev | \
-    fzf +m --query="$*" --height=60% --layout=reverse --border=rounded)
+    fzf +m --query="$*" \
+    --ghost "Type to search files globally..." \
+    --gap \
+    --height=60% --layout=reverse --border=rounded)
 
   [[ -n "$file" ]] && dir=$(dirname "$file") && cd "$dir" && ls
 }
@@ -167,7 +190,9 @@ fl() {
 fll() {
   local file
   local dir
-  file=$(fzf +m -q "$*") && dir=$(dirname "$file") && cd "$dir"
+  file=$(fzf +m -q "$*" \
+    --ghost "Type to search files locally..." \
+    --gap) && dir=$(dirname "$file") && cd "$dir"
   ls
 }
 
@@ -182,7 +207,10 @@ fenv() {
   preview_cmd='var=$(echo {} | cut -d= -f1); echo -e "\033[1;32m$var\033[0m"; echo "--------------------"; printenv "$var"'
 
   # Use fzf with optional query
-  out=$(env | fzf --query="$query" --preview "$preview_cmd" --preview-window=right:60%:wrap \
+  out=$(env | fzf --query="$query" \
+    --ghost "Type to search environment variables..." \
+    --gap \
+    --preview "$preview_cmd" --preview-window=right:60%:wrap \
     --height=60% --layout=reverse --border=rounded)
 
   # If a variable was selected, print it nicely
@@ -206,7 +234,9 @@ cd..(){
       get_parent_dirs $(dirname "$1")
     fi
   }
-  local DIR=$(get_parent_dirs $(realpath "${1:-$PWD}") | fzf-tmux --tac)
+  local DIR=$(get_parent_dirs $(realpath "${1:-$PWD}") | fzf-tmux --tac \
+    --ghost "Select parent directory..." \
+    --gap)
   cd "$DIR"
 }
 
@@ -227,7 +257,11 @@ s(){
   preview_cmd+='tail -n +$(( $(( $line - $margin )) > 0 ? $(($line-$margin)) : 0)) $file | head -n $(($margin*2+1)) |'
   preview_cmd+='bat --paging=never --color=always --style=full --file-name $file --highlight-line $(($margin+1))'
   local full=$(ag "$*" \
-    | fzf --select-1 --exit-0 --preview-window up:$(($margin*2+1)) --height=60%  --preview $preview_cmd)
+    | fzf --select-1 --exit-0 \
+      --wrap \
+      --bind 'ctrl-/:toggle-wrap' \
+      --ghost "Search results - Ctrl-/ to toggle wrap" \
+      --preview-window up:$(($margin*2+1)) --height=60% --preview $preview_cmd)
   local file="$(echo $full | awk -F: '{print $1}')"
   local line="$(echo $full | awk -F: '{print $2}')"
   [ -n "$file" ] && vim "$file" +$line
