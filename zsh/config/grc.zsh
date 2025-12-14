@@ -37,9 +37,13 @@ _grc_injector(){
                 fi
             done
 
-            # More robust regex matching with proper word boundaries
-            # Match: start of line OR path OR sudo, then progmatch, then space or end
-            if [[ "$BUFFER" =~ "(^|[[:space:]]|[/[:alnum:]._]+/|sudo[[:space:]]+)($progmatch)([[:space:]]|$)" && \
+            # Match command execution contexts only (not arguments):
+            # - Start of line: ps aux
+            # - After path: /usr/bin/ps aux
+            # - After sudo: sudo ps aux
+            # - After pipe: cat file | ps
+            # - After command separator: echo foo; ps
+            if [[ "$BUFFER" =~ "(^|[/[:alnum:]._]+/|sudo[[:space:]]+|\|[[:space:]]*|;[[:space:]]*|&&[[:space:]]*|\|\|[[:space:]]*)($progmatch)([[:space:]]|$)" && \
                   ! "$BUFFER" =~ "grcat" ]]; then
                 # Remove trailing newlines using parameter expansion (no subprocess!)
                 BUFFER="${BUFFER%$'\n'} | grcat conf.$prog"
