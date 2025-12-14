@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-from __future__ import print_function
-
 import os, re, string, sys, getopt, signal
 
 
@@ -28,13 +26,15 @@ def catch_signal(signum, frame):
     global pidp
 #    print('signal')
     try:
-        os.kill(pidp, signum)
+        # Check if pidp has been initialized before trying to use it
+        if 'pidp' in globals() and pidp is not None:
+            os.kill(pidp, signum)
     except OSError: # if the subprocess already died
         pass
 
 try:
     optlist, args = getopt.getopt(sys.argv[1:], "sec:", ["stdout", "stderr", "config=", "colour=", "pty"] )
-except:
+except getopt.GetoptError:
     help()
 
 if not args:
