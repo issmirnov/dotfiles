@@ -14,7 +14,9 @@ _GRC_TRANSFORMS=(
 _grc_load_commands() {
     _GRC_COMMANDS=()
     # Use variable for portability; falls back to detecting script location
-    local grc_conf_dir="${GRC_CONF_DIR:-${${(%):-%x}:A:h:h}/grc}"
+    # Script is at: .dotfiles/zsh/config/grc.zsh
+    # :h:h:h removes: grc.zsh, config/, zsh/ → gives us .dotfiles
+    local grc_conf_dir="${GRC_CONF_DIR:-${${(%):-%x}:A:h:h:h}/grc}"
     for f in ${grc_conf_dir}/conf.*; do
         [[ -f "$f" ]] || continue
         local prog=${f##*.}
