@@ -95,8 +95,7 @@ function showl() {
 function vf() {
   local file;
   file="$(locate / | fzf --query="$*" --select-1 --exit-0 \
-    --ghost "Type filename to edit..." \
-    --gap)";
+    --ghost "Type filename to edit...")";
   [ ! -n "$file" ] && echo "no results found" && return -1
   [ -f "$file" ] && vim "$file"
   [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
@@ -106,8 +105,7 @@ function vf() {
 function vfl() {
   local file
   file=$(fzf --exact --height 40% --reverse --query="$*"  --select-1 --exit-0 \
-    --ghost "Type filename to edit locally..." \
-    --gap)
+    --ghost "Type filename to edit locally...")
   [ ! -n "$file" ] && echo "no results found" && return -1
   [ -f "$file" ] && vim "$file"
   [ -d "$file" ] && echo "Result is a directory, running cd" && cd "$file"
@@ -150,7 +148,6 @@ _fzf_cd() {
   local dir
   dir=$(fd "${fd_flags[@]}" "${query[@]}" 2>/dev/null | fzf --no-multi \
     --ghost "Type directory name..." \
-    --gap \
     --preview "$preview_cmd" \
     --preview-window=right:50%:wrap \
     --height=60% --layout=reverse --border=rounded \
@@ -178,7 +175,6 @@ fl() {
   file=$(fd . / --type f --follow --exclude /proc --exclude /sys --exclude /dev | \
     fzf +m --query="$*" \
     --ghost "Type to search files globally..." \
-    --gap \
     --height=60% --layout=reverse --border=rounded)
 
   [[ -n "$file" ]] && dir=$(dirname "$file") && cd "$dir" && ls
@@ -189,8 +185,7 @@ fll() {
   local file
   local dir
   file=$(fzf +m -q "$*" \
-    --ghost "Type to search files locally..." \
-    --gap) && dir=$(dirname "$file") && cd "$dir"
+    --ghost "Type to search files locally...") && dir=$(dirname "$file") && cd "$dir"
   ls
 }
 
@@ -207,7 +202,6 @@ fenv() {
   # Use fzf with optional query
   out=$(env | fzf --query="$query" \
     --ghost "Type to search environment variables..." \
-    --gap \
     --preview "$preview_cmd" --preview-window=right:60%:wrap \
     --height=60% --layout=reverse --border=rounded)
 
@@ -233,8 +227,7 @@ cd..(){
     fi
   }
   local DIR=$(get_parent_dirs $(realpath "${1:-$PWD}") | fzf-tmux --tac \
-    --ghost "Select parent directory..." \
-    --gap)
+    --ghost "Select parent directory...")
   cd "$DIR"
 }
 
