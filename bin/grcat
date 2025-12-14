@@ -78,12 +78,14 @@ def get_colour(x):
         return colours[x]
     elif len(x)>=2 and x[0]=='"' and x[-1]=='"':
         # Use ast.literal_eval for safety instead of eval()
-        return ast.literal_eval(x)
+        try:
+            return ast.literal_eval(x)
+        except (ValueError, SyntaxError) as e:
+            raise ValueError(f'Bad colour specified: {x}') from e
     else:
         raise ValueError('Bad colour specified: '+x)
 
 
-home = []
 conffile = None
 xdg_config = os.environ.get('XDG_CONFIG_HOME')
 xdg_data = os.environ.get('XDG_DATA_HOME')

@@ -26,7 +26,9 @@ def catch_signal(signum, frame):
     global pidp
 #    print('signal')
     try:
-        os.kill(pidp, signum)
+        # Check if pidp has been initialized before trying to use it
+        if 'pidp' in globals() and pidp is not None:
+            os.kill(pidp, signum)
     except OSError: # if the subprocess already died
         pass
 
