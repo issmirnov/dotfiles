@@ -1,0 +1,13 @@
+PING google.com (142.250.185.46) 56(84) bytes of data.
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=1 ttl=117 time=12.3 ms
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=2 ttl=117 time=11.8 ms
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=3 ttl=117 time=13.1 ms
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=4 ttl=117 time=12.0 ms
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=5 ttl=117 time=11.9 ms
+Request timeout for icmp_seq 6
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=7 ttl=117 time=12.5 ms
+64 bytes from lax30s05-in-f14.1e100.net (142.250.185.46): icmp_seq=8 ttl=117 time=11.7 ms
+
+--- google.com ping statistics ---
+8 packets transmitted, 7 received, 12.5% packet loss, time 7012ms
+rtt min/avg/max/mdev = 11.723/12.185/13.089/0.451 ms

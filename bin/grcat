@@ -1,8 +1,6 @@
 #! /usr/bin/env python3
 
-from __future__ import print_function
-
-import sys, os, string, re, signal, errno
+import sys, os, string, re, signal, errno, ast
 
 #some default definitions
 colours = {
@@ -79,7 +77,8 @@ def get_colour(x):
     if x in colours:
         return colours[x]
     elif len(x)>=2 and x[0]=='"' and x[-1]=='"':
-        return eval(x)
+        # Use ast.literal_eval for safety instead of eval()
+        return ast.literal_eval(x)
     else:
         raise ValueError('Bad colour specified: '+x)
 

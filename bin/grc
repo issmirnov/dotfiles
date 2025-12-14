@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-from __future__ import print_function
-
 import os, re, string, sys, getopt, signal
 
 
@@ -34,7 +32,7 @@ def catch_signal(signum, frame):
 
 try:
     optlist, args = getopt.getopt(sys.argv[1:], "sec:", ["stdout", "stderr", "config=", "colour=", "pty"] )
-except:
+except getopt.GetoptError:
     help()
 
 if not args:
