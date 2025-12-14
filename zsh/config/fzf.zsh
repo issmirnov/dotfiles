@@ -74,7 +74,6 @@ function show() {
     local file
     file=$(locate / | fzf --query="$*" --select-1 --exit-0 \
         --ghost "Type to search files globally..." \
-        --gap \
         --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
@@ -86,7 +85,6 @@ function showl() {
     local file
     file=$(fzf --query="$*" --select-1 --exit-0 \
         --ghost "Type to search files locally..." \
-        --gap \
         --preview="bat --color=always --style=full {}")
     [ ! -n "$file" ] && echo "no results found" && return -1
     [ -f "$file" ] && bat "$file"
