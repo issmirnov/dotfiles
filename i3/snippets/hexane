@@ -62,8 +62,8 @@ exec_always --no-startup-id "/usr/bin/gnome-keyring-daemon --start --components=
 # Note: this appears to override the wallpaper preferences by feh, as well as DPI settings.
 exec_always --no-startup-id "unity-settings-daemon"
 
-# screen timeouts. 5 mins for monitor, no sleep and no halt.
-exec_always --no-startup-id "xset dpms 0 0 300"
+# screen timeouts: standby 5 mins, suspend 10 mins and off 15 ins
+exec_always --no-startup-id "xset dpms 300 600 900"
 
 # DPI override
 # exec_always --no-startup-id "xrandr --dpi 137"
