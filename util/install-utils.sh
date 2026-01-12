@@ -204,8 +204,16 @@ install_fzf() {
 
     tmpdir="$(mktemp -d)"
     cd "$tmpdir"
-    curl -L "$url" -o fzf.tar.gz
-    tar xzf fzf.tar.gz
+
+    # Download and extract based on OS
+    if [ "$(uname)" = "Darwin" ]; then
+        curl -L "$url" -o fzf.zip
+        unzip -q fzf.zip
+    else
+        curl -L "$url" -o fzf.tar.gz
+        tar xzf fzf.tar.gz
+    fi
+
     mkdir -p ~/.local/bin
     mv fzf ~/.local/bin/
     cd - >/dev/null
@@ -241,7 +249,8 @@ install_bat() {
                     url="https://github.com/sharkdp/bat/releases/download/${version}/bat-${version}-x86_64-unknown-linux-musl.tar.gz"
                     ;;
                 arm64)
-                    url="https://github.com/sharkdp/bat/releases/download/${version}/bat-${version}-aarch64-unknown-linux-gnu.tar.gz"
+                    # Use musl version for compatibility with both glibc and musl systems
+                    url="https://github.com/sharkdp/bat/releases/download/${version}/bat-${version}-aarch64-unknown-linux-musl.tar.gz"
                     ;;
                 *)
                     log_error "Unsupported architecture for bat: $arch"
