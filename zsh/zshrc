@@ -29,7 +29,7 @@ if ! zgen saved; then
   	zgen oh-my-zsh
 
   	plugins=(git git-extras history brew common-aliases macos tmux)
-	plugins+=(z extract kubectl ollama ollama_zsh_completion)
+	plugins+=(extract kubectl ollama ollama_zsh_completion)  # Removed 'z' - using zoxide instead
   	for p in ${(@s' ')plugins}; do
   		zgen oh-my-zsh plugins/$p
   	done
