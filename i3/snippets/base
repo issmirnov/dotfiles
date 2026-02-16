@@ -261,6 +261,10 @@ assign [class="^discord$"] discord
 assign [class="^webcord$"] discord
 assign [class="^obsidian$"] obsidian
 
+# game binds
+assign [class="^bolt-launcher$"] osrs
+assign [class="^net-runelite-client-RuneLite$"] osrs
+
 # IDE binds.
 # Get these with `xprop` + click.
 assign[class="^jetbrains-goland$"] goland
