@@ -60,7 +60,11 @@ export FZF_CTRL_R_OPTS="--wrap --bind 'ctrl-/:toggle-wrap' --wrap-sign $'\t↳ '
 
 
 # on new fzf versions, load baked in completions
-eval "$($FZF_PREFIX/fzf/bin/fzf --zsh)" 2>/dev/null || true
+if [[ -x "$FZF_PREFIX/fzf/bin/fzf" ]]; then
+  eval "$($FZF_PREFIX/fzf/bin/fzf --zsh)" 2>/dev/null || true
+elif command -v fzf > /dev/null; then
+  eval "$(fzf --zsh)" 2>/dev/null || true
+fi
 
 # better zz from fasd
 # TODO convert to Z
