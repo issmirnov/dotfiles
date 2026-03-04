@@ -1,0 +1,30 @@
+{
+  "model": "opus",
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline-command.sh",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "example-skills@anthropic-agent-skills": true,
+    "document-skills@anthropic-agent-skills": true,
+    "gopls-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true,
+  "effortLevel": "medium"
+}

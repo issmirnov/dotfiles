@@ -31,6 +31,8 @@
     ~/.zshenv: zsh/config/paths.zsh # for non interactive commands
     ~/bin/tm: tmux/tmux-menu
     ~/bin/dotbin: bin # symlink whole bin folder, recursive fpath should pick up all files
+    ~/.claude/statusline-command.sh: claude/statusline-command.sh
+    ~/.claude/settings.json: claude/settings.json
 
 - shell:
   - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]
