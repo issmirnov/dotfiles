@@ -7,49 +7,11 @@ input=$(cat)
 model=$(echo "$input" | jq -r '.model.display_name // "Unknown"')
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // "~"')
 remaining=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
-total_input=$(echo "$input" | jq -r '.context_window.total_input_tokens // 0')
-total_output=$(echo "$input" | jq -r '.context_window.total_output_tokens // 0')
-
-# Calculate cost based on model and token usage
-# Pricing as of January 2025 (per million tokens)
-case "$model" in
-  *"Opus 4"*)
-    input_price=15.00
-    output_price=75.00
-    ;;
-  *"Sonnet 4"*)
-    input_price=3.00
-    output_price=15.00
-    ;;
-  *"Haiku 4"*)
-    input_price=0.80
-    output_price=4.00
-    ;;
-  *"Opus 3.5"*|*"Opus 3"*)
-    input_price=15.00
-    output_price=75.00
-    ;;
-  *"Sonnet 3.5"*|*"Sonnet 3"*)
-    input_price=3.00
-    output_price=15.00
-    ;;
-  *"Haiku 3.5"*|*"Haiku 3"*)
-    input_price=0.80
-    output_price=4.00
-    ;;
-  *)
-    input_price=3.00
-    output_price=15.00
-    ;;
-esac
-
-# Calculate cost (tokens / 1,000,000 * price)
-input_cost=$(echo "scale=4; $total_input / 1000000 * $input_price" | bc -l)
-output_cost=$(echo "scale=4; $total_output / 1000000 * $output_price" | bc -l)
-total_cost=$(echo "scale=4; $input_cost + $output_cost" | bc -l)
+# Use Claude Code's pre-calculated cost (accounts for cache read/write pricing and multi-model usage)
+total_cost_usd=$(echo "$input" | jq -r '.cost.total_cost_usd // 0')
 
 # Format cost to 2 decimal places
-formatted_cost=$(printf "%.2f" "$total_cost" 2>/dev/null || echo "0.00")
+formatted_cost=$(printf "%.2f" "$total_cost_usd" 2>/dev/null || echo "0.00")
 
 # Get git information if in a git repository
 git_info=""
