@@ -20,5 +20,5 @@ alias vup='vagrant up'
 # terraform
 alias tf=terraform
 
-# tree -a to auto-list all hidden files
-alias tree='tree -a'
+# tree -a to auto-list all hidden files, ignore .git and node_modules
+alias tree='tree -a -I ".git|node_modules"'
