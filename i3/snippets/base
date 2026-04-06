@@ -244,7 +244,7 @@ bindsym XF86AudioPrev exec cmus-remote -r
 
 set $filemanager nemo --no-desktop
 # use "google-chrome" on ubuntu and "google-chrome-stable" on arch.
-set $browser "google-chrome-stable --force-device-scale-factor=1.25"
+set $browser "google-chrome-stable"
 set $terminal terminator
 
 # favorite programs
