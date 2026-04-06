@@ -31,6 +31,7 @@
     ~/.zshenv: zsh/config/paths.zsh # for non interactive commands
     ~/bin/tm: tmux/tmux-menu
     ~/bin/dotbin: bin # symlink whole bin folder, recursive fpath should pick up all files
+    ~/.config/chrome-flags.conf: chrome/chrome-flags.conf
     ~/.claude/statusline-command.sh: claude/statusline-command.sh
     ~/.claude/settings.json: claude/settings.json
 
