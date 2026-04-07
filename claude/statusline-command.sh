@@ -8,16 +8,18 @@ GREEN='\033[32m'
 YELLOW='\033[33m'
 RED='\033[31m'
 MAGENTA='\033[35m'
+DIM='\033[2m'
 RESET='\033[0m'
 
 DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 HOME_DIR="$HOME"
 DIR="${DIR/#$HOME_DIR/~}"
 BASENAME=$(basename "$DIR")
+REAL_DIR="${DIR/#\~/$HOME_DIR}"
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // ""')
+SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
 SESSION_NAME=$(echo "$input" | jq -r '.session_name // ""')
-VERSION=$(echo "$input" | jq -r '.version // ""')
 OUTPUT_STYLE=$(echo "$input" | jq -r '.output_style.name // ""')
 COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 
@@ -28,17 +30,40 @@ CACHE_CREATE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creati
 # Robbyrussell-style prompt
 PROMPT_PART="${BOLD_GREEN}➜${RESET} ${CYAN}${BASENAME}${RESET}"
 
-# Git info with dirty indicator
-if [ -d "${DIR/#\~/$HOME_DIR}/.git" ] || git -C "${DIR/#\~/$HOME_DIR}" rev-parse --git-dir >/dev/null 2>&1; then
-    BRANCH=$(git -C "${DIR/#\~/$HOME_DIR}" symbolic-ref --short HEAD 2>/dev/null)
+# Git info with dirty indicator (cached for 10 seconds to avoid hammering large repos)
+GIT_CACHE_FILE="/tmp/claude-statusline-git-${SESSION_ID:-$$}.cache"
+GIT_CACHE_TTL=10
+NOW_SECS=$(date +%s)
+
+git_from_cache() {
+    if [ -f "$GIT_CACHE_FILE" ]; then
+        local cached_time cached_dir
+        cached_time=$(head -1 "$GIT_CACHE_FILE" | cut -d' ' -f1)
+        cached_dir=$(head -1 "$GIT_CACHE_FILE" | cut -d' ' -f2-)
+        if [ -n "$cached_time" ] && [ "$cached_dir" = "$REAL_DIR" ] && [ $((NOW_SECS - cached_time)) -lt $GIT_CACHE_TTL ]; then
+            tail -1 "$GIT_CACHE_FILE"
+            return 0
+        fi
+    fi
+    return 1
+}
+
+GIT_PART=""
+if cached=$(git_from_cache); then
+    GIT_PART="$cached"
+elif [ -d "${REAL_DIR}/.git" ] || git -C "$REAL_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+    BRANCH=$(git -C "$REAL_DIR" symbolic-ref --short HEAD 2>/dev/null)
     if [ -n "$BRANCH" ]; then
         DIRTY=""
-        if ! git -C "${DIR/#\~/$HOME_DIR}" diff --quiet 2>/dev/null || ! git -C "${DIR/#\~/$HOME_DIR}" diff --cached --quiet 2>/dev/null; then
+        if ! git -C "$REAL_DIR" diff --quiet HEAD -- 2>/dev/null; then
             DIRTY=" ${YELLOW}✗${RESET}"
         fi
-        PROMPT_PART="${PROMPT_PART} ${BOLD_BLUE}git:(${RED}${BRANCH}${BOLD_BLUE})${RESET}${DIRTY}"
+        GIT_PART=" ${BOLD_BLUE}git:(${RED}${BRANCH}${BOLD_BLUE})${RESET}${DIRTY}"
     fi
+    echo "${NOW_SECS} ${REAL_DIR}" > "$GIT_CACHE_FILE"
+    echo "$GIT_PART" >> "$GIT_CACHE_FILE"
 fi
+PROMPT_PART="${PROMPT_PART}${GIT_PART}"
 
 # Worktree indicator
 WORKTREE=$(echo "$input" | jq -r '.worktree.name // ""')
@@ -53,10 +78,10 @@ fi
 
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
-# Session cost
+# Session cost (dimmed with ~ prefix for Max subscription)
 COST_STR=""
 if [ -n "$COST_USD" ]; then
-    COST_STR=$(printf "${YELLOW}\$%.2f${RESET}" "$COST_USD")
+    COST_STR=$(printf "${DIM}${YELLOW}~\$%.2f${RESET}" "$COST_USD")
 fi
 
 # Cache efficiency (percentage of reads vs total cache operations)
@@ -76,50 +101,41 @@ if [ -n "$CACHE_READ" ] && [ -n "$CACHE_CREATE" ]; then
     fi
 fi
 
-# Output style + version tag
+# Output style (no version — too noisy)
 META_STR=""
 if [ -n "$OUTPUT_STYLE" ] && [ "$OUTPUT_STYLE" != "default" ]; then
     META_STR="${CYAN}${OUTPUT_STYLE}${RESET}"
 fi
-if [ -n "$VERSION" ]; then
-    if [ -n "$META_STR" ]; then
-        META_STR="${META_STR} ${BOLD_BLUE}v${VERSION}${RESET}"
-    else
-        META_STR="${BOLD_BLUE}v${VERSION}${RESET}"
-    fi
-fi
 
-# Session duration
+# Session duration (hidden under 1 minute)
 DURATION_MS=$(echo "$input" | jq -r '.cost.total_duration_ms // empty')
 DURATION_STR=""
 if [ -n "$DURATION_MS" ]; then
     DURATION_SECS=$((DURATION_MS / 1000))
-    DUR_HOURS=$((DURATION_SECS / 3600))
-    DUR_MINS=$(( (DURATION_SECS % 3600) / 60 ))
-    if [ "$DUR_HOURS" -gt 0 ]; then
-        DURATION_STR="${DUR_HOURS}h${DUR_MINS}m"
-    else
-        DURATION_STR="${DUR_MINS}m"
+    if [ "$DURATION_SECS" -ge 60 ]; then
+        DUR_HOURS=$((DURATION_SECS / 3600))
+        DUR_MINS=$(( (DURATION_SECS % 3600) / 60 ))
+        if [ "$DUR_HOURS" -gt 0 ]; then
+            DURATION_STR="${DUR_HOURS}h${DUR_MINS}m"
+        else
+            DURATION_STR="${DUR_MINS}m"
+        fi
     fi
 fi
 
-# Lines changed
+# Lines changed (hidden when both are 0)
 LINES_ADDED=$(echo "$input" | jq -r '.cost.total_lines_added // empty')
 LINES_REMOVED=$(echo "$input" | jq -r '.cost.total_lines_removed // empty')
 LINES_STR=""
-if [ -n "$LINES_ADDED" ] || [ -n "$LINES_REMOVED" ]; then
-    ADDED="${LINES_ADDED:-0}"
-    REMOVED="${LINES_REMOVED:-0}"
-    if [ "$ADDED" -gt 0 ] || [ "$REMOVED" -gt 0 ]; then
-        LINES_STR="${GREEN}+${ADDED}${RESET} ${RED}-${REMOVED}${RESET}"
-    fi
+ADDED="${LINES_ADDED:-0}"
+REMOVED="${LINES_REMOVED:-0}"
+if [ "$ADDED" -gt 0 ] || [ "$REMOVED" -gt 0 ]; then
+    LINES_STR="${GREEN}+${ADDED}${RESET} ${RED}-${REMOVED}${RESET}"
 fi
 
-# Rate limit info (5-hour)
+# Rate limit info
 FIVE_H_PCT=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 FIVE_H_RESET=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
-
-# Rate limit info (7-day)
 SEVEN_D_PCT=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
 SEVEN_D_RESET=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
 
@@ -127,9 +143,9 @@ SEVEN_D_RESET=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty
 TOTAL_INPUT=$(echo "$input" | jq -r '.context_window.total_input_tokens // empty')
 TOTAL_OUTPUT=$(echo "$input" | jq -r '.context_window.total_output_tokens // empty')
 
-# Build rate limit part for a given window
+# Build rate limit part — only show reset countdown when usage >= 50%
 build_rate_part() {
-    local label=$1 pct=$2 reset_at=$3 unit=$4
+    local label=$1 pct=$2 reset_at=$3
     local part=""
     if [ -n "$pct" ]; then
         local pct_int
@@ -144,10 +160,9 @@ build_rate_part() {
         fi
 
         local reset_str=""
-        if [ -n "$reset_at" ]; then
-            local now diff
-            now=$(date +%s)
-            diff=$((reset_at - now))
+        if [ "$pct_int" -ge 50 ] && [ -n "$reset_at" ]; then
+            local diff
+            diff=$((reset_at - NOW_SECS))
             if [ "$diff" -gt 0 ]; then
                 local days hours mins
                 days=$((diff / 86400))
@@ -168,15 +183,14 @@ build_rate_part() {
     echo "$part"
 }
 
-FIVE_PART=$(build_rate_part "5h:" "$FIVE_H_PCT" "$FIVE_H_RESET" "h")
-SEVEN_PART=$(build_rate_part "7d:" "$SEVEN_D_PCT" "$SEVEN_D_RESET" "d")
+FIVE_PART=$(build_rate_part "5h:" "$FIVE_H_PCT" "$FIVE_H_RESET")
+SEVEN_PART=$(build_rate_part "7d:" "$SEVEN_D_PCT" "$SEVEN_D_RESET")
 
-# Tokens per minute: 5-minute rolling average
+# Tokens per minute: 5-minute rolling average (session-specific state file)
 TPM_STR=""
 if [ -n "$TOTAL_INPUT" ] && [ -n "$TOTAL_OUTPUT" ]; then
     TOTAL_TOKENS=$((TOTAL_INPUT + TOTAL_OUTPUT))
-    STATE_FILE="/tmp/claude-statusline-global.log"
-    NOW_SECS=$(date +%s)
+    STATE_FILE="/tmp/claude-statusline-tpm-${SESSION_ID:-$$}.log"
     WINDOW=300
 
     echo "${NOW_SECS} ${TOTAL_TOKENS}" >> "$STATE_FILE"
@@ -229,12 +243,12 @@ if [ -n "$PCT" ]; then
         BAR_COLOR="$GREEN"
     fi
 
-    RESULT=$(printf "${PROMPT_PART} | ${CYAN}%s${RESET} | ${BAR_COLOR}%s %d%%${RESET}" "$MODEL" "$BAR" "$PCT_INT")
+    RESULT=$(printf "%b | ${CYAN}%s${RESET} | ${BAR_COLOR}%s %d%%${RESET}" "$PROMPT_PART" "$MODEL" "$BAR" "$PCT_INT")
 else
-    RESULT=$(printf "${PROMPT_PART} | ${CYAN}%s${RESET}" "$MODEL")
+    RESULT=$(printf "%b | ${CYAN}%s${RESET}" "$PROMPT_PART" "$MODEL")
 fi
 
-# Append extra segments
+# Append extra segments (only when non-empty)
 [ -n "$COST_STR" ] && RESULT="${RESULT} | ${COST_STR}"
 [ -n "$LINES_STR" ] && RESULT="${RESULT} | ${LINES_STR}"
 [ -n "$CACHE_STR" ] && RESULT="${RESULT} | ${CACHE_STR}"
