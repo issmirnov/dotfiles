@@ -1,4 +1,8 @@
 {
+  "env": {
+    "ENABLE_TOOL_SEARCH": "true",
+    "CLAUDE_CODE_EFFORT_LEVEL": "max"
+  },
   "model": "opus[1m]",
   "hooks": {
     "Notification": [
@@ -23,7 +27,10 @@
     "gopls-lsp@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "presentation-tools@smirnovlabs-claude-skills": true,
-    "skill-codex@skill-codex": true
+    "skill-codex@skill-codex": true,
+    "nonstop@nonstop": true,
+    "git-recon@smirnovlabs-claude-skills": true,
+    "visual-explainer@visual-explainer-marketplace": true
   },
   "extraKnownMarketplaces": {
     "claude-code-plugins": {
@@ -43,9 +50,16 @@
         "source": "github",
         "repo": "skills-directory/skill-codex"
       }
+    },
+    "nonstop": {
+      "source": {
+        "source": "github",
+        "repo": "andylizf/nonstop"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "medium",
-  "skipDangerousModePermissionPrompt": true
+  "effortLevel": "xhigh",
+  "skipDangerousModePermissionPrompt": true,
+  "verbose": true
 }
