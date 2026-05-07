@@ -3,6 +3,33 @@
     "ENABLE_TOOL_SEARCH": "true",
     "CLAUDE_CODE_EFFORT_LEVEL": "max"
   },
+  "permissions": {
+    "allow": [
+      "Bash(snapper list:*)",
+      "Bash(chmod:*)",
+      "Bash(crontab:*)",
+      "Bash(/home/vania/disk_monitor.sh:*)",
+      "Bash(claude mcp:*)",
+      "mcp__opnsense__wireguard_manage",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(git clone:*)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(mkdir:*)",
+      "Bash(ip addr:*)",
+      "WebSearch",
+      "WebFetch(domain:releases.ubuntu.com)",
+      "Bash(wget:*)",
+      "Read(//usr/share/**)",
+      "Bash(codex:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "dontAsk"
+  },
   "model": "opus[1m]",
   "hooks": {
     "Notification": [
@@ -12,6 +39,17 @@
           {
             "type": "command",
             "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/nonstop.sh"
           }
         ]
       }
@@ -29,7 +67,6 @@
     "presentation-tools@smirnovlabs-claude-skills": true,
     "skill-codex@skill-codex": true,
     "nonstop@nonstop": true,
-    "git-recon@smirnovlabs-claude-skills": true,
     "visual-explainer@visual-explainer-marketplace": true
   },
   "extraKnownMarketplaces": {
@@ -59,7 +96,9 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
-  "verbose": true
+  "verbose": true,
+  "remoteControlAtStartup": true,
+  "agentPushNotifEnabled": true
 }
