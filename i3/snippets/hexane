@@ -42,8 +42,17 @@ for_window [class="^Pavucontrol$"] move window to scratchpad
 exec_always --no-startup-id pavucontrol
 
 
-# Map Print Screeen Key to flameshot for screenshots (instead of maim / slop )
-bindsym Print exec "flameshot gui"
+# Screenshot key → flameshot. Bound to XF86Tools (keycode 191) because:
+# 1. Slack's globalShortcut grabs bare Print system-wide, killing the
+#    obvious bindsym Print.
+# 2. Voyager's Oryx layout sends KC_F13, which the kernel emits as
+#    KEY_F13. On Arch's default xkb keymap, X11 keycode 191 is assigned
+#    to the keysym XF86Tools — NOT F13 — so bindsym F13 won't fire.
+# 3. The env wrappers force flameshot down the X11 code path: i3's
+#    inherited XDG_SESSION_TYPE is "wayland" (mismatch from gdm-x-session),
+#    which makes flameshot try Wayland, fail wl_display, and abort.
+# See ~/docs/hexane.md 2026-05-06 entry for full chain.
+bindsym XF86Tools exec "env XDG_SESSION_TYPE=x11 QT_QPA_PLATFORM=xcb flameshot gui"
 
 # update mouse speed
 exec_always 'xset m 1/2 8'

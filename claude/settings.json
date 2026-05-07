@@ -100,5 +100,6 @@
   "skipDangerousModePermissionPrompt": true,
   "verbose": true,
   "remoteControlAtStartup": true,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }

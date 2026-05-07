@@ -21,3 +21,10 @@ export ZSH_PLUGINS_ALIAS_TIPS_REVEAL_EXCLUDES="(_ ll vi)"
 
 # XDG config location
 export XDG_CONFIG_HOME="$HOME/.config"
+
+# Correct XDG_SESSION_TYPE when logind reports wayland but we're actually on X11
+# (happens when connecting via Chrome Remote Desktop into a wayland-tagged seat).
+# Without this, Wayland-aware apps like Chrome try Wayland and crash on missing socket.
+if [[ -n "$DISPLAY" && -z "$WAYLAND_DISPLAY" && "$XDG_SESSION_TYPE" == "wayland" ]]; then
+	export XDG_SESSION_TYPE=x11
+fi
