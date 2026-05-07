@@ -66,12 +66,8 @@ elif command -v fzf > /dev/null; then
   eval "$(fzf --zsh)" 2>/dev/null || true
 fi
 
-# better zz from fasd
-# TODO convert to Z
-function zz() {
-  local dir
-  dir="$(fasd -Rdl "$*" | fzf --query="$*" -1 -0 --no-sort +m)" && cd "${dir}" || return 1
-}
+# zz: muscle-memory alias for zoxide's interactive picker
+alias zz=zi
 
 # does global file search, shows selected file in bat
 function show() {
