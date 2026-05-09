@@ -308,6 +308,9 @@ exec xset r rate 280 40
 
 # noise supppression
 exec noisetorch
+
+# notification daemon (libnotify -> dunst)
+exec --no-startup-id dunst
 ### user apps
 exec $browser
 exec $terminal
