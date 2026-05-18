@@ -14,8 +14,12 @@ set -o pipefail
 # Replace with your headphone's MAC address
 HEADPHONES_MAC="04:52:C7:79:8E:6B"
 
-# Start bluetoothctl, then get info of the device, and finally exit
-battery_level=$(bluetoothctl info ${HEADPHONES_MAC} | grep 'Battery Percentage' | cut -d '(' -f2 | cut -d ')' -f1)
+# Start bluetoothctl, then get info of the device, and finally exit.
+# `|| true` keeps the script from tripping `errexit`/`pipefail` when the
+# headphones are disconnected (grep returns 1 on no match) — otherwise the
+# N/A fallback below is unreachable and the script exits 1 every interval,
+# which used to leak X11 RENDER resources via i3bar's error rendering path.
+battery_level=$(bluetoothctl info ${HEADPHONES_MAC} 2>/dev/null | grep 'Battery Percentage' | cut -d '(' -f2 | cut -d ')' -f1 || true)
 
 # Check if battery level info is available
 if [ -z "$battery_level" ]; then

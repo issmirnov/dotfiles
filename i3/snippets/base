@@ -262,8 +262,8 @@ assign [class="^webcord$"] discord
 assign [class="^obsidian$"] obsidian
 
 # game binds
-assign [class="^bolt-launcher$"] osrs
-assign [class="^net-runelite-client-RuneLite$"] osrs
+for_window [class="^bolt-launcher$"] move container to workspace osrs, workspace osrs
+for_window [class="^net-runelite-client-RuneLite$"] move container to workspace osrs, workspace osrs
 
 # IDE binds.
 # Get these with `xprop` + click.

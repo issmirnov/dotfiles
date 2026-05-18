@@ -1043,7 +1043,7 @@ if [ "${pango}" = "1" ]; then
 else
 	echo "${format}"	# Long output
 	echo "${format}"	# short output
-	echo "\\${color}"	# color code '\#RRGGBB'
+	echo "${color}"		# color code '#RRGGBB' — no backslash (i3blocks color protocol expects bare hash)
 fi
 
 exit 0

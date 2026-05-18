@@ -30,7 +30,6 @@
     "ask": [],
     "defaultMode": "dontAsk"
   },
-  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -69,7 +68,8 @@
     "visual-explainer@visual-explainer-marketplace": true,
     "superpowers@superpowers-marketplace": true,
     "plan-utilities@smirnovlabs-claude-skills": true,
-    "git-recon@smirnovlabs-claude-skills": true
+    "git-recon@smirnovlabs-claude-skills": true,
+    "pr-utilities@smirnovlabs-claude-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-code-plugins": {
@@ -82,7 +82,8 @@
       "source": {
         "source": "github",
         "repo": "smirnov-labs/claude-skills"
-      }
+      },
+      "autoUpdate": true
     },
     "skill-codex": {
       "source": {
