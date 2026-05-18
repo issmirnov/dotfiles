@@ -61,13 +61,15 @@
     "padding": 0
   },
   "enabledPlugins": {
-    "document-skills@anthropic-agent-skills": true,
     "gopls-lsp@claude-plugins-official": true,
     "superpowers@claude-plugins-official": true,
     "presentation-tools@smirnovlabs-claude-skills": true,
     "skill-codex@skill-codex": true,
     "nonstop@nonstop": true,
-    "visual-explainer@visual-explainer-marketplace": true
+    "visual-explainer@visual-explainer-marketplace": true,
+    "superpowers@superpowers-marketplace": true,
+    "plan-utilities@smirnovlabs-claude-skills": true,
+    "git-recon@smirnovlabs-claude-skills": true
   },
   "extraKnownMarketplaces": {
     "claude-code-plugins": {
@@ -93,11 +95,24 @@
         "source": "github",
         "repo": "andylizf/nonstop"
       }
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      }
+    },
+    "visual-explainer-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "nicobailon/visual-explainer"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
   "verbose": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,

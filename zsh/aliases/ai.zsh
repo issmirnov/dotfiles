@@ -5,4 +5,5 @@ alias cc='claude --dangerously-skip-permissions'
 alias ccr='claude --resume --dangerously-skip-permissions'
 
 ## codex
-alias co='codex --full-auto'
+alias co='codex --dangerously-bypass-approvals-and-sandbox'
+alias cor='co resume'

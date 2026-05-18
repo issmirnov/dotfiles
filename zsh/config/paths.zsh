@@ -18,7 +18,8 @@ fpath=($HOME/.dotfiles/zsh/config/fpath /opt/homebrew/share/zsh/site-functions /
 
 # Go Definitions
 export GOPATH=$HOME/go
-GOLANG_BIN="/usr/local/go/bin:/usr/lib/go/bin"
+GOLANG_BIN="$HOME/.local/go/bin:/usr/local/go/bin:/usr/lib/go/bin"
+RUST_BIN="$HOME/.cargo/bin"
 
 # Ubuntu Snaps are installed to /snap/bin symlinks
 SNAP_BIN="/snap/bin"
@@ -42,4 +43,4 @@ done
 unset elem
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$RUST_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
