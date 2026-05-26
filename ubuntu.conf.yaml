@@ -20,12 +20,12 @@
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
     ~/.config/waybar: waybar
-    ~/.fonts/Font-Awesome-6-Brands-Regular-400.otf: fonts/Font-Awesome-6-Brands-Regular-400.otf
-    ~/.fonts/Font-Awesome-6-Free-Regular-400.otf: fonts/Font-Awesome-6-Free-Regular-400.otf
-    ~/.fonts/Font-Awesome-6-Free-Solid-900.otf: fonts/Font-Awesome-6-Free-Solid-900.otf
+    ~/.fonts/Font-Awesome-7-Brands-Regular-400.otf: fonts/Font-Awesome-7-Brands-Regular-400.otf
+    ~/.fonts/Font-Awesome-7-Free-Regular-400.otf: fonts/Font-Awesome-7-Free-Regular-400.otf
+    ~/.fonts/Font-Awesome-7-Free-Solid-900.otf: fonts/Font-Awesome-7-Free-Solid-900.otf
     ~/.fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/.fonts/NotoColorEmoji.ttf: fonts/NotoColorEmoji.ttf
-    ~/.fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
+    ~/.fonts/SourceCodePro-Regular.otf: fonts/SourceCodePro-Regular.otf
     ~/.i3/config: i3/config
     ~/.i3blocks.conf: i3/i3blocks.conf
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc

@@ -13,6 +13,6 @@
     ~/.skhdrc: skhd/skhdrc.generated
     ~/.yabairc: yabai/yabairc
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
-    ~/Library/Fonts/SourceCodePro-Regular.ttf: fonts/SourceCodePro-Regular.ttf
+    ~/Library/Fonts/SourceCodePro-Regular.otf: fonts/SourceCodePro-Regular.otf
     ~/Library/Preferences/espanso: espanso
     ~/bin/lock: bin/osx_lock
