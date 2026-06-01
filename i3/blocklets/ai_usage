@@ -58,12 +58,95 @@ render_codex() {
   color=$(pct_color "$worst")
   printf '%s\n%s\n%s\n' "CX $seg5 $segw" "CX ${five}/${wk}" "$color"
 }
-main()          { :; }          # implemented in Task 5
+main() {
+  local provider="${BLOCK_INSTANCE:-claude}" ttl cache json
+  case "$provider" in codex) ttl=120;; *) ttl=180;; esac
+  mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$provider.json"
+
+  # 1) fresh cache -> live color
+  if [ -f "$cache" ] && [ $(( $(date +%s) - $(stat -c %Y "$cache") )) -lt "$ttl" ]; then
+    "render_$provider" "$(cat "$cache")" && return 0
+  fi
+  # 2) fetch live; cache only on valid response
+  json=$("fetch_$provider")
+  if "validate_$provider" "$json"; then
+    printf '%s' "$json" > "$cache"
+    "render_$provider" "$json" && return 0
+  fi
+  # 3) fallbacks, rendered gray
+  if [ "$provider" = "codex" ] && json=$(codex_rollout_json) && [ -n "$json" ]; then
+    emit_dim "$json" && return 0
+  fi
+  if [ -f "$cache" ]; then emit_dim "$(cat "$cache")" && return 0; fi
+  # 4) nothing available
+  local l; l=$(label); printf '%s ?\n%s ?\n#888888\n' "$l" "$l"
+}
+
+CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
+
+fetch_claude() {
+  [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
+  local cred="$HOME/.claude/.credentials.json" token ver
+  [ -f "$cred" ] || return 1
+  token=$(jq -r '.claudeAiOauth.accessToken // empty' "$cred"); [ -z "$token" ] && return 1
+  ver=$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); ver=${ver:-2.1.159}
+  curl -sS --max-time 6 \
+    -H "Authorization: Bearer $token" \
+    -H "anthropic-beta: oauth-2025-04-20" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "User-Agent: claude-code/$ver" \
+    "https://api.anthropic.com/api/oauth/usage" 2>/dev/null
+}
+validate_claude() { jq -e '.five_hour.utilization' >/dev/null 2>&1 <<<"${1:-}"; }
+
+fetch_codex() {
+  [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
+  local auth="$HOME/.codex/auth.json" token acct
+  [ -f "$auth" ] || return 1
+  token=$(jq -r '.tokens.access_token // empty' "$auth"); [ -z "$token" ] && return 1
+  acct=$(jq -r '.tokens.account_id // empty' "$auth")
+  curl -sS --max-time 6 \
+    -H "Authorization: Bearer $token" \
+    -H "ChatGPT-Account-Id: $acct" \
+    -H "User-Agent: codex-cli" \
+    "https://chatgpt.com/backend-api/wham/usage" 2>/dev/null
+}
+validate_codex() { jq -e '.rate_limit.primary_window.used_percent' >/dev/null 2>&1 <<<"${1:-}"; }
+
+# stdin: one rollout JSONL line -> stdout: wham-shaped JSON (or exit 1)
+map_rollout_line() {
+  jq -e -c '
+    .payload.rate_limits as $r
+    | select($r != null and $r.primary != null)
+    | def after($w): (if $w.resets_at then ($w.resets_at - now)
+                      elif $w.resets_in_seconds then $w.resets_in_seconds
+                      else 0 end | floor);
+      { rate_limit: {
+          primary_window:   { used_percent: $r.primary.used_percent,   reset_after_seconds: after($r.primary) },
+          secondary_window: { used_percent: $r.secondary.used_percent, reset_after_seconds: after($r.secondary) } } }
+  ' 2>/dev/null
+}
+
+codex_rollout_json() {
+  local f line
+  f=$(ls -t "$HOME"/.codex/sessions/*/*/*/rollout-*.jsonl 2>/dev/null | head -1); [ -n "$f" ] || return 1
+  line=$(grep '"rate_limits"' "$f" 2>/dev/null | tail -1); [ -n "$line" ] || return 1
+  printf '%s' "$line" | map_rollout_line
+}
+
+label() { case "${BLOCK_INSTANCE:-claude}" in codex) echo "CX";; *) echo "CC";; esac; }
+
+# re-render the given JSON but force the color line to gray (stale/fallback marker)
+emit_dim() {
+  local out; out=$("render_${BLOCK_INSTANCE:-claude}" "$1") || return 1
+  printf '%s\n%s\n#888888\n' "$(sed -n 1p <<<"$out")" "$(sed -n 2p <<<"$out")"
+}
 
 # ---- dispatch ----
 case "${1:-}" in
   __color)  pct_color "${2:-0}"; exit 0 ;;
   __reset)  fmt_reset "${2:-0}"; exit 0 ;;
-  __render) "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
+  __render)     "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
+  __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;
 esac
