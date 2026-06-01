@@ -26,16 +26,16 @@ fmt_reset() {
 render_claude() {
   local json=$1 now five sev seg5 seg7 worst color r ts
   now=$(date +%s)
-  five=$(jq -r '.five_hour.utilization // empty' <<<"$json"); five=${five%.*}
-  sev=$(jq -r '.seven_day.utilization // empty' <<<"$json"); sev=${sev%.*}
+  five=$(jq -r '.five_hour.utilization // empty' <<<"$json" 2>/dev/null); five=${five%.*}
+  sev=$(jq -r '.seven_day.utilization // empty' <<<"$json" 2>/dev/null); sev=${sev%.*}
   { [ -z "$five" ] || [ -z "$sev" ]; } && return 1
   seg5="5h ${five}%"; seg7="7d ${sev}%"
   if [ "$five" -ge 50 ]; then
-    ts=$(jq -r '.five_hour.resets_at // empty' <<<"$json")
+    ts=$(jq -r '.five_hour.resets_at // empty' <<<"$json" 2>/dev/null)
     [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
   fi
   if [ "$sev" -ge 50 ]; then
-    ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json")
+    ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
     [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
   fi
   worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
@@ -44,16 +44,16 @@ render_claude() {
 }
 render_codex() {
   local json=$1 five wk seg5 segw worst color r
-  five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json"); five=${five%.*}
-  wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json"); wk=${wk%.*}
+  five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json" 2>/dev/null); five=${five%.*}
+  wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json" 2>/dev/null); wk=${wk%.*}
   { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
   seg5="5h ${five}%"; segw="wk ${wk}%"
   if [ "$five" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json"); r=${r%.*}
+    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
     [ -n "$r" ] && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
   fi
   if [ "$wk" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json"); r=${r%.*}
+    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
     [ -n "$r" ] && [ "$r" -gt 0 ] && segw="$segw ($(fmt_reset "$r"))"
   fi
   worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
