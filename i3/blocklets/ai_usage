@@ -3,6 +3,7 @@
 # Provider via $BLOCK_INSTANCE (claude|codex). Reads OAuth tokens from $HOME at
 # runtime — contains NO secrets. Safe to commit to a public repo.
 set -u
+CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
 
 pct_color() {
   local p=${1:-0}
@@ -17,7 +18,8 @@ fmt_reset() {
   d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
   if   [ "$d" -gt 0 ]; then echo "${d}d${h}h"
   elif [ "$h" -gt 0 ]; then echo "${h}h${m}m"
-  else                      echo "${m}m"
+  else
+    if [ "$m" -gt 0 ]; then echo "${m}m"; else echo "<1m"; fi
   fi
 }
 
@@ -47,12 +49,12 @@ render_codex() {
   { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
   seg5="5h ${five}%"; segw="wk ${wk}%"
   if [ "$five" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json")
-    [ -n "$r" ] && [ "$r" -gt 0 ] 2>/dev/null && seg5="$seg5 ($(fmt_reset "$r"))"
+    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json"); r=${r%.*}
+    [ -n "$r" ] && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
   fi
   if [ "$wk" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json")
-    [ -n "$r" ] && [ "$r" -gt 0 ] 2>/dev/null && segw="$segw ($(fmt_reset "$r"))"
+    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json"); r=${r%.*}
+    [ -n "$r" ] && [ "$r" -gt 0 ] && segw="$segw ($(fmt_reset "$r"))"
   fi
   worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
   color=$(pct_color "$worst")
@@ -64,7 +66,8 @@ main() {
   mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$provider.json"
 
   # 1) fresh cache -> live color
-  if [ -f "$cache" ] && [ $(( $(date +%s) - $(stat -c %Y "$cache") )) -lt "$ttl" ]; then
+  local mtime; mtime=$(stat -c %Y "$cache" 2>/dev/null)
+  if [ -n "$mtime" ] && [ $(( $(date +%s) - mtime )) -lt "$ttl" ]; then
     "render_$provider" "$(cat "$cache")" && return 0
   fi
   # 2) fetch live; cache only on valid response
@@ -81,8 +84,6 @@ main() {
   # 4) nothing available
   local l; l=$(label); printf '%s ?\n%s ?\n#888888\n' "$l" "$l"
 }
-
-CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
 
 fetch_claude() {
   [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
@@ -129,7 +130,12 @@ map_rollout_line() {
 
 codex_rollout_json() {
   local f line
-  f=$(ls -t "$HOME"/.codex/sessions/*/*/*/rollout-*.jsonl 2>/dev/null | head -1); [ -n "$f" ] || return 1
+  if [ -n "${AIUSAGE_ROLLOUT_FILE:-}" ]; then
+    f="$AIUSAGE_ROLLOUT_FILE"
+  else
+    f=$(ls -t "$HOME"/.codex/sessions/*/*/*/rollout-*.jsonl 2>/dev/null | head -1)
+  fi
+  [ -n "$f" ] || return 1
   line=$(grep '"rate_limits"' "$f" 2>/dev/null | tail -1); [ -n "$line" ] || return 1
   printf '%s' "$line" | map_rollout_line
 }
@@ -138,8 +144,9 @@ label() { case "${BLOCK_INSTANCE:-claude}" in codex) echo "CX";; *) echo "CC";; 
 
 # re-render the given JSON but force the color line to gray (stale/fallback marker)
 emit_dim() {
-  local out; out=$("render_${BLOCK_INSTANCE:-claude}" "$1") || return 1
-  printf '%s\n%s\n#888888\n' "$(sed -n 1p <<<"$out")" "$(sed -n 2p <<<"$out")"
+  local out l1 l2; out=$("render_${BLOCK_INSTANCE:-claude}" "$1") || return 1
+  { IFS= read -r l1; IFS= read -r l2; } <<<"$out"
+  printf '%s\n%s\n#888888\n' "$l1" "$l2"
 }
 
 # ---- dispatch ----

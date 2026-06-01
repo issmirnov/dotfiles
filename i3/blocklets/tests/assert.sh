@@ -11,4 +11,10 @@ assert_contains() { # $1 desc  $2 needle  $3 haystack
     *) fail=$((fail+1)); printf 'FAIL - %s\n  needle: %q\n  in:     %q\n' "$1" "$2" "$3";;
   esac
 }
+assert_not_contains() { # $1 desc  $2 needle  $3 haystack
+  case "$3" in
+    *"$2"*) fail=$((fail+1)); printf 'FAIL - %s\n  unexpected: %q\n  in: %q\n' "$1" "$2" "$3";;
+    *) pass=$((pass+1));;
+  esac
+}
 finish() { printf '%d passed, %d failed\n' "$pass" "$fail"; [ "$fail" -eq 0 ]; }
