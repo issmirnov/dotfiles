@@ -1,0 +1,185 @@
+#!/usr/bin/env bash
+# i3blocks: Claude Code / Codex usage (5h + weekly), verbose with reset countdowns.
+# Provider via $BLOCK_INSTANCE (claude|codex). Reads OAuth tokens from $HOME at
+# runtime — contains NO secrets. Safe to commit to a public repo.
+set -u
+CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
+
+pct_color() {
+  local p=${1:-0}
+  if   [ "$p" -ge 90 ]; then echo "#FF1744"
+  elif [ "$p" -ge 70 ]; then echo "#FFD600"
+  else                       echo "#00C853"
+  fi
+}
+
+fmt_reset() {
+  local s=${1:-0} d h m
+  d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
+  if   [ "$d" -gt 0 ]; then echo "${d}d${h}h"
+  elif [ "$h" -gt 0 ]; then echo "${h}h${m}m"
+  else
+    if [ "$m" -gt 0 ]; then echo "${m}m"; else echo "<1m"; fi
+  fi
+}
+
+# Pace toward 100% over a usage window (the weekly limit). Compares actual usage to
+# where even (1/7-per-day) pacing would put you now, returning an emoji + the points
+# off pace: ⚠️N = N ahead (burning hot — ease off or you'll run out early), 🦥N = N
+# behind (under-using — speed up), ✅ = on pace (within ±tol). Empty when no reset time.
+# Args: used remaining_seconds window_seconds
+pace_sym() {
+  local used=$1 rem=$2 window=$3 elapsed expected delta tol=5
+  [ -z "$rem" ] && return 0
+  [ "$rem" -lt 0 ] && rem=0; [ "$rem" -gt "$window" ] && rem=$window
+  elapsed=$(( window - rem ))
+  expected=$(( elapsed * 100 / window ))
+  delta=$(( used - expected ))
+  if   [ "$delta" -gt "$tol" ];  then echo "⚠️${delta}"
+  elif [ "$delta" -lt "-$tol" ]; then echo "🦥$(( -delta ))"
+  else echo "✅"
+  fi
+}
+
+render_claude() {
+  local json=$1 now five sev seg5 seg7 worst color r ts sev_reset rem7 pace
+  now=$(date +%s)
+  five=$(jq -r '.five_hour.utilization // empty' <<<"$json" 2>/dev/null); five=${five%.*}
+  sev=$(jq -r '.seven_day.utilization // empty' <<<"$json" 2>/dev/null); sev=${sev%.*}
+  { [ -z "$five" ] || [ -z "$sev" ]; } && return 1
+  seg5="5h ${five}%"; seg7="7d ${sev}%"
+  if [ "$five" -ge 50 ]; then
+    ts=$(jq -r '.five_hour.resets_at // empty' <<<"$json" 2>/dev/null)
+    [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
+  fi
+  ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
+  sev_reset=""; [ -n "$ts" ] && sev_reset=$(date -d "$ts" +%s 2>/dev/null)
+  rem7=""; [ -n "$sev_reset" ] && rem7=$(( sev_reset - now ))
+  pace=$(pace_sym "$sev" "$rem7" 604800)
+  [ -n "$pace" ] && seg7="$seg7 $pace"
+  if [ "$sev" -ge 50 ] && [ -n "$sev_reset" ]; then
+    r=$(( sev_reset - now )); [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
+  fi
+  worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
+  color=$(pct_color "$worst")
+  printf '%s\n%s\n%s\n' "CC $seg5 $seg7" "CC ${five}/${sev}" "$color"
+}
+render_codex() {
+  local json=$1 five wk seg5 segw worst color r wk_after wk_window pace
+  five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json" 2>/dev/null); five=${five%.*}
+  wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json" 2>/dev/null); wk=${wk%.*}
+  { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
+  seg5="5h ${five}%"; segw="wk ${wk}%"
+  if [ "$five" -ge 50 ]; then
+    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
+    [ -n "$r" ] && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
+  fi
+  wk_after=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); wk_after=${wk_after%.*}
+  wk_window=$(jq -r '.rate_limit.secondary_window.limit_window_seconds // empty' <<<"$json" 2>/dev/null); wk_window=${wk_window%.*}; wk_window=${wk_window:-604800}
+  pace=$(pace_sym "$wk" "$wk_after" "$wk_window")
+  [ -n "$pace" ] && segw="$segw $pace"
+  if [ "$wk" -ge 50 ] && [ -n "$wk_after" ] && [ "$wk_after" -gt 0 ]; then
+    segw="$segw ($(fmt_reset "$wk_after"))"
+  fi
+  worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
+  color=$(pct_color "$worst")
+  printf '%s\n%s\n%s\n' "CX $seg5 $segw" "CX ${five}/${wk}" "$color"
+}
+main() {
+  local provider="${BLOCK_INSTANCE:-claude}" ttl cache json
+  case "$provider" in codex) ttl=120;; *) ttl=180;; esac
+  mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$provider.json"
+
+  # 1) fresh cache -> live color
+  local mtime; mtime=$(stat -c %Y "$cache" 2>/dev/null)
+  if [ -n "$mtime" ] && [ $(( $(date +%s) - mtime )) -lt "$ttl" ]; then
+    "render_$provider" "$(cat "$cache")" && return 0
+  fi
+  # 2) fetch live; cache only on valid response
+  json=$("fetch_$provider")
+  if "validate_$provider" "$json"; then
+    printf '%s' "$json" > "$cache"
+    "render_$provider" "$json" && return 0
+  fi
+  # 3) fallbacks, rendered gray
+  if [ "$provider" = "codex" ] && json=$(codex_rollout_json) && [ -n "$json" ]; then
+    emit_dim "$json" && return 0
+  fi
+  if [ -f "$cache" ]; then emit_dim "$(cat "$cache")" && return 0; fi
+  # 4) nothing available
+  local l; l=$(label); printf '%s ?\n%s ?\n#888888\n' "$l" "$l"
+}
+
+fetch_claude() {
+  [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
+  local cred="$HOME/.claude/.credentials.json" token ver
+  [ -f "$cred" ] || return 1
+  token=$(jq -r '.claudeAiOauth.accessToken // empty' "$cred"); [ -z "$token" ] && return 1
+  ver=$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); ver=${ver:-2.1.159}
+  curl -sS --max-time 6 \
+    -H "Authorization: Bearer $token" \
+    -H "anthropic-beta: oauth-2025-04-20" \
+    -H "anthropic-version: 2023-06-01" \
+    -H "User-Agent: claude-code/$ver" \
+    "https://api.anthropic.com/api/oauth/usage" 2>/dev/null
+}
+validate_claude() { jq -e '.five_hour.utilization' >/dev/null 2>&1 <<<"${1:-}"; }
+
+fetch_codex() {
+  [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
+  local auth="$HOME/.codex/auth.json" token acct
+  [ -f "$auth" ] || return 1
+  token=$(jq -r '.tokens.access_token // empty' "$auth"); [ -z "$token" ] && return 1
+  acct=$(jq -r '.tokens.account_id // empty' "$auth")
+  curl -sS --max-time 6 \
+    -H "Authorization: Bearer $token" \
+    -H "ChatGPT-Account-Id: $acct" \
+    -H "User-Agent: codex-cli" \
+    "https://chatgpt.com/backend-api/wham/usage" 2>/dev/null
+}
+validate_codex() { jq -e '.rate_limit.primary_window.used_percent' >/dev/null 2>&1 <<<"${1:-}"; }
+
+# stdin: one rollout JSONL line -> stdout: wham-shaped JSON (or exit 1)
+map_rollout_line() {
+  jq -e -c '
+    .payload.rate_limits as $r
+    | select($r != null and $r.primary != null)
+    | def after($w): (if $w.resets_at then ($w.resets_at - now)
+                      elif $w.resets_in_seconds then $w.resets_in_seconds
+                      else 0 end | floor);
+      { rate_limit: {
+          primary_window:   { used_percent: $r.primary.used_percent,   reset_after_seconds: after($r.primary) },
+          secondary_window: { used_percent: $r.secondary.used_percent, reset_after_seconds: after($r.secondary) } } }
+  ' 2>/dev/null
+}
+
+codex_rollout_json() {
+  local f line
+  if [ -n "${AIUSAGE_ROLLOUT_FILE:-}" ]; then
+    f="$AIUSAGE_ROLLOUT_FILE"
+  else
+    f=$(ls -t "$HOME"/.codex/sessions/*/*/*/rollout-*.jsonl 2>/dev/null | head -1)
+  fi
+  [ -n "$f" ] || return 1
+  line=$(grep '"rate_limits"' "$f" 2>/dev/null | tail -1); [ -n "$line" ] || return 1
+  printf '%s' "$line" | map_rollout_line
+}
+
+label() { case "${BLOCK_INSTANCE:-claude}" in codex) echo "CX";; *) echo "CC";; esac; }
+
+# re-render the given JSON but force the color line to gray (stale/fallback marker)
+emit_dim() {
+  local out l1 l2; out=$("render_${BLOCK_INSTANCE:-claude}" "$1") || return 1
+  { IFS= read -r l1; IFS= read -r l2; } <<<"$out"
+  printf '%s\n%s\n#888888\n' "$l1" "$l2"
+}
+
+# ---- dispatch ----
+case "${1:-}" in
+  __color)  pct_color "${2:-0}"; exit 0 ;;
+  __reset)  fmt_reset "${2:-0}"; exit 0 ;;
+  __pace)   pace_sym "${2:-}" "${3:-}" "${4:-604800}"; exit 0 ;;
+  __render)     "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
+  __maprollout) map_rollout_line; exit $? ;;
+  *)        main ;;
+esac

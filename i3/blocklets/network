@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# i3blocks: adaptive network indicator. Keys off the default route so it ignores
+# docker/veth/bridge interfaces. Quiet on wired, loud (SSID+signal) on wifi,
+# urgent when down. Test seams: NET_TEST_IF / NET_TEST_WIRELESS / NET_TEST_SSID /
+# NET_TEST_SIGNAL (use the ${VAR-...} form so an empty value is honored).
+set -u
+
+get_iface()   { echo "${NET_TEST_IF-$(ip route show default 2>/dev/null | awk '/^default/{print $5; exit}')}"; }
+is_wireless() {
+  if [ -n "${NET_TEST_WIRELESS+x}" ]; then [ "$NET_TEST_WIRELESS" = 1 ]
+  else [ -d "/sys/class/net/$1/wireless" ]; fi
+}
+get_ssid()   { echo "${NET_TEST_SSID-$(nmcli -t -f active,ssid dev wifi 2>/dev/null | sed -n 's/^yes://p' | sed 's/\\:/:/g' | head -1)}"; }
+get_signal() { echo "${NET_TEST_SIGNAL-$(nmcli -t -f active,signal dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')}"; }
+
+IF=$(get_iface)
+
+if [ -z "$IF" ]; then
+  printf 'no net\nno net\n#FF1744\n'; exit 33   # i3blocks: exit 33 marks the block urgent
+fi
+
+case "$IF" in
+  tun*|wg*|tap*) printf 'VPN\nVPN\n#00B8D4\n'; exit 0 ;;
+esac
+
+if is_wireless "$IF"; then
+  ssid=$(get_ssid); sig=$(get_signal)
+  [[ "$sig" =~ ^[0-9]+$ ]] || sig=""
+  [ -z "$ssid" ] && ssid="wifi"
+  color="#FFD600"; [ -n "$sig" ] && [ "$sig" -lt 40 ] 2>/dev/null && color="#FF6D00"
+  if [ -n "$sig" ]; then text="$ssid ${sig}%"; else text="$ssid"; fi
+  printf '%s\n%s\n%s\n' "$text" "$text" "$color"; exit 0
+fi
+
+printf 'LAN\nLAN\n#00C853\n'; exit 0
