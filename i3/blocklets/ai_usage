@@ -23,8 +23,25 @@ fmt_reset() {
   fi
 }
 
+# Pace for the weekly window toward 100% by reset: compares actual usage to where
+# even (1/7-per-day) pacing would put you right now. Prints ↑N (ahead / burning hot),
+# ↓N (behind / under-using), or = (on pace); N = percentage points off pace. Empty
+# when no reset time is known. Args: used reset_epoch now week_seconds
+claude_pace() {
+  local used=$1 reset=$2 now=$3 week=$4 rem elapsed expected delta
+  [ -z "$reset" ] && return 0
+  rem=$(( reset - now )); [ "$rem" -lt 0 ] && rem=0; [ "$rem" -gt "$week" ] && rem=$week
+  elapsed=$(( week - rem ))
+  expected=$(( elapsed * 100 / week ))
+  delta=$(( used - expected ))
+  if   [ "$delta" -ge 1 ];  then echo "↑${delta}"
+  elif [ "$delta" -le -1 ]; then echo "↓$(( -delta ))"
+  else echo "="
+  fi
+}
+
 render_claude() {
-  local json=$1 now five sev seg5 seg7 worst color r ts
+  local json=$1 now five sev seg5 seg7 worst color r ts sev_reset pace
   now=$(date +%s)
   five=$(jq -r '.five_hour.utilization // empty' <<<"$json" 2>/dev/null); five=${five%.*}
   sev=$(jq -r '.seven_day.utilization // empty' <<<"$json" 2>/dev/null); sev=${sev%.*}
@@ -34,9 +51,12 @@ render_claude() {
     ts=$(jq -r '.five_hour.resets_at // empty' <<<"$json" 2>/dev/null)
     [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
   fi
-  if [ "$sev" -ge 50 ]; then
-    ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
-    [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
+  ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
+  sev_reset=""; [ -n "$ts" ] && sev_reset=$(date -d "$ts" +%s 2>/dev/null)
+  pace=$(claude_pace "$sev" "$sev_reset" "$now" 604800)
+  [ -n "$pace" ] && seg7="$seg7 $pace"
+  if [ "$sev" -ge 50 ] && [ -n "$sev_reset" ]; then
+    r=$(( sev_reset - now )); [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
   fi
   worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
   color=$(pct_color "$worst")
@@ -153,6 +173,7 @@ emit_dim() {
 case "${1:-}" in
   __color)  pct_color "${2:-0}"; exit 0 ;;
   __reset)  fmt_reset "${2:-0}"; exit 0 ;;
+  __pace)   claude_pace "${2:-}" "${3:-}" "${4:-}" "${5:-604800}"; exit 0 ;;
   __render)     "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
   __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;

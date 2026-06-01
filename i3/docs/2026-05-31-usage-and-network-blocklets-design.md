@@ -55,7 +55,15 @@ each colors independently.
 - **Response fields:** `.five_hour.utilization` (float 0–100), `.five_hour.resets_at`
   (ISO-8601 string with offset), `.seven_day.utilization`, `.seven_day.resets_at`.
   (`.seven_day_opus` / `.seven_day_sonnet` exist but may be null — not displayed.)
-- **Renders:** `CC 5h 38% 7d 60% (3d4h)`
+- **Renders:** `CC 5h 7% 7d 66% ↑12 (3d4h)`
+- **Weekly pace indicator** (7d window only): goal is to consume ~100% of the weekly
+  quota evenly (1/7 per day) without running out early or leaving tokens unused. Compute
+  the even-pace target `expected = (elapsed / 604800) * 100` where `elapsed = 604800 -
+  (resets_at - now)`, then `delta = utilization - expected`. Render a compact token after
+  the 7d percentage: `↑N` = N points **ahead** of pace (burning hot — ease off), `↓N` =
+  N points **behind** (under-using — room to ramp up), `=` = on pace. Shown whenever a 7d
+  reset time is known (independent of the ≥50% reset-countdown threshold). The 5h window
+  gets no pace indicator (it's a short rolling limit, not a consume-to-100% goal).
 
 ### Codex (`instance=codex`)
 
