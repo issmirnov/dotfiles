@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# i3blocks: Claude Code / Codex usage (5h + weekly), verbose with reset countdowns.
+# Provider via $BLOCK_INSTANCE (claude|codex). Reads OAuth tokens from $HOME at
+# runtime — contains NO secrets. Safe to commit to a public repo.
+set -u
+
+pct_color() {
+  local p=${1:-0}
+  if   [ "$p" -ge 90 ]; then echo "#FF1744"
+  elif [ "$p" -ge 70 ]; then echo "#FFD600"
+  else                       echo "#00C853"
+  fi
+}
+
+fmt_reset() {
+  local s=${1:-0} d h m
+  d=$(( s / 86400 )); h=$(( (s % 86400) / 3600 )); m=$(( (s % 3600) / 60 ))
+  if   [ "$d" -gt 0 ]; then echo "${d}d${h}h"
+  elif [ "$h" -gt 0 ]; then echo "${h}h${m}m"
+  else                      echo "${m}m"
+  fi
+}
+
+render_claude() { return 1; }   # implemented in Task 3
+render_codex()  { return 1; }   # implemented in Task 4
+main()          { :; }          # implemented in Task 5
+
+# ---- dispatch ----
+case "${1:-}" in
+  __color)  pct_color "${2:-0}"; exit 0 ;;
+  __reset)  fmt_reset "${2:-0}"; exit 0 ;;
+  __render) "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
+  *)        main ;;
+esac
