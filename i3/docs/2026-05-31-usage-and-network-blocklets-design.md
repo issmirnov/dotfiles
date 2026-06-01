@@ -55,15 +55,17 @@ each colors independently.
 - **Response fields:** `.five_hour.utilization` (float 0–100), `.five_hour.resets_at`
   (ISO-8601 string with offset), `.seven_day.utilization`, `.seven_day.resets_at`.
   (`.seven_day_opus` / `.seven_day_sonnet` exist but may be null — not displayed.)
-- **Renders:** `CC 5h 7% 7d 66% ↑12 (3d4h)`
-- **Weekly pace indicator** (7d window only): goal is to consume ~100% of the weekly
-  quota evenly (1/7 per day) without running out early or leaving tokens unused. Compute
-  the even-pace target `expected = (elapsed / 604800) * 100` where `elapsed = 604800 -
-  (resets_at - now)`, then `delta = utilization - expected`. Render a compact token after
-  the 7d percentage: `↑N` = N points **ahead** of pace (burning hot — ease off), `↓N` =
-  N points **behind** (under-using — room to ramp up), `=` = on pace. Shown whenever a 7d
-  reset time is known (independent of the ≥50% reset-countdown threshold). The 5h window
-  gets no pace indicator (it's a short rolling limit, not a consume-to-100% goal).
+- **Renders:** `CC 5h 10% 7d 67% ⚠️13 (3d4h)`
+- **Weekly pace indicator** (`pace_sym`, weekly window only): goal is to consume ~100% of
+  the weekly quota evenly (1/7 per day) without running out early or leaving tokens unused.
+  Compute the even-pace target `expected = (elapsed / window) * 100` where `elapsed =
+  window - remaining` (window = 604800s), then `delta = utilization - expected`, and render
+  an emoji + the points off pace after the weekly percentage: `⚠️N` = N points **ahead**
+  (burning hot — ease off or you'll run out early), `🦥N` = N points **behind** (under-using
+  — speed up), `✅` = on pace (within ±5). Shown whenever a weekly reset time is known
+  (independent of the ≥50% reset-countdown threshold). **Applies to both** the Claude 7d
+  window and the Codex weekly window. The short 5-hour windows get no pace indicator —
+  they're rolling limits, not consume-to-100% goals.
 
 ### Codex (`instance=codex`)
 
@@ -78,7 +80,7 @@ each colors independently.
   18000), `.rate_limit.secondary_window.used_percent` (weekly; 604800). Each window has
   `reset_after_seconds` (countdown) and `reset_at` (epoch seconds). This read does not
   consume model quota.
-- **Renders:** `CX 5h 10% wk 8%`
+- **Renders:** `CX 5h 3% wk 11% ✅` (weekly pace via the shared `pace_sym` — see above)
 - **Fallback (no network / 401):** newest `~/.codex/sessions/*/*/*/rollout-*.jsonl`, last
   line containing `"rate_limits"`, fields `.payload.rate_limits.primary.used_percent` /
   `.secondary.used_percent`. This is a lagging snapshot and `rate_limits` may be null in some

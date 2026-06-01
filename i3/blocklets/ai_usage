@@ -23,25 +23,26 @@ fmt_reset() {
   fi
 }
 
-# Pace for the weekly window toward 100% by reset: compares actual usage to where
-# even (1/7-per-day) pacing would put you right now. Prints ↑N (ahead / burning hot),
-# ↓N (behind / under-using), or = (on pace); N = percentage points off pace. Empty
-# when no reset time is known. Args: used reset_epoch now week_seconds
-claude_pace() {
-  local used=$1 reset=$2 now=$3 week=$4 rem elapsed expected delta
-  [ -z "$reset" ] && return 0
-  rem=$(( reset - now )); [ "$rem" -lt 0 ] && rem=0; [ "$rem" -gt "$week" ] && rem=$week
-  elapsed=$(( week - rem ))
-  expected=$(( elapsed * 100 / week ))
+# Pace toward 100% over a usage window (the weekly limit). Compares actual usage to
+# where even (1/7-per-day) pacing would put you now, returning an emoji + the points
+# off pace: ⚠️N = N ahead (burning hot — ease off or you'll run out early), 🦥N = N
+# behind (under-using — speed up), ✅ = on pace (within ±tol). Empty when no reset time.
+# Args: used remaining_seconds window_seconds
+pace_sym() {
+  local used=$1 rem=$2 window=$3 elapsed expected delta tol=5
+  [ -z "$rem" ] && return 0
+  [ "$rem" -lt 0 ] && rem=0; [ "$rem" -gt "$window" ] && rem=$window
+  elapsed=$(( window - rem ))
+  expected=$(( elapsed * 100 / window ))
   delta=$(( used - expected ))
-  if   [ "$delta" -ge 1 ];  then echo "↑${delta}"
-  elif [ "$delta" -le -1 ]; then echo "↓$(( -delta ))"
-  else echo "="
+  if   [ "$delta" -gt "$tol" ];  then echo "⚠️${delta}"
+  elif [ "$delta" -lt "-$tol" ]; then echo "🦥$(( -delta ))"
+  else echo "✅"
   fi
 }
 
 render_claude() {
-  local json=$1 now five sev seg5 seg7 worst color r ts sev_reset pace
+  local json=$1 now five sev seg5 seg7 worst color r ts sev_reset rem7 pace
   now=$(date +%s)
   five=$(jq -r '.five_hour.utilization // empty' <<<"$json" 2>/dev/null); five=${five%.*}
   sev=$(jq -r '.seven_day.utilization // empty' <<<"$json" 2>/dev/null); sev=${sev%.*}
@@ -53,7 +54,8 @@ render_claude() {
   fi
   ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
   sev_reset=""; [ -n "$ts" ] && sev_reset=$(date -d "$ts" +%s 2>/dev/null)
-  pace=$(claude_pace "$sev" "$sev_reset" "$now" 604800)
+  rem7=""; [ -n "$sev_reset" ] && rem7=$(( sev_reset - now ))
+  pace=$(pace_sym "$sev" "$rem7" 604800)
   [ -n "$pace" ] && seg7="$seg7 $pace"
   if [ "$sev" -ge 50 ] && [ -n "$sev_reset" ]; then
     r=$(( sev_reset - now )); [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
@@ -63,7 +65,7 @@ render_claude() {
   printf '%s\n%s\n%s\n' "CC $seg5 $seg7" "CC ${five}/${sev}" "$color"
 }
 render_codex() {
-  local json=$1 five wk seg5 segw worst color r
+  local json=$1 five wk seg5 segw worst color r wk_after wk_window pace
   five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json" 2>/dev/null); five=${five%.*}
   wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json" 2>/dev/null); wk=${wk%.*}
   { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
@@ -72,9 +74,12 @@ render_codex() {
     r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
     [ -n "$r" ] && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
   fi
-  if [ "$wk" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
-    [ -n "$r" ] && [ "$r" -gt 0 ] && segw="$segw ($(fmt_reset "$r"))"
+  wk_after=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); wk_after=${wk_after%.*}
+  wk_window=$(jq -r '.rate_limit.secondary_window.limit_window_seconds // empty' <<<"$json" 2>/dev/null); wk_window=${wk_window%.*}; wk_window=${wk_window:-604800}
+  pace=$(pace_sym "$wk" "$wk_after" "$wk_window")
+  [ -n "$pace" ] && segw="$segw $pace"
+  if [ "$wk" -ge 50 ] && [ -n "$wk_after" ] && [ "$wk_after" -gt 0 ]; then
+    segw="$segw ($(fmt_reset "$wk_after"))"
   fi
   worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
   color=$(pct_color "$worst")
@@ -173,7 +178,7 @@ emit_dim() {
 case "${1:-}" in
   __color)  pct_color "${2:-0}"; exit 0 ;;
   __reset)  fmt_reset "${2:-0}"; exit 0 ;;
-  __pace)   claude_pace "${2:-}" "${3:-}" "${4:-}" "${5:-604800}"; exit 0 ;;
+  __pace)   pace_sym "${2:-}" "${3:-}" "${4:-604800}"; exit 0 ;;
   __render)     "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
   __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;
