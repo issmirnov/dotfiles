@@ -106,12 +106,12 @@ interval=10
 [claude_usage]
 command=$SCRIPT_DIR/ai_usage
 instance=claude
-interval=300
+interval=1200
 
 [codex_usage]
 command=$SCRIPT_DIR/ai_usage
 instance=codex
-interval=300
+interval=1200
 ```
 
 Inserted just before `[time]`, so the resulting bar order (left→right) is the existing
