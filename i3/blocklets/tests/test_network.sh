@@ -25,4 +25,13 @@ assert_eq "wifi weak color" "#FF6D00" "$(sed -n 3p <<<"$out")"
 out=$(NET_TEST_IF=enp8s0f0 NET_TEST_WIRELESS=0 bash "$S")
 assert_eq "wired full"  "LAN"     "$(sed -n 1p <<<"$out")"
 assert_eq "wired color" "#00C853" "$(sed -n 3p <<<"$out")"
+
+# wireguard iface also classified as VPN
+out=$(NET_TEST_IF=wg0 bash "$S")
+assert_eq "vpn wg full"  "VPN"     "$(sed -n 1p <<<"$out")"
+assert_eq "vpn wg color" "#00B8D4" "$(sed -n 3p <<<"$out")"
+
+# wifi with empty SSID (hidden network) -> "wifi" fallback label
+out=$(NET_TEST_IF=wlo1 NET_TEST_WIRELESS=1 NET_TEST_SSID="" NET_TEST_SIGNAL=65 bash "$S")
+assert_eq "wifi hidden ssid" "wifi 65%" "$(sed -n 1p <<<"$out")"
 finish

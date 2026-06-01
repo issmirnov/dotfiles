@@ -10,7 +10,7 @@ is_wireless() {
   if [ -n "${NET_TEST_WIRELESS+x}" ]; then [ "$NET_TEST_WIRELESS" = 1 ]
   else [ -d "/sys/class/net/$1/wireless" ]; fi
 }
-get_ssid()   { echo "${NET_TEST_SSID-$(nmcli -t -f active,ssid   dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')}"; }
+get_ssid()   { echo "${NET_TEST_SSID-$(nmcli -t -f active,ssid dev wifi 2>/dev/null | sed -n 's/^yes://p' | sed 's/\\:/:/g' | head -1)}"; }
 get_signal() { echo "${NET_TEST_SIGNAL-$(nmcli -t -f active,signal dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')}"; }
 
 IF=$(get_iface)
@@ -25,6 +25,7 @@ esac
 
 if is_wireless "$IF"; then
   ssid=$(get_ssid); sig=$(get_signal)
+  [[ "$sig" =~ ^[0-9]+$ ]] || sig=""
   [ -z "$ssid" ] && ssid="wifi"
   color="#FFD600"; [ -n "$sig" ] && [ "$sig" -lt 40 ] 2>/dev/null && color="#FF6D00"
   if [ -n "$sig" ]; then text="$ssid ${sig}%"; else text="$ssid"; fi
