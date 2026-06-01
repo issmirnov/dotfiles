@@ -40,7 +40,24 @@ render_claude() {
   color=$(pct_color "$worst")
   printf '%s\n%s\n%s\n' "CC $seg5 $seg7" "CC ${five}/${sev}" "$color"
 }
-render_codex()  { return 1; }   # implemented in Task 4
+render_codex() {
+  local json=$1 five wk seg5 segw worst color r
+  five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json"); five=${five%.*}
+  wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json"); wk=${wk%.*}
+  { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
+  seg5="5h ${five}%"; segw="wk ${wk}%"
+  if [ "$five" -ge 50 ]; then
+    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json")
+    [ -n "$r" ] && [ "$r" -gt 0 ] 2>/dev/null && seg5="$seg5 ($(fmt_reset "$r"))"
+  fi
+  if [ "$wk" -ge 50 ]; then
+    r=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json")
+    [ -n "$r" ] && [ "$r" -gt 0 ] 2>/dev/null && segw="$segw ($(fmt_reset "$r"))"
+  fi
+  worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
+  color=$(pct_color "$worst")
+  printf '%s\n%s\n%s\n' "CX $seg5 $segw" "CX ${five}/${wk}" "$color"
+}
 main()          { :; }          # implemented in Task 5
 
 # ---- dispatch ----
