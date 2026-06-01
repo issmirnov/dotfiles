@@ -155,22 +155,22 @@ git commit -m "feat(i3): worldclock blocklet (Zagreb/Prague/Kyiv)"
 ### Task 4: Wire into the bar + deploy locally
 
 **Files:**
-- Modify: `i3/i3blocks.conf` (insert before `[time]`, currently line 88)
+- Modify: `i3/i3blocks.conf` (insert as the first block, before `[bt_vol]`)
 
-- [ ] **Step 1: Insert the block immediately before `[time]`**
+- [ ] **Step 1: Insert the block as the first block, before `[bt_vol]`**
 
 ```ini
 [worldclock]
 command=$SCRIPT_DIR/worldclock
 interval=30
 
-[time]
+[bt_vol]
 ```
 
 - [ ] **Step 2: Deploy in place**
 
 Run: `i3-msg restart`
-Expected: `[{"success":true}]`; the bar reloads, new segment appears immediately left of the local clock.
+Expected: `[{"success":true}]`; the bar reloads, new segment appears at the far left (before the 🎧 block).
 
 - [ ] **Step 3: Eyeball the live segment**
 
@@ -181,7 +181,7 @@ Expected: `ZAG·PRG HH:MM  KYV HH:MM` matching the real current time in those ci
 
 ```bash
 git add i3/i3blocks.conf
-git commit -m "feat(i3): wire worldclock block before [time]"
+git commit -m "feat(i3): wire worldclock as the first (leftmost) block"
 ```
 
 ---
@@ -220,7 +220,7 @@ git commit -m "docs(i3): document worldclock blocklet in README"
 
 ## Self-Review
 
-- **Spec coverage:** collapse-by-equal-time render (T2), full+short output (T2), `WORLDCLOCK_NOW`/`__render` seam (T2), summer+winter+invariant tests (T1/T3), config before `[time]` interval=30 (T4), README (T5), design doc already committed. ✓
+- **Spec coverage:** collapse-by-equal-time render (T2), full+short output (T2), `WORLDCLOCK_NOW`/`__render` seam (T2), summer+winter+invariant tests (T1/T3), config as first block before `[bt_vol]` interval=30 (T4), README (T5), design doc already committed. ✓
 - **Placeholders:** none — every code/command step is concrete.
 - **Type consistency:** test references `$S/../worldclock` and `__render`; script defines `__render` + default both calling `render`; label spelling `ZAG/PRG/KYV` and `·` separator consistent across script, tests, README, design doc. ✓
 - **DST correctness:** summer (UTC+2/+3 → 14:00/15:00) and winter (UTC+1/+2 → 13:00/14:00) verified against the tz rules; fixed UTC epochs make assertions host-TZ-independent.

@@ -60,10 +60,10 @@ command=$SCRIPT_DIR/worldclock
 interval=30
 ```
 
-Inserted just **before `[time]`**, so the bar's right end reads `… worldclock, time` — the
-remote clocks sit immediately left of the local clock. `interval=30`: the display is
-minute-granular and `date` is effectively free, so 30 s keeps worst-case skew under half a
-minute at negligible cost (trivially tunable; could match `[time]`'s `5` for lockstep ticks).
+Inserted as the **first (leftmost) block, before `[bt_vol]`**, so the bar's left end reads
+`worldclock, bt_vol, …`. `interval=30`: the display is minute-granular and `date` is
+effectively free, so 30 s keeps worst-case skew under half a minute at negligible cost
+(trivially tunable; could match `[time]`'s `5` for lockstep ticks).
 `~/.i3blocks.conf` is a symlink to this file, so editing the repo file is the deployed change.
 
 ## Tests — `blocklets/tests/test_worldclock.sh`
@@ -95,7 +95,7 @@ files under `$HOME` and writes nothing to the repo.
 - `WORLDCLOCK_NOW=$(date -u -d '2026-07-01 12:00 UTC' +%s) i3/blocklets/worldclock __render`
   → `ZAG·PRG 14:00  KYV 15:00`.
 - `bash i3/blocklets/tests/run.sh` → all suites green (existing + new).
-- `i3-msg restart` → eyeball the new segment immediately left of the local clock.
+- `i3-msg restart` → eyeball the new segment at the far left of the bar (before the 🎧 block).
 
 ## Out of scope (YAGNI)
 
