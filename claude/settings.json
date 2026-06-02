@@ -3,7 +3,6 @@
     "ENABLE_TOOL_SEARCH": "true",
     "CLAUDE_CODE_EFFORT_LEVEL": "max"
   },
-  "model": "opus[1m]",
   "permissions": {
     "allow": [
       "Bash(snapper list:*)",
@@ -112,11 +111,16 @@
     }
   },
   "alwaysThinkingEnabled": true,
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "verbose": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "voiceEnabled": true
 }
