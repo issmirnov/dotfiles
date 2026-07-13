@@ -7,8 +7,8 @@ Each script prints the i3blocks 3-line protocol — `full_text`, `short_text`, `
 (`#RRGGBB`); `markup=none` is set globally.
 
 Most files here are stock [i3blocks-contrib](https://github.com/vivien/i3blocks-contrib)
-scripts (`battery`, `cpu_usage`, `disk`, `memory`, `volume`, `iface`, `wifi`, …). The two
-documented below — `ai_usage` and `network` — are custom.
+scripts (`battery`, `cpu_usage`, `disk`, `memory`, `volume`, `iface`, `wifi`, …). The three
+documented below — `ai_usage`, `network`, and `worldclock` — are custom.
 
 > **Reload:** i3blocks only re-reads its config when the bar (re)starts. After editing
 > `i3blocks.conf`, run **`i3-msg restart`** (in-place; windows/workspaces preserved). A
@@ -92,14 +92,33 @@ the host's many docker / veth / bridge interfaces:
 
 SSID and signal come from `nmcli` (falling back to `iw`).
 
+## `worldclock` — Zagreb / Prague / Kyiv
+
+Single block (`[worldclock]`, `interval=30`). Live time in three cities, collapsing those
+that currently share a clock:
+
+```
+ZAG·PRG 21:03  KYV 22:03
+```
+
+Zagreb and Prague are both Central European Time and always show the same clock; Kyiv is one
+hour ahead (Eastern European Time). The grouping is computed from the *actual* rendered
+times, so it's DST-aware and self-correcting — if two cities' clocks ever diverged they'd
+split into separate labels automatically. `full_text` shows the labelled groups; `short_text`
+drops the labels (`21:03 22:03`).
+
+Pure `date`/`TZ` — no network, no secrets, always exits 0. The `WORLDCLOCK_NOW=<epoch>` seam
+pins "now" so the summer/winter tests assert exact strings across a DST boundary.
+
 ## Tests
 
-Dependency-free bash harness (no `bats`/`shellcheck` required). Both custom scripts expose
-env-var seams (`AIUSAGE_CACHE_DIR`, `AIUSAGE_NO_FETCH`, `AIUSAGE_ROLLOUT_FILE`,
-`NET_TEST_IF`/`NET_TEST_WIRELESS`/`NET_TEST_SSID`/`NET_TEST_SIGNAL`) and hidden dispatch
-verbs (`__color`, `__reset`, `__pace`, `__render`, `__maprollout`) so every branch —
-thresholds, pace math, parsing, caching, fallbacks, all network states — is testable
-offline against synthetic fixtures (no live network or tokens needed).
+Dependency-free bash harness (no `bats`/`shellcheck` required). All three custom scripts
+expose env-var seams (`AIUSAGE_CACHE_DIR`, `AIUSAGE_NO_FETCH`, `AIUSAGE_ROLLOUT_FILE`,
+`NET_TEST_IF`/`NET_TEST_WIRELESS`/`NET_TEST_SSID`/`NET_TEST_SIGNAL`, `WORLDCLOCK_NOW`) and
+hidden dispatch verbs (`__color`, `__reset`, `__pace`, `__render`, `__maprollout`) so every
+branch — thresholds, pace math, parsing, caching, fallbacks, all network states, world-clock
+DST collapse — is testable offline against synthetic fixtures (no live network or tokens
+needed).
 
 ```sh
 bash tests/run.sh        # runs every tests/test_*.sh

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# worldclock — i3blocks segment: live time in Zagreb, Prague, Kyiv.
+# Zagreb & Prague share CET (always equal); Kyiv is EET (+1h). Cities whose
+# current HH:MM match are collapsed under a joined label. Pure date/TZ — no
+# network, no secrets, always exits 0. Test seam: WORLDCLOCK_NOW=<epoch> pins now.
+set -u
+
+# label|tz, ordered west-to-east by offset
+CITIES=(
+  "ZAG|Europe/Zagreb"
+  "PRG|Europe/Prague"
+  "KYV|Europe/Kyiv"
+)
+
+time_in() {  # <tz> -> HH:MM at the current (or pinned) instant
+  local tz=$1
+  if [ -n "${WORLDCLOCK_NOW:-}" ]; then
+    TZ="$tz" date -d "@$WORLDCLOCK_NOW" +%H:%M
+  else
+    TZ="$tz" date +%H:%M
+  fi
+}
+
+render() {
+  local entry lab tz i gi found
+  local labels=() times=()
+  for entry in "${CITIES[@]}"; do
+    lab=${entry%%|*}; tz=${entry#*|}
+    labels+=("$lab"); times+=("$(time_in "$tz")")
+  done
+  # group cities by equal time, preserving first-appearance order
+  local group_times=() group_labels=()
+  for i in "${!times[@]}"; do
+    found=-1
+    for gi in "${!group_times[@]}"; do
+      [ "${group_times[$gi]}" = "${times[$i]}" ] && { found=$gi; break; }
+    done
+    if [ "$found" -ge 0 ]; then
+      group_labels[$found]="${group_labels[$found]}·${labels[$i]}"
+    else
+      group_times+=("${times[$i]}"); group_labels+=("${labels[$i]}")
+    fi
+  done
+  local full="" short=""
+  for gi in "${!group_times[@]}"; do
+    [ -n "$full" ]  && full+="  "
+    [ -n "$short" ] && short+=" "
+    full+="${group_labels[$gi]} ${group_times[$gi]}"
+    short+="${group_times[$gi]}"
+  done
+  printf '%s\n' "$full"   # full_text
+  printf '%s\n' "$short"  # short_text (no color line -> inherits bar default)
+}
+
+case "${1:-}" in
+  __render) render ;;
+  *)        render ;;
+esac
+exit 0
