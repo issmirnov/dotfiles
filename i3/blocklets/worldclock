@@ -9,7 +9,7 @@ set -u
 CITIES=(
   "ZAG|Europe/Zagreb"
   "PRG|Europe/Prague"
-  "KYV|Europe/Kiev"
+  "KYV|Europe/Kyiv"
 )
 
 time_in() {  # <tz> -> HH:MM at the current (or pinned) instant
