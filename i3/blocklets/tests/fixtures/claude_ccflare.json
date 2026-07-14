@@ -1,0 +1,11 @@
+[
+  { "name": "lena-chatgpt", "provider": "codex", "rateLimitStatus": "-", "usageData": null },
+  { "name": "claude-smirnovlabs", "provider": "anthropic", "rateLimitStatus": "Rate limited (2m)",
+    "usageData": {
+      "five_hour": { "utilization": 0,   "resets_at": null },
+      "seven_day": { "utilization": 100, "resets_at": "2099-01-01T00:00:00+00:00" } } },
+  { "name": "claude_isgmirnov", "provider": "anthropic", "rateLimitStatus": "allowed (191m)",
+    "usageData": {
+      "five_hour": { "utilization": 15, "resets_at": "2099-01-01T00:00:00+00:00" },
+      "seven_day": { "utilization": 49, "resets_at": "2099-01-01T00:00:00+00:00" } } }
+]

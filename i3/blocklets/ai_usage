@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # i3blocks: Claude Code / Codex usage (5h + weekly), verbose with reset countdowns.
-# Provider via $BLOCK_INSTANCE (claude|codex). Reads OAuth tokens from $HOME at
-# runtime — contains NO secrets. Safe to commit to a public repo.
+# Provider via $BLOCK_INSTANCE (claude|codex).
+#   claude -> better-ccflare fleet (all Anthropic accounts) via $CCFLARE_BASE/api/accounts;
+#            Bearer token read at runtime from ~/.config/ccflare/token (untracked, NOT in repo).
+#   codex  -> ChatGPT usage via the ~/.codex OAuth token read from $HOME.
+# No secrets are stored in this file — safe to commit to a public repo.
 set -u
 CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
 
@@ -41,28 +44,62 @@ pace_sym() {
   fi
 }
 
+# Short 2-char tag for an account name. Known accounts get a stable hand-picked
+# tag (matching the Home Assistant sensor naming); anything else derives one by
+# stripping a leading "claude"/separator and taking the first two alnum chars.
+short_tag() {
+  local n="${1:-}"
+  case "$n" in
+    *smirnovlabs*) echo "sl" ;;
+    *isgmirnov*)   echo "ig" ;;
+    *) n=$(printf '%s' "$n" | sed -E 's/^claude[-_]?//; s/[^a-zA-Z0-9]//g'); echo "${n:0:2}" ;;
+  esac
+}
+
+# Render the whole better-ccflare Anthropic fleet: one "<tag> 5h/7d" segment per
+# account, worst-utilization account first, with a weekly pace token and (when a
+# window is >=50%) a reset countdown. Block color + short_text track the single
+# worst window across all accounts. Input: raw /api/accounts JSON (array).
 render_claude() {
-  local json=$1 now five sev seg5 seg7 worst color r ts sev_reset rem7 pace
+  local json=$1 now name five sev sev_ts five_ts worst tag seg sres rem pace wts wres r gmax=-1
+  local -a segs=()
   now=$(date +%s)
-  five=$(jq -r '.five_hour.utilization // empty' <<<"$json" 2>/dev/null); five=${five%.*}
-  sev=$(jq -r '.seven_day.utilization // empty' <<<"$json" 2>/dev/null); sev=${sev%.*}
-  { [ -z "$five" ] || [ -z "$sev" ]; } && return 1
-  seg5="5h ${five}%"; seg7="7d ${sev}%"
-  if [ "$five" -ge 50 ]; then
-    ts=$(jq -r '.five_hour.resets_at // empty' <<<"$json" 2>/dev/null)
-    [ -n "$ts" ] && r=$(( $(date -d "$ts" +%s 2>/dev/null || echo "$now") - now )) && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
-  fi
-  ts=$(jq -r '.seven_day.resets_at // empty' <<<"$json" 2>/dev/null)
-  sev_reset=""; [ -n "$ts" ] && sev_reset=$(date -d "$ts" +%s 2>/dev/null)
-  rem7=""; [ -n "$sev_reset" ] && rem7=$(( sev_reset - now ))
-  pace=$(pace_sym "$sev" "$rem7" 604800)
-  [ -n "$pace" ] && seg7="$seg7 $pace"
-  if [ "$sev" -ge 50 ] && [ -n "$sev_reset" ]; then
-    r=$(( sev_reset - now )); [ "$r" -gt 0 ] && seg7="$seg7 ($(fmt_reset "$r"))"
-  fi
-  worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
-  color=$(pct_color "$worst")
-  printf '%s\n%s\n%s\n' "CC $seg5 $seg7" "CC ${five}/${sev}" "$color"
+  while IFS=$'\t' read -r name five sev sev_ts five_ts; do
+    [ -z "$name" ] && continue
+    five=${five%.*}; sev=${sev%.*}; five=${five:-0}; sev=${sev:-0}
+    tag=$(short_tag "$name")
+    worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
+    seg="$tag ${five}/${sev}"
+    if [ -n "$sev_ts" ] && [ "$sev_ts" != "null" ]; then
+      sres=$(date -d "$sev_ts" +%s 2>/dev/null)
+      if [ -n "$sres" ]; then
+        rem=$(( sres - now )); pace=$(pace_sym "$sev" "$rem" 604800)
+        [ -n "$pace" ] && seg="$seg $pace"
+      fi
+    fi
+    if [ "$worst" -ge 50 ]; then
+      if [ "$five" -ge "$sev" ]; then wts=$five_ts; else wts=$sev_ts; fi
+      if [ -n "$wts" ] && [ "$wts" != "null" ]; then
+        wres=$(date -d "$wts" +%s 2>/dev/null)
+        [ -n "$wres" ] && { r=$(( wres - now )); [ "$r" -gt 0 ] && seg="$seg ($(fmt_reset "$r"))"; }
+      fi
+    fi
+    segs+=("$seg")
+    [ "$worst" -gt "$gmax" ] && gmax=$worst
+  done < <(jq -r --arg acct "$ACCT" '
+      [ .[] | select(.provider=="anthropic") | select($acct=="" or .name==$acct) ]
+      | sort_by( [ (.usageData.five_hour.utilization // 0), (.usageData.seven_day.utilization // 0) ] | max )
+      | reverse | .[]
+      | [ .name,
+          (.usageData.five_hour.utilization // 0),
+          (.usageData.seven_day.utilization // 0),
+          (.usageData.seven_day.resets_at // ""),
+          (.usageData.five_hour.resets_at // "") ] | @tsv
+    ' <<<"$json" 2>/dev/null)
+  [ "$gmax" -lt 0 ] && return 1
+  local full="CC ${segs[0]}" i
+  for ((i = 1; i < ${#segs[@]}; i++)); do full="$full  ${segs[i]}"; done
+  printf '%s\n%s\n%s\n' "$full" "CC ${gmax}%" "$(pct_color "$gmax")"
 }
 render_codex() {
   local json=$1 five wk seg5 segw worst color r wk_after wk_window pace
@@ -86,7 +123,7 @@ render_codex() {
   printf '%s\n%s\n%s\n' "CX $seg5 $segw" "CX ${five}/${wk}" "$color"
 }
 main() {
-  local provider="${BLOCK_INSTANCE:-claude}" ttl cache json
+  local provider="$PROVIDER" ttl cache json
   case "$provider" in codex) ttl=120;; *) ttl=180;; esac
   mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$provider.json"
 
@@ -112,18 +149,13 @@ main() {
 
 fetch_claude() {
   [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
-  local cred="$HOME/.claude/.credentials.json" token ver
-  [ -f "$cred" ] || return 1
-  token=$(jq -r '.claudeAiOauth.accessToken // empty' "$cred"); [ -z "$token" ] && return 1
-  ver=$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1); ver=${ver:-2.1.159}
-  curl -sS --max-time 6 \
-    -H "Authorization: Bearer $token" \
-    -H "anthropic-beta: oauth-2025-04-20" \
-    -H "anthropic-version: 2023-06-01" \
-    -H "User-Agent: claude-code/$ver" \
-    "https://api.anthropic.com/api/oauth/usage" 2>/dev/null
+  local tokfile="${CCFLARE_TOKEN_FILE:-$HOME/.config/ccflare/token}" base token
+  base="${CCFLARE_BASE:-http://10.3.39.6:8080}"
+  token=$(head -n1 "$tokfile" 2>/dev/null | tr -d '[:space:]'); [ -z "$token" ] && return 1
+  curl -sS --max-time 6 -H "Authorization: Bearer $token" "$base/api/accounts" 2>/dev/null
 }
-validate_claude() { jq -e '.five_hour.utilization' >/dev/null 2>&1 <<<"${1:-}"; }
+# Valid iff the array has at least one Anthropic account exposing a 5h utilization.
+validate_claude() { jq -e 'any(.[]?; .provider=="anthropic" and (.usageData.five_hour.utilization != null))' >/dev/null 2>&1 <<<"${1:-}"; }
 
 fetch_codex() {
   [ -n "${AIUSAGE_NO_FETCH:-}" ] && return 1
@@ -165,21 +197,28 @@ codex_rollout_json() {
   printf '%s' "$line" | map_rollout_line
 }
 
-label() { case "${BLOCK_INSTANCE:-claude}" in codex) echo "CX";; *) echo "CC";; esac; }
+label() { case "$PROVIDER" in codex) echo "CX";; *) echo "CC";; esac; }
 
 # re-render the given JSON but force the color line to gray (stale/fallback marker)
 emit_dim() {
-  local out l1 l2; out=$("render_${BLOCK_INSTANCE:-claude}" "$1") || return 1
+  local out l1 l2; out=$("render_$PROVIDER" "$1") || return 1
   { IFS= read -r l1; IFS= read -r l2; } <<<"$out"
   printf '%s\n%s\n#888888\n' "$l1" "$l2"
 }
+
+# ---- instance parse: BLOCK_INSTANCE is "provider[:account]" ----
+# A bare "claude"/"codex" renders the whole provider; "claude:<account-name>"
+# renders just that ccflare account so it gets its own i3 block and its own color.
+PROVIDER="${BLOCK_INSTANCE:-claude}"; ACCT=""
+case "$PROVIDER" in *:*) ACCT="${PROVIDER#*:}"; PROVIDER="${PROVIDER%%:*}" ;; esac
 
 # ---- dispatch ----
 case "${1:-}" in
   __color)  pct_color "${2:-0}"; exit 0 ;;
   __reset)  fmt_reset "${2:-0}"; exit 0 ;;
+  __tag)    short_tag "${2:-}"; exit 0 ;;
   __pace)   pace_sym "${2:-}" "${3:-}" "${4:-604800}"; exit 0 ;;
-  __render)     "render_${BLOCK_INSTANCE:-claude}" "$(cat)"; exit $? ;;
+  __render)     "render_$PROVIDER" "$(cat)"; exit $? ;;
   __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;
 esac
