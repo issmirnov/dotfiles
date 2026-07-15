@@ -40,6 +40,15 @@
             "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
           }
         ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/usr/bin/node\" \"/home/vania/.shellular/hooks/shellular-notify.mjs\" claude-code"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -49,6 +58,14 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/nonstop.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"/usr/bin/node\" \"/home/vania/.shellular/hooks/shellular-notify.mjs\" claude-code"
           }
         ]
       }
@@ -61,15 +78,16 @@
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
     "presentation-tools@smirnovlabs-claude-skills": true,
-    "skill-codex@skill-codex": true,
     "nonstop@nonstop": true,
     "visual-explainer@visual-explainer-marketplace": true,
     "superpowers@superpowers-marketplace": true,
     "plan-utilities@smirnovlabs-claude-skills": true,
     "git-recon@smirnovlabs-claude-skills": true,
-    "pr-utilities@smirnovlabs-claude-skills": true
+    "pr-utilities@smirnovlabs-claude-skills": true,
+    "posthog@claude-plugins-official": true,
+    "episodic-memory@superpowers-marketplace": true,
+    "skill-codex@skill-codex": true
   },
   "extraKnownMarketplaces": {
     "claude-code-plugins": {
@@ -108,6 +126,12 @@
         "source": "github",
         "repo": "nicobailon/visual-explainer"
       }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
@@ -116,6 +140,7 @@
     "enabled": true,
     "mode": "hold"
   },
+  "tui": "fullscreen",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark",
   "verbose": true,

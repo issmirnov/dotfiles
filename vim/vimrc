@@ -113,6 +113,13 @@ command! KillWhitespace :normal :%s/ *$//g<cr><c-o><cr>
 autocmd Filetype yaml setlocal ts=2 sts=2 sw=2
 autocmd Filetype sh setlocal ts=4 sts=4 sw=4
 
+"" Markdown in-buffer render (conceal via polyglot's vim-markdown)
+" hide **, _, `, and [text](url) markup; bold/italic show styled.
+" concealcursor= reveals raw markup on the cursor's line so editing stays sane.
+autocmd FileType markdown setlocal conceallevel=2 concealcursor=
+" keep ``` code fences visible instead of concealing them
+let g:vim_markdown_conceal_code_blocks = 0
+
 
 "" Splits
 set splitright
