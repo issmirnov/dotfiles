@@ -84,7 +84,7 @@ multiplier = 3  # Default: 3
 [font]
 
 # Normal font style
-normal = { family = "monospace", style = "Regular" }  # Default for Linux/BSD: "monospace", Regular
+normal = { family = "Inconsolata", style = "Regular" }  # Matched to Terminator (was "monospace" => DejaVu Sans Mono)
 
 # Bold font style
 bold = { style = "Bold" }  # Inherits family from normal, Default style: Bold
@@ -103,7 +103,7 @@ bold_italic = { style = "Bold Italic" }  # Inherits family from normal, Default 
 # ]
 
 # Font size in points
-size = 15  # Default: 11.25
+size = 16  # Matched to Terminator's Inconsolata 16 (was 15)
 
 # Offset is extra space around each character
 offset = { x = 0, y = 0 }  # Default: x = 0, y = 0

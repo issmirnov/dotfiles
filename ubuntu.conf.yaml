@@ -16,6 +16,7 @@
     ~/.config/gammastep: gammastep
     ~/.config/greenclip.toml: greenclip/greenclip.toml
     ~/.config/onagre: onagre
+    ~/.config/rofi: rofi
     ~/.config/hypr: hypr
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
