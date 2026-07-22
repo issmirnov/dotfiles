@@ -35,4 +35,7 @@
 
 
 - shell:
-    - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v ~/.fonts) || echo "no fc-cache command"', "Regenerate font cache."]
+    # Rebuild ALL font caches, not just ~/.fonts: the Noto Color Emoji scan-strip in
+    # fonts/fonts.conf must also apply to the system copy (/usr/share/fonts/noto, from
+    # noto-fonts-emoji) or that copy keeps space/digits and the word-gaps persist.
+    - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate all font caches."]
