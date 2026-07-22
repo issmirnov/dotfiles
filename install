@@ -10,6 +10,11 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${BASEDIR}"
 git submodule update --init --recursive "${DOTBOT_DIR}"
 
+# Prereqs: ensure targets exist before dotbot links into them.
+mkdir -p "${HOME}/bin"                                                 # ~/bin/* symlinks need the dir to populate
+[ -f "${HOME}/.zshrc.local" ] || touch "${HOME}/.zshrc.local"          # local zsh overrides sourced by ~/.zshrc
+[ -f "${HOME}/.zsh_history_ext" ] || touch "${HOME}/.zsh_history_ext"  # per-dir cmd log appended by jog()
+
 # base lib
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "default${CONFIG_SUFFIX}"
 
