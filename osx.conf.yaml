@@ -10,6 +10,7 @@
 - link:
     "~/Library/Application Support/Übersicht/widgets": ubersicht
     ~/.config/karabiner/karabiner.json: karabiner/karabiner.json
+    ~/.config/borders/bordersrc: borders/bordersrc
     ~/.skhdrc: skhd/skhdrc.generated
     ~/.yabairc: yabai/yabairc
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
