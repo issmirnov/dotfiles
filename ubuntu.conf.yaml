@@ -34,4 +34,6 @@
 
 
 - shell:
+    # Arch: JetBrainsMono Nerd Font from the official 'extra' repo (verify pkg name on your box)
+    - ['command -v pacman >/dev/null && sudo pacman -S --needed --noconfirm ttf-jetbrains-mono-nerd || echo "pacman not found; install JetBrainsMono Nerd Font manually"', "Install JetBrainsMono Nerd Font (Arch)"]
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v ~/.fonts) || echo "no fc-cache command"', "Regenerate font cache."]
