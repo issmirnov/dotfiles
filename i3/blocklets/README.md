@@ -121,7 +121,7 @@ DST collapse — is testable offline against synthetic fixtures (no live network
 needed).
 
 ```sh
-bash tests/run.sh        # runs every tests/test_*.sh
+bash tests/run.sh        # runs every tests/test_*.sh (skips on macOS)
 ```
 
 ## See also
