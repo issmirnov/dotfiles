@@ -1,6 +1,6 @@
 # vim:ft=zsh
 ## python
-alias pi='python3 -i'
+alias pii='python3 -i'
 alias pserver="python -m SimpleHTTPServer"
 
 ## ansible
