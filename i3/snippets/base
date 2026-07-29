@@ -245,12 +245,12 @@ bindsym XF86AudioPrev exec cmus-remote -r
 set $filemanager nemo --no-desktop
 # use "google-chrome" on ubuntu and "google-chrome-stable" on arch.
 set $browser "google-chrome-stable"
-set $terminal terminator
+set $terminal alacritty
 
 # favorite programs
 bindsym $mod+z exec $browser
 bindsym $mod+x exec $filemanager
-bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Return exec $terminal
 
 # App Bindings: use 'xprop | grep WM_CLASS' to get names.
 assign [instance="^crx_nckgahadagoaajjgafhacjanaoiihapd$"] hangouts
@@ -304,7 +304,7 @@ exec xset r rate 280 40
 
 # music
 # for_window [title="^cmus$"] move window to scratchpad
-# exec --no-startup-id terminator -T cmus -e cmus
+# exec --no-startup-id $terminal -T cmus -e cmus
 
 # noise supppression
 exec noisetorch

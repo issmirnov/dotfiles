@@ -1,88 +1,117 @@
-# Config for https://github.com/koekeishiya/skhd/tree/b659b90576cf88100b52ca6ab9270d84af7e579b
+# skhd config — https://github.com/koekeishiya/skhd
+# Regenerated from this `base` file by generator.sh (-> skhdrc.generated).
 
-# # open terminal
+# ── modes ─────────────────────────────────────────────────────────────────────
+# 'resize' mode: enter with (alt - w), use h/j/k/l to resize, esc/return to exit.
+# The active border turns red in resize mode (requires JankyBorders running).
+:: default : borders active_color=0xffffa500 2>/dev/null
+:: resize @ : borders active_color=0xffff3b30 2>/dev/null
+
+# ── don't intercept keys inside these apps (remote desktop / VMs) ─────────────
+.blacklist [
+    "vmware fusion"
+    "parallels desktop"
+    "microsoft remote desktop"
+    "windows app"
+    "screen sharing"
+    "utm"
+]
+
+# ── launchers ──────────────────────────────────────────────────────────────────
+# open terminal
 cmd - return : open -na /System/Applications/Utilities/Terminal.app
-# Open Work profile
+# Chrome work / personal profiles
 alt - z : open -na /Applications/Google\ Chrome.app --args --profile-directory=Profile\ 1
-# Open personal profile
 alt - x : open -na /Applications/Google\ Chrome.app --args --profile-directory=Default
-# alt - z : chrome-cli open "https://smirnov.wiki" -n
 
 # close current window
 alt - q : yabai -m window --close
 
-# # focus window (can jump across displays)
-alt - left : yabai -m window --focus west || yabai -m display --focus west
+# ── focus window (falls back to focusing the display in that direction) ───────
+alt - left  : yabai -m window --focus west  || yabai -m display --focus west
+alt - down  : yabai -m window --focus south
+alt - up    : yabai -m window --focus north
+alt - right : yabai -m window --focus east  || yabai -m display --focus east
 alt + ctrl - d : yabai -m window --focus west || yabai -m display --focus west
-alt - down : yabai -m window --focus south
-alt - up : yabai -m window --focus north
-alt - right : yabai -m window --focus east || yabai -m display --focus east
-alt + ctrl - f: yabai -m window --focus east || yabai -m display --focus east
+alt + ctrl - f : yabai -m window --focus east || yabai -m display --focus east
 
+# ── move / swap windows (can jump displays, not spaces) ───────────────────────
+cmd + shift - left  : yabai -m window --swap west  || $(yabai -m window --display west;  yabai -m display --focus west)
+cmd + shift - down  : yabai -m window --swap south || $(yabai -m window --display south; yabai -m display --focus south)
+cmd + shift - up    : yabai -m window --swap north || $(yabai -m window --display north; yabai -m display --focus north)
+cmd + shift - right : yabai -m window --swap east  || $(yabai -m window --display east;  yabai -m display --focus east)
 
-# # From https://github.com/koekeishiya/yabai/issues/526
-# Move windows around and follow focus. Can jump across displays but not spaces
-cmd + shift - left : yabai -m window --swap west || $(yabai -m window --display west; yabai -m display --focus west)
-cmd + shift - down : yabai -m window --swap south || $(yabai -m window --display south; yabai -m display --focus south)
-cmd + shift - up : yabai -m window --swap north || $(yabai -m window --display north; yabai -m display --focus north)
-cmd + shift - right : yabai -m window --swap east || $(yabai -m window --display east; yabai -m display --focus east)
-
-# # balance size of windows
+# balance sizes / rotate the tree
 alt - space : yabai -m space --balance
+alt - r     : yabai -m space --rotate 90
 
-# # make floating window fill screen
-# shift + cmd - space     : yabai -m window --grid 1:1:0:0:1:1
+# ── resize mode (NEW — keyboard resizing) ─────────────────────────────────────
+alt - w ; resize
+resize < escape ; default
+resize < return ; default
+# the || fallback picks whichever edge this window actually owns in the bsp tree
+resize < h : yabai -m window --resize left:-40:0   || yabai -m window --resize right:-40:0
+resize < l : yabai -m window --resize left:40:0    || yabai -m window --resize right:40:0
+resize < j : yabai -m window --resize bottom:0:40  || yabai -m window --resize top:0:40
+resize < k : yabai -m window --resize bottom:0:-40 || yabai -m window --resize top:0:-40
 
-# # make floating window fill left-half of screen
-# shift + alt - left   : yabai -m window --grid 1:2:0:0:1:1
+# ── stacks (NEW) ──────────────────────────────────────────────────────────────
+# cycle through windows stacked in the same tile
+ctrl + alt - up   : yabai -m window --focus stack.prev
+ctrl + alt - down : yabai -m window --focus stack.next
+# stack the last-focused window onto the current one (build a 2-window stack)
+alt + shift - s   : yabai -m window --stack recent
+# UNSTACK the focused window: float it, then re-tile it back as a normal split.
+# (yabai has no direct un-stack; the float/unfloat cycle removes it from the stack.)
+alt + shift - u   : yabai -m window --toggle float && yabai -m window --toggle float
 
-# # make floating window fill right-half of screen
-# shift + alt - right  : yabai -m window --grid 1:2:1:0:1:1
-
-# create desktop and follow focus
-# Create new display, move window there and follow focus
-cmd + shift - z : yabai -m space --create && \
-                             WIN_ID=$(yabai -m query --windows --window | jq '.id') && \
-                             index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
-                             yabai -m window --space $index && yabai -m window --focus $WIN_ID
-# Move window to next space
-cmd + shift - x : WIN_ID=$(yabai -m query --windows --window | jq '.id') && \
-                    yabai -m window --space next && yabai -m window --focus $WIN_ID
-
-# # create desktop and follow focus
-alt + shift - n : yabai -m space --create \
-                    index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
-                    yabai -m window --space $index
-
-# # destroy desktop
-cmd + shift - q : yabai -m space --destroy
-
-# # focus monitor
-ctrl + alt - left  : yabai -m display --focus west
-ctrl + alt - right  : yabai -m display --focus east
-
-# rotate tree (use home row mods - right hand 3rd finger trigger alt)
-alt - r : yabai -m space --rotate 90
-
-
-# # toggle window fullscreen zoom
+# ── fullscreen ────────────────────────────────────────────────────────────────
+# fill the tile, ignoring gaps
 alt - f : yabai -m window --toggle zoom-fullscreen
+# fill the whole display without a native macOS fullscreen space (NEW)
+shift + alt - f : yabai -m window --toggle windowed-fullscreen
+# (native macOS fullscreen alternative: yabai -m window --toggle native-fullscreen)
 
-# # toggle window native fullscreen
-# shift + alt - f : yabai -m window --toggle native-fullscreen
-
-
-# # float / unfloat window and center on screen
-# alt - t : yabai -m window --toggle float;\
-#           yabai -m window --grid 4:4:1:1:2:2
-
-# # toggle sticky
+# toggle sticky (show window on all spaces)
+# NOTE: sticky requires the scripting addition (SA); inert under full SIP.
 alt - s : yabai -m window --toggle sticky
 
+# ── move window between spaces / displays ─────────────────────────────────────
+# move window to the next space and follow it (works with SIP enabled on 7.1.25+)
+cmd + shift - x : WIN_ID=$(yabai -m query --windows --window | jq '.id') && \
+                    yabai -m window --space next && yabai -m window --focus $WIN_ID
+# rotate a window across displays and keep focus on it
+alt + shift - r : WIN_ID=$(yabai -m query --windows --window | jq '.id') && \
+                    yabai -m window --display recent && yabai -m window --focus $WIN_ID
+# focus a monitor directly
+ctrl + alt - left  : yabai -m display --focus west
+ctrl + alt - right : yabai -m display --focus east
 
-# Set insertion point (shows red area whre next window will be placed)
-alt + shift - c : yabai -m window --insert south # down
-alt + shift - v : yabai -m window --insert east # right
+# ── set insertion point (red feedback shows where the next window lands) ──────
+alt + shift - c : yabai -m window --insert south
+alt + shift - v : yabai -m window --insert east
 
-# # Rotate focus between displays and keep focus
-alt + shift -r : WIN_ID=$(yabai -m query --windows --window | jq '.id') && yabai -m window --display recent && yabai -m window --focus $WIN_ID
+# ── space create / destroy — DISABLED ─────────────────────────────────────────
+# space --create / --destroy need the scripting addition (SA) and FAIL under full
+# SIP. Re-enable after partially disabling SIP + loading the SA.
+# cmd + shift - z : yabai -m space --create && \
+#     index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
+#     yabai -m window --space $index && yabai -m window --focus $(yabai -m query --windows --window | jq '.id')
+# alt + shift - n : yabai -m space --create && \
+#     index="$(yabai -m query --spaces --display | jq 'map(select(."is-native-fullscreen" == false))[-1].index')" && \
+#     yabai -m window --space $index
+# cmd + shift - q : yabai -m space --destroy
+
+# ── application-specific bindings (example, NEW) ──────────────────────────────
+# The same key can do different things per app; `~` forwards the key, `*` = default.
+# alt - n [
+#     "Google Chrome" : open -na "Google Chrome"
+#     "Terminal"       : open -na /System/Applications/Utilities/Terminal.app
+#     *                ~
+# ]
+
+# ── scratchpad toggle (needs a dedicated terminal; see the rule in yabairc) ───
+# alt - 0x32 : yabai -m window --toggle dropdown || open -na Alacritty   # 0x32 = ` key
+
+# ── split config into extra files (example, NEW) ──────────────────────────────
+# .load "skhdrc.local"

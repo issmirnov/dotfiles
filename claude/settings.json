@@ -12,7 +12,6 @@
       "Bash(claude mcp:*)",
       "mcp__opnsense__wireguard_manage",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(git clone:*)",
       "Bash(npm install)",
@@ -40,6 +39,14 @@
             "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type Notification"
+          }
+        ]
       }
     ],
     "Stop": [
@@ -49,6 +56,86 @@
           {
             "type": "command",
             "command": "bash ~/.claude/hooks/nonstop.sh"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type Stop --add-chat"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SessionStart"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type UserPromptSubmit"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PreToolUse"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PostToolUse"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SubagentStop --add-chat"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PreCompact"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SessionEnd --add-chat"
           }
         ]
       }
@@ -61,15 +148,16 @@
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true,
     "presentation-tools@smirnovlabs-claude-skills": true,
-    "skill-codex@skill-codex": true,
     "nonstop@nonstop": true,
     "visual-explainer@visual-explainer-marketplace": true,
     "superpowers@superpowers-marketplace": true,
     "plan-utilities@smirnovlabs-claude-skills": true,
     "git-recon@smirnovlabs-claude-skills": true,
-    "pr-utilities@smirnovlabs-claude-skills": true
+    "pr-utilities@smirnovlabs-claude-skills": true,
+    "posthog@claude-plugins-official": true,
+    "episodic-memory@superpowers-marketplace": true,
+    "skill-codex@skill-codex": true
   },
   "extraKnownMarketplaces": {
     "claude-code-plugins": {
@@ -108,10 +196,17 @@
         "source": "github",
         "repo": "nicobailon/visual-explainer"
       }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
     }
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
+  "tui": "fullscreen",
   "voice": {
     "enabled": true,
     "mode": "hold"

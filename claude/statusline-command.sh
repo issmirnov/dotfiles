@@ -7,6 +7,7 @@ BOLD_BLUE='\033[1;34m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
 RED='\033[31m'
+BOLD_RED='\033[1;31m'
 MAGENTA='\033[35m'
 DIM='\033[2m'
 RESET='\033[0m'
@@ -105,6 +106,26 @@ fi
 META_STR=""
 if [ -n "$OUTPUT_STYLE" ] && [ "$OUTPUT_STYLE" != "default" ]; then
     META_STR="${CYAN}${OUTPUT_STYLE}${RESET}"
+fi
+
+# Effort level — prefer JSON input, fall back to env var, then persisted setting.
+# Highlight in BOLD_RED with ⚠ when not at the top tier (max/xhigh).
+EFFORT=$(echo "$input" | jq -r '.effort_level // .effortLevel // .model.effort_level // empty')
+[ -z "$EFFORT" ] && EFFORT="${CLAUDE_CODE_EFFORT_LEVEL:-}"
+if [ -z "$EFFORT" ] && [ -f "$HOME/.claude/settings.json" ]; then
+    EFFORT=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null)
+fi
+
+EFFORT_DISPLAY=""
+if [ -n "$EFFORT" ]; then
+    case "$EFFORT" in
+        max|xhigh)
+            EFFORT_DISPLAY=" ${DIM}⚡${EFFORT}${RESET}"
+            ;;
+        *)
+            EFFORT_DISPLAY=" ${BOLD_RED}⚠ ${EFFORT}${RESET}"
+            ;;
+    esac
 fi
 
 # Session duration (hidden under 1 minute)
@@ -243,9 +264,9 @@ if [ -n "$PCT" ]; then
         BAR_COLOR="$GREEN"
     fi
 
-    RESULT=$(printf "%b | ${CYAN}%s${RESET} | ${BAR_COLOR}%s %d%%${RESET}" "$PROMPT_PART" "$MODEL" "$BAR" "$PCT_INT")
+    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b | ${BAR_COLOR}%s %d%%${RESET}" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY" "$BAR" "$PCT_INT")
 else
-    RESULT=$(printf "%b | ${CYAN}%s${RESET}" "$PROMPT_PART" "$MODEL")
+    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY")
 fi
 
 # Append extra segments (only when non-empty)

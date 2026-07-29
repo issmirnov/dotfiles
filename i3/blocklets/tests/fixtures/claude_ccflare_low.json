@@ -1,0 +1,6 @@
+[
+  { "name": "claude-smirnovlabs", "provider": "anthropic",
+    "usageData": {
+      "five_hour": { "utilization": 10 },
+      "seven_day": { "utilization": 30 } } }
+]

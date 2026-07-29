@@ -1,0 +1,15 @@
+#!/bin/bash
+# JankyBorders config — replaces yabai's built-in window borders (removed in v6.0.0).
+# Recreates your previous yabai border look. Runs as a brew service:
+#   brew services start borders
+# Reference: https://github.com/FelixKratz/JankyBorders
+
+options=(
+    style=round
+    width=6.0
+    hidpi=off
+    active_color=0xffffa500   # orange — matches your old active_window_border_color
+    inactive_color=0xff505050 # grey  — matches your old normal_window_border_color
+)
+
+borders "${options[@]}"
