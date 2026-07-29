@@ -11,6 +11,7 @@
 - link:
     ~/.Xresources: x/Xresources
     ~/.config/alacritty: alacritty
+    ~/.config/ghostty: ghostty
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
     ~/.config/gammastep: gammastep
@@ -36,4 +37,6 @@
 - shell:
     # Arch: JetBrainsMono Nerd Font from the official 'extra' repo (verify pkg name on your box)
     - ['command -v pacman >/dev/null && sudo pacman -S --needed --noconfirm ttf-jetbrains-mono-nerd || echo "pacman not found; install JetBrainsMono Nerd Font manually"', "Install JetBrainsMono Nerd Font (Arch)"]
+    # Ghostty: in the Arch 'extra' repo; note falls back to AUR if unavailable
+    - ['command -v pacman >/dev/null && (sudo pacman -S --needed --noconfirm ghostty || echo "ghostty not in pacman repos; install via AUR (ghostty)") || echo "pacman not found; install Ghostty manually"', "Install Ghostty (Arch)"]
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v ~/.fonts) || echo "no fc-cache command"', "Regenerate font cache."]

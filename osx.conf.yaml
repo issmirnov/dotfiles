@@ -7,6 +7,7 @@
 - shell:
     - [skhd/generator.sh, "Generating skhd config"]
     - ['command -v brew >/dev/null && brew install --cask font-jetbrains-mono-nerd-font || echo "brew not found; install JetBrainsMono Nerd Font manually"', "Install JetBrainsMono Nerd Font"]
+    - ['command -v brew >/dev/null && brew install --cask ghostty || echo "brew not found; install Ghostty manually"', "Install Ghostty"]
 
 - link:
     "~/Library/Application Support/Übersicht/widgets": ubersicht
@@ -14,6 +15,7 @@
     ~/.skhdrc: skhd/skhdrc.generated
     ~/.yabairc: yabai/yabairc
     ~/.config/alacritty: alacritty
+    ~/.config/ghostty: ghostty
     ~/Library/Fonts/Inconsolata-Regular.ttf: fonts/Inconsolata-Regular.ttf
     ~/Library/Fonts/SourceCodePro-Regular.otf: fonts/SourceCodePro-Regular.otf
     ~/Library/Preferences/espanso: espanso

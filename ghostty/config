@@ -1,0 +1,9 @@
+# Ghostty — matches the Alacritty + tmux Catppuccin Mocha setup.
+# Signed/notarized on macOS (no Gatekeeper hassle); cross-platform with Linux.
+
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 15
+theme = Catppuccin Mocha
+
+# macOS: Option key sends Alt (word-wise motion in zsh/readline). Ignored on Linux.
+macos-option-as-alt = true
