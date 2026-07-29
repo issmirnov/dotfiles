@@ -19,6 +19,10 @@ workspace 9 output $right
 workspace 10 output $right
 
 #  App Bindings ########
+
+# Use Ghostty as the terminal on hexane (overrides base's $mod+Return -> $terminal=alacritty)
+bindsym $mod+Return exec ghostty
+
 assign [class="^Standard Notes$"] notes
 
 # Studio

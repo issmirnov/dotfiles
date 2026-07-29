@@ -4,7 +4,7 @@
 # Default for Linux/BSD/macOS is $SHELL or user's login shell
 # Default for Windows is "powershell"
 [terminal.shell]
-program = "/usr/bin/zsh"  # Example for Linux/BSD/macOS
+program = "/bin/zsh"  # cross-platform: works on macOS and Arch (/bin -> /usr/bin). Was: /usr/bin/zsh
 args = ["-l"]
 # Working directory
 # working_directory = "None"  # Default: "None"
@@ -84,7 +84,7 @@ multiplier = 3  # Default: 3
 [font]
 
 # Normal font style
-normal = { family = "Inconsolata", style = "Regular" }  # Matched to Terminator (was "monospace" => DejaVu Sans Mono)
+normal = { family = "JetBrainsMono Nerd Font Mono", style = "Regular" }  # Nerd Font (Powerline + glyphs) so the tmux bar renders; overrides Inconsolata
 
 # Bold font style
 bold = { style = "Bold" }  # Inherits family from normal, Default style: Bold
