@@ -1,2 +1,8 @@
 snippets=(hexane gnome)
 source $ROOT/profiles/_builder
+
+# hexane's terminal is Ghostty. base bakes `set $terminal alacritty` and uses it
+# ($mod+Return binding + autostart) before host snippets are appended, so a second
+# bindsym in the hexane snippet only collides (i3 errors on the duplicate). Rewrite
+# the generated $terminal instead, so base's own binding + autostart resolve to it.
+sed -i 's/^set \$terminal .*/set $terminal ghostty/' $ROOT/config
