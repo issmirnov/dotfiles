@@ -114,7 +114,7 @@ hl.config({
         rounding       = 15,
         rounding_power = 4,      -- iOS-style squircle corners (was 2.0)
 
-        dim_inactive = true,     -- subtle depth on unfocused windows
+        dim_inactive = false,    -- don't dim windows on the unfocused monitor
         dim_strength = 0.1,
 
         blur = {
@@ -165,6 +165,12 @@ hl.config({
         },
     },
 
+    -- No scroll debounce: every wheel tick fires immediately, rapid spins cycle
+    -- multiple workspaces. Bump to ~15 if a single detent ever overshoots.
+    binds = {
+        scroll_event_delay = 0,
+    },
+
     dwindle = {
         preserve_split = true,
     },
@@ -192,6 +198,7 @@ hl.config({
 hl.curve("linear",   { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
 hl.curve("smooth",   { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.05 } } })
 hl.curve("bouncy",   { type = "spring", mass = 1, stiffness = 320, dampening = 18 })  -- overshoot/bounce
+hl.curve("snappy",   { type = "spring", mass = 1, stiffness = 600, dampening = 40 })  -- fast settle, minimal bounce
 
 hl.animation({ leaf = "windows",     enabled = true, speed = 5,  spring = "bouncy" })
 hl.animation({ leaf = "windowsIn",   enabled = true, speed = 5,  spring = "bouncy", style = "popin 80%" })
@@ -200,7 +207,11 @@ hl.animation({ leaf = "border",      enabled = true, speed = 10, bezier = "defau
 hl.animation({ leaf = "borderangle", enabled = false })   -- static gradient border (no shimmer)
 hl.animation({ leaf = "glowangle",   enabled = false })   -- glow disabled
 hl.animation({ leaf = "fade",        enabled = true, speed = 3,  bezier = "default" })
-hl.animation({ leaf = "workspaces",  enabled = true, speed = 4,  spring = "bouncy", style = "slide" })
+-- Disabled = instant switch. Named app workspaces (slack/telegram/osrs) get negative
+-- ids, so Hyprland's id-ordered slide brought them in from the wrong side (they slid
+-- from the LEFT despite sitting on the right of the bar). The leaf is global with no
+-- per-workspace override, so instant is the trade for correct direction everywhere.
+hl.animation({ leaf = "workspaces",  enabled = false, speed = 4,  spring = "snappy", style = "slide" })
 
 ------------------------------------------------------------------------
 -- KEYBINDINGS  (https://wiki.hypr.land/Configuring/Basics/Binds/)
@@ -210,7 +221,7 @@ local mainMod = "SUPER"
 hl.bind(mainMod .. " + Return",    hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q",         hl.dsp.window.close())
 hl.bind(mainMod .. " + X",         hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd(browser))
+hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd(browser .. " --profile-directory=Default --new-window"))
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + T",         hl.dsp.layout("orientationnext"))
 hl.bind(mainMod .. " + R",         hl.dsp.layout("rollnext"), { release = true })
