@@ -25,6 +25,7 @@ Singleton {
     readonly property color wsActiveBg: _v ? "#f5c542" : "#c8a2f0"
     readonly property color wsActiveText: _v ? "#1a1600" : "#241436"
     readonly property color urgent:     _v ? "#e0743b" : "#f0a2b8"
+    readonly property color wsHoverBg:  _v ? "#33405f" : "#372f57"
 
     // --- per-stat accents ---
     readonly property color volCol:  _v ? "#e0a43b" : "#f0c2a2"
@@ -35,13 +36,13 @@ Singleton {
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
 
     // --- metrics ---
-    readonly property int barHeight:  40
-    readonly property int barRadius:  20
-    readonly property int chipRadius: 11
-    readonly property int chipHeight: 28
-    readonly property int gap:        8
-    readonly property int marginTop:  7
-    readonly property int marginSide: 9
-    readonly property int fontSize:   13
-    readonly property int iconSize:   18
+    readonly property int barHeight:  46
+    readonly property int barRadius:  22
+    readonly property int chipRadius: 12
+    readonly property int chipHeight: 32
+    readonly property int gap:        9
+    readonly property int marginTop:  8
+    readonly property int marginSide: 10
+    readonly property int fontSize:   16
+    readonly property int iconSize:   22
 }

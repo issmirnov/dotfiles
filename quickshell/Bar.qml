@@ -28,17 +28,29 @@ PanelWindow {
             barScreen: bar.screen
         }
 
-        // center — clock
-        Clock { anchors.centerIn: parent }
+        // center — local date/time + a few timezones (ZAG·PRG·KYV)
+        Row {
+            anchors.centerIn: parent
+            spacing: Theme.gap * 2
+            Clock {}
+            Blocklet {
+                flat: true
+                exec: "/home/vania/.dotfiles/i3/blocklets/worldclock"
+                interval: 30000
+            }
+        }
 
-        // right — audio, stats, tray
+        // right — AI usage (Claude/Codex), audio, stats, idle-inhibitor, tray
         Row {
             anchors.right: parent.right
             anchors.rightMargin: 12
             anchors.verticalCenter: parent.verticalCenter
             spacing: Theme.gap
+            Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "claude"; interval: 60000 }
+            Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "codex"; interval: 60000 }
             Audio {}
             Stats {}
+            IdleInhibitor { barWindow: bar }
             SysTray {}
         }
     }

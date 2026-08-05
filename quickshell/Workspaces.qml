@@ -27,7 +27,11 @@ Row {
             height: Theme.chipHeight
             width: inner.width + 16
             radius: height / 2
-            color: ws.urgent ? Theme.urgent : (focused ? Theme.wsActiveBg : Theme.wsIdleBg)
+            color: ws.urgent ? Theme.urgent
+                 : focused ? Theme.wsActiveBg
+                 : ma.containsMouse ? Theme.wsHoverBg
+                 : Theme.wsIdleBg
+            Behavior on color { ColorAnimation { duration: 120 } }
 
             Row {
                 id: inner
@@ -71,7 +75,10 @@ Row {
             }
 
             MouseArea {
+                id: ma
                 anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
                 onClicked: pill.ws.activate()
             }
         }
