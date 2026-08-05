@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# SUPER+Space switcher/launcher — a fuzzel --dmenu merged list of:
+#   1. open WINDOWS      -> focus (jumps to its workspace/monitor too)
+#   2. WORKSPACES        -> focus
+#   3. favorite APPS     -> spawn
+#   4. "All apps…"       -> reopen fuzzel in full drun mode (escape hatch)
+#
+# Replaces the plain `fuzzel` drun that used to be on SUPER+Space. One tool,
+# one key, Wayland-native — the switch targets you actually use up front,
+# instead of the entire app catalog.
+#
+# HOW IT STAYS ROBUST
+#   fuzzel is fed only display LABELS; `--index` returns the chosen line number,
+#   which we map back to a parallel ACTIONS array. Nothing parses display text.
+#
+# HYPRLAND DISPATCH NOTE (same gotcha as hypr-move / hypr-rename)
+#   This Hyprland is configured in Lua, so `hyprctl dispatch <name> …` is parsed
+#   AS Lua and fails. Dispatchers must go through the wrapper:
+#       hyprctl eval 'hl.dispatch(hl.dsp.<path>({ … }))'
+#   Focus window:    hl.dsp.focus({ window = "address:0x…" })
+#   Focus workspace: hl.dsp.focus({ workspace = <id> | "name:<name>" })
+#   Apps are launched directly (setsid -f); Hyprland window-rules still apply
+#   (they match on class, not on how the process was spawned).
+#
+# FOLLOW_MOUSE GOTCHA
+#   input:follow_mouse=1 here, so a bare focus-window dispatch gets stolen back
+#   to whatever sits under the cursor. We therefore focus the window AND warp
+#   the cursor onto its centre in a SINGLE atomic eval (hl.dsp.cursor.move), so
+#   no cursor-driven re-focus can sneak in between the two dispatches.
+
+set -euo pipefail
+
+# ── favorite apps: "command<TAB>Label" ──────────────────────────────────────
+# Edit this list to taste. Command is run verbatim via `sh -c`.
+apps=(
+  $'slack\tSlack'
+  $'google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj\tChrome'
+  $'Telegram\tTelegram'
+  $'bolt\tBolt'
+  $'runelite\tOSRS'
+)
+
+# ── build parallel actions[] / labels[] ─────────────────────────────────────
+# Each source emits rows of "ACTION<TAB>LABEL"; ACTION is "kind|payload".
+actions=()
+labels=()
+
+add_rows() {  # reads "ACTION<TAB>LABEL" lines on stdin
+  local row
+  while IFS= read -r row; do
+    [ -n "$row" ] || continue
+    actions+=( "${row%%$'\t'*}" )
+    labels+=( "${row#*$'\t'}" )
+  done
+}
+
+# 1. Windows — mapped, non-hidden, non-special.
+#    Action carries the window centre (at + size/2) so we can warp onto it.
+#    Label: "class — title".
+add_rows < <(hyprctl clients -j | jq -r '
+  [ .[]
+    | select(.mapped and (.hidden | not))
+    | select((.workspace.name // "") | startswith("special:") | not) ]
+  | sort_by(.class, .title)
+  | .[]
+  | "win|address:\(.address)|\((.at[0] + .size[0] / 2) | floor)|\((.at[1] + .size[1] / 2) | floor)\t\(.class) — \(.title[0:70])"
+')
+
+# 2. Workspaces — non-special. Positive id -> focus by id; named (neg id) -> by name.
+add_rows < <(hyprctl workspaces -j | jq -r '
+  [ .[] | select((.name // "") | startswith("special:") | not) ]
+  | sort_by(.id)
+  | .[]
+  | (if .id > 0 then "ws|\(.id)" else "ws|name:\(.name)" end)
+    + "\t→ \(.name)  ·  ws"
+')
+
+# 3. Favorite apps
+for a in "${apps[@]}"; do
+  actions+=( "app|${a%%$'\t'*}" )
+  labels+=( "${a#*$'\t'}" )
+done
+
+# 4. Escape hatch: full app catalog
+actions+=( "drun|" )
+labels+=( "All apps…" )
+
+# ── pick ────────────────────────────────────────────────────────────────────
+# Testing seam: `HYPR_SWITCH_DUMP=1 hypr-switch` prints the labels and exits,
+# so the list can be inspected (or piped to a throwaway fuzzel) without acting.
+if [ -n "${HYPR_SWITCH_DUMP:-}" ]; then printf '%s\n' "${labels[@]}"; exit 0; fi
+
+idx=$(printf '%s\n' "${labels[@]}" | fuzzel --dmenu --index --prompt 'go › ' || true)
+[[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -lt "${#actions[@]}" ] || exit 0
+
+sel="${actions[$idx]}"
+kind="${sel%%|*}"
+payload="${sel#*|}"
+
+case "$kind" in
+  win)
+    # payload = "address:0x…|cx|cy" — focus, then warp the cursor onto the
+    # window centre in ONE atomic eval (see FOLLOW_MOUSE GOTCHA above).
+    IFS='|' read -r waddr wcx wcy <<<"$payload"
+    hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"$waddr\" })); hl.dispatch(hl.dsp.cursor.move({ x = $wcx, y = $wcy }))" >/dev/null
+    ;;
+  ws)
+    if [[ "$payload" =~ ^[0-9]+$ ]]; then wsval="$payload"; else wsval="\"$payload\""; fi
+    hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = $wsval }))" >/dev/null
+    ;;
+  app)
+    setsid -f sh -c "$payload" >/dev/null 2>&1
+    ;;
+  drun)
+    setsid -f fuzzel >/dev/null 2>&1
+    ;;
+esac

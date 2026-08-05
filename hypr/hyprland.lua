@@ -13,7 +13,7 @@ local terminal    = "alacritty"
 -- (1.25 = subtler, 1.6 = bigger). NOTE: nemo is single-instance, so close any open
 -- nemo window before a new value takes effect.
 local fileManager = "env GDK_DPI_SCALE=1.4 nemo"
-local menu        = "fuzzel"
+local menu        = "~/.dotfiles/hypr/scripts/hypr-switch"  -- SUPER+Space switcher: windows+workspaces+fav apps (fuzzel dmenu); was "fuzzel"
 -- NOTE: keep WaylandFractionalScaleV1 ENABLED. Disabling it while chrome-flags.conf
 -- forces --force-device-scale-factor makes Chrome paint only part of its window
 -- (transparent remainder shows the wallpaper). Verified 2026-08-04.
@@ -298,3 +298,46 @@ hl.window_rule({ name = "fullscreen-bordersize", match = { fullscreen = true }, 
 
 -- Center jetbrains IDE windows
 hl.window_rule({ name = "jetbrains-center", match = { class = "jetbrains-idea" }, center = true })
+
+------------------------------------------------------------------------
+-- PLUGINS  (https://wiki.hypr.land/Plugins/Using-Plugins/)
+------------------------------------------------------------------------
+-- hyprbars: real per-window title bars, so tiled windows (especially the many
+-- Claude-Code terminals) are distinguishable at a glance. The title text comes
+-- from the app itself (alacritty has dynamic_title = true).
+--
+-- Install once (needs sudo — hyprpm compiles against Hyprland headers):
+--     hyprpm update
+--     hyprpm add https://github.com/hyprwm/hyprland-plugins
+--     hyprpm enable hyprbars
+--     hyprpm reload -n
+-- After every Hyprland upgrade, rebuild:  hyprpm update && hyprpm reload -n
+--
+-- The guard keeps this block inert until the plugin is actually loaded, so a
+-- config reload never errors when hyprbars is missing (e.g. right after a
+-- Hyprland upgrade, before the rebuild). The `hyprpm reload -n` in the autostart
+-- block loads the plugin on login, which triggers the config re-parse that then
+-- applies everything below.
+if hl.plugin ~= nil and hl.plugin.hyprbars ~= nil then
+    hl.config({
+        plugin = {
+            hyprbars = {
+                bar_height      = 34,
+                bar_color       = "rgb(1a1a1a)",
+                col             = { text = "rgb(d8d8d8)" },  -- plugin:hyprbars:col.text (title color)
+                bar_text_size   = 15,
+                bar_text_font   = "JetBrainsMono Nerd Font Propo",  -- proportional (nicer than Mono), keeps Nerd glyphs
+                bar_text_weight = 500,                             -- medium weight = crisper titles
+                bar_text_align  = "left",
+                bar_padding    = 12,
+                bar_part_of_window         = true,
+                bar_precedence_over_border = true,
+                on_double_click = "hyprctl dispatch fullscreen 1",
+            },
+        },
+    })
+
+    -- Right-aligned window buttons (first added renders rightmost): close, maximize.
+    hl.plugin.hyprbars.add_button({ bg_color = "rgb(ac4242)", fg_color = "rgb(ffffff)", size = 14, icon = "󰖭", action = "hyprctl dispatch killactive" })
+    hl.plugin.hyprbars.add_button({ bg_color = "rgb(f4bf75)", fg_color = "rgb(181818)", size = 14, icon = "󰖯", action = "hyprctl dispatch fullscreen 1" })
+end
