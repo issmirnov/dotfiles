@@ -8,7 +8,11 @@
 -- PROGRAMS
 ------------------------------------------------------------------------
 local terminal    = "alacritty"
-local fileManager = "nemo"
+-- GDK_DPI_SCALE enlarges nemo's fonts (~40%) at 4K scale=1 without touching other
+-- GTK apps or global scaling. Fonts only; icons/layout unchanged. Tune the number
+-- (1.25 = subtler, 1.6 = bigger). NOTE: nemo is single-instance, so close any open
+-- nemo window before a new value takes effect.
+local fileManager = "env GDK_DPI_SCALE=1.4 nemo"
 local menu        = "fuzzel"
 -- NOTE: keep WaylandFractionalScaleV1 ENABLED. Disabling it while chrome-flags.conf
 -- forces --force-device-scale-factor makes Chrome paint only part of its window
