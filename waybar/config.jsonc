@@ -87,6 +87,8 @@
         "class<Skype>": "",
         "class<libreoffice-writer>": "",
         "class<org.pulseaudio.pavucontrol>": "",
+        "class<net-runelite-client-RuneLite>": "", // RuneLite — class match (when waybar has captured the class)
+        "title<^RuneLite( -.*)?$>": "", // RuneLite — XWayland title fallback (class is unset for windows already open when waybar starts)
       },
       // Set this up when we figure out wraparound logic
       // "on-scroll-up": "hyprctl dispatch workspace -1",
