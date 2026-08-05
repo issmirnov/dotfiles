@@ -1,0 +1,6 @@
+[Unit]
+Description=Sun-tracked gentle backlight dim for the Dell U3225QEs
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/hexane-nightlight
