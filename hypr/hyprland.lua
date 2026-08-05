@@ -195,8 +195,9 @@ hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
 
 -- clipboard picker + screenshots
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
-hl.bind("Print",                   hl.dsp.exec_cmd("slurp | grim -g - - | tee ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png') | wl-copy"))
-hl.bind(mainMod .. " + Print",     hl.dsp.exec_cmd("slurp | grim -g - - | wl-copy"))
+hl.bind("XF86Tools",                   hl.dsp.exec_cmd("grimblast --notify --freeze copysave area ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind("SHIFT + XF86Tools",           hl.dsp.exec_cmd("grimblast --notify copysave output ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind(mainMod .. " + XF86Tools",     hl.dsp.exec_cmd("grimblast --notify copysave active ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
 
 -- move focus
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
