@@ -80,7 +80,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
     -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
-    hl.exec_cmd("walker --gapplication-service")         -- pre-launch launcher
+    -- (retired walker --gapplication-service prewarm — SUPER+Space now uses hypr-switch/fuzzel)
     -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
     -- unit at ~/.dotfiles/systemd/xeneon-edge.service. Import the Wayland env into
     -- the --user manager, clear any crash-loop lockout left from a previous session,

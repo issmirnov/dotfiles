@@ -30,14 +30,19 @@
 
 set -euo pipefail
 
-# ── favorite apps: "command<TAB>Label" ──────────────────────────────────────
+# ── favorite apps: "command<TAB>Label<TAB>open-token" ───────────────────────
 # Edit this list to taste. Command is run verbatim via `sh -c`.
+# open-token: a lowercase substring of the window class this app opens. If a
+# matching window is ALREADY open, the launch entry is suppressed — so typing
+# e.g. "slack" resolves to the running Slack window/workspace (switch) instead
+# of a competing "launch Slack" entry (which, since Slack's already running,
+# would do nothing). Launch entries are for apps that aren't open yet.
 apps=(
-  $'slack\tSlack'
-  $'google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj\tChrome'
-  $'Telegram\tTelegram'
-  $'bolt\tBolt'
-  $'runelite\tOSRS'
+  $'slack\tSlack\tslack'
+  $'google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj\tChrome\tchrome'
+  $'Telegram\tTelegram\ttelegram'
+  $'bolt\tBolt\tbolt'
+  $'runelite\tOSRS\trunelite'
 )
 
 # ── build parallel actions[] / labels[] ─────────────────────────────────────
@@ -75,10 +80,13 @@ add_rows < <(hyprctl workspaces -j | jq -r '
     + "\t→ \(.name)  ·  ws"
 ')
 
-# 3. Favorite apps
+# 3. Favourite apps — suppress any whose window is already open (switch, don't spawn)
+open_classes=$(hyprctl clients -j | jq -r '.[].class' | tr '[:upper:]' '[:lower:]')
 for a in "${apps[@]}"; do
-  actions+=( "app|${a%%$'\t'*}" )
-  labels+=( "${a#*$'\t'}" )
+  IFS=$'\t' read -r cmd label token <<<"$a"
+  grep -qF "$token" <<<"$open_classes" && continue   # already open -> use its window/ws entry
+  actions+=( "app|$cmd" )
+  labels+=( "$label" )
 done
 
 # 4. Escape hatch: full app catalog
@@ -86,27 +94,50 @@ actions+=( "drun|" )
 labels+=( "All apps…" )
 
 # ── pick ────────────────────────────────────────────────────────────────────
-# Testing seam: `HYPR_SWITCH_DUMP=1 hypr-switch` prints the labels and exits,
-# so the list can be inspected (or piped to a throwaway fuzzel) without acting.
-if [ -n "${HYPR_SWITCH_DUMP:-}" ]; then printf '%s\n' "${labels[@]}"; exit 0; fi
+# Category icon (a coloured dot) per row via fuzzel's dmenu icon protocol
+# (label\0icon\x1fpath): windows=blue, workspaces=green, apps=peach, more=grey.
+# Bash can't hold a NUL in a variable, so each line is assembled with printf at
+# feed time, keyed off the action's kind.
+ICON_DIR="$HOME/.dotfiles/fuzzel/swatches"
+feed() {
+  local i ic
+  for i in "${!labels[@]}"; do
+    case "${actions[$i]%%|*}" in
+      win) ic="$ICON_DIR/window.png" ;;
+      ws)  ic="$ICON_DIR/workspace.png" ;;
+      app) ic="$ICON_DIR/app.png" ;;
+      *)   ic="$ICON_DIR/more.png" ;;
+    esac
+    printf '%s\0icon\x1f%s\n' "${labels[$i]}" "$ic"
+  done
+}
 
-idx=$(printf '%s\n' "${labels[@]}" | fuzzel --dmenu --index --prompt 'go › ' || true)
+# Testing seam: HYPR_SWITCH_DUMP=1 prints plain labels; =icons emits the real
+# fuzzel feed (label + per-row icon) so a throwaway fuzzel can preview the look.
+if [ -n "${HYPR_SWITCH_DUMP:-}" ]; then
+  if [ "$HYPR_SWITCH_DUMP" = icons ]; then feed; else printf '%s\n' "${labels[@]}"; fi
+  exit 0
+fi
+
+idx=$(feed | fuzzel --dmenu --index --prompt 'go › ' || true)
 [[ "$idx" =~ ^[0-9]+$ ]] && [ "$idx" -lt "${#actions[@]}" ] || exit 0
 
 sel="${actions[$idx]}"
 kind="${sel%%|*}"
 payload="${sel#*|}"
 
+# Build the focus dispatch (win/ws) as a Lua string; launch directly (app/drun).
+lua=""
 case "$kind" in
   win)
-    # payload = "address:0x…|cx|cy" — focus, then warp the cursor onto the
-    # window centre in ONE atomic eval (see FOLLOW_MOUSE GOTCHA above).
+    # payload = "address:0x…|cx|cy" — focus the window AND warp the cursor onto
+    # its centre (FOLLOW_MOUSE GOTCHA). Deferred below so fuzzel can't steal it.
     IFS='|' read -r waddr wcx wcy <<<"$payload"
-    hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"$waddr\" })); hl.dispatch(hl.dsp.cursor.move({ x = $wcx, y = $wcy }))" >/dev/null
+    lua="hl.dispatch(hl.dsp.focus({ window = \"$waddr\" })); hl.dispatch(hl.dsp.cursor.move({ x = $wcx, y = $wcy }))"
     ;;
   ws)
     if [[ "$payload" =~ ^[0-9]+$ ]]; then wsval="$payload"; else wsval="\"$payload\""; fi
-    hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = $wsval }))" >/dev/null
+    lua="hl.dispatch(hl.dsp.focus({ workspace = $wsval }))"
     ;;
   app)
     setsid -f sh -c "$payload" >/dev/null 2>&1
@@ -115,3 +146,15 @@ case "$kind" in
     setsid -f fuzzel >/dev/null 2>&1
     ;;
 esac
+
+# FUZZEL TEARDOWN RACE (the "display switched but focus didn't" bug):
+# When fuzzel closes it releases its keyboard grab and Hyprland returns focus to
+# the previously-focused window. A single immediate focus dispatch loses that
+# race — the async focus-return fires just after us and snaps focus back home
+# (the workspace visibly switches, but the keyboard stays put). Fix: run the
+# dispatch DETACHED (so the script/fuzzel fully exit first) and re-assert it a
+# few times over ~150ms so a dispatch always lands AFTER the teardown and wins.
+# The Lua is passed as an argv element ($1) to sidestep nested-quoting.
+if [ -n "$lua" ]; then
+  setsid -f bash -c 'for _ in 1 2 3; do hyprctl eval "$1" >/dev/null 2>&1; sleep 0.06; done' _ "$lua"
+fi
