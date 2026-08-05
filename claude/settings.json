@@ -53,40 +53,24 @@
       },
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type Stop --add-chat"
-          }
         ]
       }
     ],
     "SessionStart": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SessionStart"
-          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type UserPromptSubmit"
-          }
         ]
       }
     ],
     "PreToolUse": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PreToolUse"
-          }
         ],
         "matcher": "*"
       }
@@ -94,10 +78,6 @@
     "PostToolUse": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PostToolUse"
-          }
         ],
         "matcher": "*"
       }
@@ -105,30 +85,18 @@
     "SubagentStop": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SubagentStop --add-chat"
-          }
         ]
       }
     ],
     "PreCompact": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type PreCompact"
-          }
         ]
       }
     ],
     "SessionEnd": [
       {
         "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type SessionEnd --add-chat"
-          }
         ]
       }
     ]
