@@ -40,9 +40,9 @@ Row {
 
                 Text {
                     text: pill.ws.name
-                    color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
+                    color: (pill.focused || pill.ws.urgent) ? Theme.wsActiveText : Theme.wsIdleText
                     font.pixelSize: Theme.fontSize
-                    font.bold: pill.focused
+                    font.bold: pill.focused || pill.ws.urgent
                 }
 
                 Repeater {
@@ -67,7 +67,7 @@ Row {
                             width: parent.width * 0.45
                             height: width
                             radius: width / 2
-                            color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
+                            color: (pill.focused || pill.ws.urgent) ? Theme.wsActiveText : Theme.wsIdleText
                             opacity: 0.55
                         }
                     }

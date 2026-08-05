@@ -13,6 +13,7 @@ Singleton {
     property int  tempC: 0
     property real netRx: 0   // bytes/sec
     property real netTx: 0
+    property real load: 0    // 1-min load average
 
     property var _cpu   // { idle, total }
     property var _net   // { rx, tx, t }
@@ -38,6 +39,7 @@ Singleton {
         if (p.length < 6 || p.some(isNaN))
             return;
         const idle = p[0], total = p[1], mem = p[2], temp = p[3], rx = p[4], tx = p[5];
+        sys.load = p.length > 6 ? p[6] : 0;
 
         if (sys._cpu) {
             const dt = total - sys._cpu.total;

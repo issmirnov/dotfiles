@@ -33,6 +33,7 @@ Singleton {
     readonly property color cpuCol:  _v ? "#3fae6a" : "#a2f0c8"
     readonly property color memCol:  _v ? "#8a5cf0" : "#c8a2f0"
     readonly property color tempCol: _v ? "#e0743b" : "#f0a2b8"
+    readonly property color loadCol: _v ? "#5cc8d0" : "#a2e0dc"
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
 
     // --- metrics ---

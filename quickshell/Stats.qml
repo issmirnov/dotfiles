@@ -31,4 +31,5 @@ Row {
     Chip { accent: Theme.cpuCol;  label: "CPU " + Math.round(Sys.cpuPct) + "%" }
     Chip { accent: Theme.memCol;  label: "MEM " + Sys.memPct + "%" }
     Chip { accent: Theme.tempCol; label: Sys.tempC + "°C" }
+    Chip { accent: Theme.loadCol; label: "LOAD " + Sys.load.toFixed(2) }
 }

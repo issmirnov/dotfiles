@@ -29,4 +29,7 @@ if [ -n "$dev" ] && [ -d "/sys/class/net/$dev/statistics" ]; then
   tx=$(< "/sys/class/net/$dev/statistics/tx_bytes")
 fi
 
-echo "$idle $cpu_total $mem_pct $temp_c $rx $tx"
+# --- Load average (1 min) ---
+load=$(cut -d ' ' -f1 /proc/loadavg 2>/dev/null); load=${load:-0}
+
+echo "$idle $cpu_total $mem_pct $temp_c $rx $tx $load"
