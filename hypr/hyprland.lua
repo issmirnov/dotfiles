@@ -263,6 +263,12 @@ hl.bind(mainMod .. " + ALT + S", hl.dsp.focus({ workspace = "name:slack" }))
 hl.bind(mainMod .. " + ALT + T", hl.dsp.focus({ workspace = "name:telegram" }))
 hl.bind(mainMod .. " + ALT + R", hl.dsp.focus({ workspace = "name:osrs" }))
 
+-- named workspaces via rofi (parity with i3's mod+Shift+a / mod+Shift+s):
+--   SUPER + SHIFT + A  -> rename the CURRENT workspace
+--   SUPER + SHIFT + S  -> move the FOCUSED window to a chosen/typed workspace
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-rename"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-move"))
+
 -- scroll through workspaces
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e+1" }))

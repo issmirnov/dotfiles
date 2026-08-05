@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Rename the CURRENT Hyprland workspace via a rofi prompt.
+# Wayland port of ~/.dotfiles/i3/scripts/i3-rename
+#   (i3 did: i3-msg "rename workspace to $name").
+# Bound to SUPER+SHIFT+A in ~/.dotfiles/hypr/hyprland.lua.
+#
+# NOTE: this Hyprland is configured in Lua, so `hyprctl dispatch <name> ...` is
+# parsed AS Lua and fails. Dispatchers must be run through the Lua wrapper:
+#   hyprctl eval 'hl.dispatch(hl.dsp.<path>({ ... }))'
+# (the same mechanism the hypr-cua MCP uses). The rename schema is
+#   hl.dsp.workspace.rename({ workspace = <id>, name = "<new>" }).
+
+name=$(printf '' | rofi -dmenu -p "Rename workspace: ")
+[ $? -eq 0 ] && [ -n "$name" ] || exit 0
+
+id=$(hyprctl activeworkspace -j | jq -r '.id')
+[ -n "$id" ] || exit 0
+
+# Escape for a Lua double-quoted string literal.
+esc=${name//\\/\\\\}; esc=${esc//\"/\\\"}
+hyprctl eval "hl.dispatch(hl.dsp.workspace.rename({ workspace = $id, name = \"$esc\" }))"
