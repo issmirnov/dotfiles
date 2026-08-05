@@ -38,6 +38,11 @@ PanelWindow {
                 exec: "/home/vania/.dotfiles/i3/blocklets/worldclock"
                 interval: 30000
             }
+            Blocklet {
+                flat: true
+                exec: "/home/vania/.config/quickshell/lib/cal-next"
+                interval: 60000
+            }
         }
 
         // right — AI usage (Claude/Codex), audio, stats, idle-inhibitor, tray

@@ -51,15 +51,20 @@ Row {
                         id: ic
                         required property var modelData
                         readonly property string cls: modelData.lastIpcObject ? (modelData.lastIpcObject.class || "") : ""
+                        // Explicit icon for windows whose class doesn't resolve via the icon theme.
+                        // OSRS / RuneLite: class net-runelite-client-RuneLite, no theme match under Adwaita.
+                        readonly property string overrideIcon: cls.toLowerCase().indexOf("runelite") !== -1
+                            ? "file:///usr/share/pixmaps/runelite.png" : ""
                         readonly property var entry: cls ? DesktopEntries.heuristicLookup(cls) : null
                         readonly property string iconName: entry && entry.icon ? entry.icon : cls
-                        readonly property bool haveIcon: iconName !== "" && Quickshell.hasThemeIcon(iconName)
+                        readonly property bool haveIcon: overrideIcon !== "" || (iconName !== "" && Quickshell.hasThemeIcon(iconName))
                         width: Theme.iconSize
                         height: Theme.iconSize
                         IconImage {          // real app icon when the theme has it
                             visible: ic.haveIcon
                             anchors.fill: parent
-                            source: ic.haveIcon ? Quickshell.iconPath(ic.iconName) : ""
+                            source: ic.overrideIcon !== "" ? ic.overrideIcon
+                                  : (ic.haveIcon ? Quickshell.iconPath(ic.iconName) : "")
                         }
                         Rectangle {          // neutral dot placeholder otherwise (no broken icons)
                             visible: !ic.haveIcon

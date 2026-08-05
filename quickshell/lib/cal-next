@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Quickshell "next event" blocklet — soonest upcoming TIMED event across ALL calendars.
+# i3blocks-style output: full_text, short_text, [color].
+#
+# Refreshes an events cache from `gws calendar` at most every REFRESH_TTL seconds (16
+# calendars = 16 API calls, so we don't do it every tick); the countdown itself is
+# recomputed from cache on every call (cheap). Shared by the bar chip and cal-notify.
+#
+# Needs gws authed with calendar.readonly:  gws auth login --services gmail,calendar --readonly
+# Credentials live in ~/.config/gws (NOT in the dotfiles).
+set -u
+CACHE_DIR="${CAL_CACHE_DIR:-$HOME/.cache/quickshell-cal}"
+CACHE="$CACHE_DIR/events.json"
+REFRESH_TTL="${CAL_REFRESH_TTL:-180}"
+LOOKAHEAD_H="${CAL_LOOKAHEAD_H:-24}"
+mkdir -p "$CACHE_DIR"
+now=$(date +%s)
+
+# ---- refresh the merged, all-calendars event cache if stale ----
+refresh() {
+  local mt; mt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
+  [ -s "$CACHE" ] && [ $(( now - mt )) -lt "$REFRESH_TTL" ] && return 0
+  [ -n "${CAL_NO_FETCH:-}" ] && return 1
+
+  local tmin tmax ids cal ev all
+  tmin=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  tmax=$(date -u -d "+${LOOKAHEAD_H} hours" +%Y-%m-%dT%H:%M:%SZ)
+
+  ids=$(gws calendar calendarList list --format json 2>/dev/null | jq -r '.items[]?.id' 2>/dev/null)
+  [ -z "$ids" ] && return 1
+
+  all='[]'
+  while IFS= read -r cal; do
+    [ -z "$cal" ] && continue
+    ev=$(gws calendar events list --params \
+      "{\"calendarId\":\"$cal\",\"timeMin\":\"$tmin\",\"timeMax\":\"$tmax\",\"singleEvents\":true,\"orderBy\":\"startTime\",\"maxResults\":10}" \
+      --format json 2>/dev/null)
+    [ -z "$ev" ] && continue
+    # keep only TIMED events (start.dateTime; all-day events use start.date -> skipped)
+    all=$(jq -c --argjson acc "$all" '
+      $acc + [ .items[]? | select(.start.dateTime != null)
+               | { id:.id, summary:(.summary // "(busy)"), start:.start.dateTime,
+                   link:(.hangoutLink // .htmlLink // "") } ]' <<<"$ev" 2>/dev/null) || :
+  done <<<"$ids"
+
+  printf '%s' "$all" > "$CACHE"
+}
+refresh
+
+[ -s "$CACHE" ] || { printf 'cal ?\ncal ?\n#888888\n'; exit 0; }
+
+# ---- soonest future event (epochs via `date`, which handles TZ offsets jq can't) ----
+best_e=0; best_s=""; best_l=""
+while IFS=$'\t' read -r st su lk; do
+  [ -z "$st" ] && continue
+  e=$(date -d "$st" +%s 2>/dev/null) || continue
+  [ "$e" -lt "$now" ] && continue
+  if [ -z "$best_s" ] || [ "$e" -lt "$best_e" ]; then best_e=$e; best_s=$su; best_l=$lk; fi
+done < <(jq -r '.[]? | "\(.start)\t\(.summary)\t\(.link)"' "$CACHE" 2>/dev/null)
+
+# nothing upcoming -> empty output (the bar chip hides itself)
+[ -z "$best_s" ] && { printf '\n\n'; exit 0; }
+
+rem=$(( best_e - now ))
+if [ "$rem" -ge 3600 ]; then cd="$(( rem/3600 ))h$(( (rem%3600)/60 ))m"
+elif [ "$rem" -lt 60 ]; then cd="<1m"
+else cd="$(( rem/60 ))m"; fi
+
+sum=$best_s; [ "${#sum}" -gt 24 ] && sum="${sum:0:23}…"
+printf '◷ %s  %s\n' "$sum" "$cd"     # full_text
+printf '%s\n' "$cd"                   # short_text
+if   [ "$rem" -le 300 ]; then printf '#FF6b6b\n'   # <=5m  red
+elif [ "$rem" -le 900 ]; then printf '#FFD600\n'   # <=15m yellow
+fi

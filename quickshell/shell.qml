@@ -1,5 +1,6 @@
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Io
 import QtQuick
 
 // Entrypoint: one Bar per monitor. A single timer keeps window classes fresh
@@ -11,6 +12,15 @@ ShellRoot {
         repeat: true
         triggeredOnStart: true
         onTriggered: Hyprland.refreshToplevels()
+    }
+
+    // Calendar alerts: run cal-notify every minute → swaync at 10/5/1 min before next event
+    Process { id: calNotify; command: ["/home/vania/.config/quickshell/lib/cal-notify"] }
+    Timer {
+        interval: 60000
+        running: true
+        repeat: true
+        onTriggered: calNotify.running = true
     }
 
     Variants {

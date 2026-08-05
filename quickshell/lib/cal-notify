@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# swaync alerts at 10 / 5 / 1 min before the next calendar event.
+# Driven every ~60s by a Timer in the Quickshell bar (qs is always running, so no
+# systemd unit needed). Dedupes per (event, threshold) via a state file, and uses a
+# ±30s window per threshold so a slightly-jittery tick still catches each mark.
+# Reads the events cache maintained by cal-next (same dir).
+set -u
+DIR="$(dirname "$(readlink -f "$0")")"
+CACHE_DIR="${CAL_CACHE_DIR:-$HOME/.cache/quickshell-cal}"
+CACHE="$CACHE_DIR/events.json"
+STATE="$CACHE_DIR/notified"
+mkdir -p "$CACHE_DIR"; touch "$STATE"
+
+# keep the cache fresh (cal-next only hits the API when it's stale)
+"$DIR/cal-next" >/dev/null 2>&1 || true
+[ -s "$CACHE" ] || exit 0
+
+now=$(date +%s)
+best_e=0; best_s=""; best_id=""
+while IFS=$'\t' read -r st su id; do
+  [ -z "$st" ] && continue
+  e=$(date -d "$st" +%s 2>/dev/null) || continue
+  [ "$e" -lt "$now" ] && continue
+  if [ -z "$best_s" ] || [ "$e" -lt "$best_e" ]; then best_e=$e; best_s=$su; best_id=$id; fi
+done < <(jq -r '.[]? | "\(.start)\t\(.summary)\t\(.id)"' "$CACHE" 2>/dev/null)
+[ -z "$best_s" ] && exit 0
+
+rem=$(( best_e - now ))
+for th in 10 5 1; do
+  lo=$(( th*60 - 30 )); hi=$(( th*60 + 30 ))
+  if [ "$rem" -ge "$lo" ] && [ "$rem" -le "$hi" ]; then
+    key="${best_id}@${th}"
+    grep -qF "$key" "$STATE" 2>/dev/null && break
+    u=normal; [ "$th" -le 1 ] && u=critical
+    notify-send -a "Calendar" -u "$u" "⏰ ${best_s}" "starts in ${th} min"
+    printf '%s\n' "$key" >> "$STATE"
+    break
+  fi
+done
+# keep the state file small
+tail -n 80 "$STATE" > "$STATE.tmp" 2>/dev/null && mv "$STATE.tmp" "$STATE" || true
