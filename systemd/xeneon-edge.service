@@ -1,0 +1,28 @@
+[Unit]
+Description=Xeneon Edge dashboard (WebKitGTK panes, fullscreen on HDMI-A-2)
+Documentation=https://github.com/Smirnov-Labs/xeneon-edge-linux
+# This is a Wayland client: it needs a live Hyprland compositor to render.
+# On this box there is no active graphical-session.target (GDM -> Hyprland,
+# no uwsm), and Hyprland does not import its env into the systemd --user
+# manager on its own. So the real start comes from Hyprland's autostart
+# (~/.dotfiles/hypr/hyprland.lua), which first imports WAYLAND_DISPLAY +
+# HYPRLAND_INSTANCE_SIGNATURE into the --user manager and then
+# `systemctl --user restart`s this unit. The target bindings below are the
+# correct modelling and light up automatically if a session target is ever
+# wired (e.g. via uwsm). Give up (leave it down for investigation via
+# `journalctl --user -u xeneon-edge`) if it dies 5x inside 60s.
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+Environment=GDK_BACKEND=wayland
+Environment=PYTHONPATH=%h/Projects/smirnovlabs/xeneon-edge-linux
+ExecStart=/usr/bin/python3 -m xeneon_edge --config %h/.config/xeneon-edge/config.toml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

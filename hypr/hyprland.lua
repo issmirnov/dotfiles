@@ -28,7 +28,12 @@ local rightMon = "DP-2"
 hl.monitor({ output = "",       mode = "preferred",        position = "auto",   scale = "auto" })
 hl.monitor({ output = leftMon,  mode = "3840x2160@119.91", position = "0x0",    scale = 1 })
 hl.monitor({ output = rightMon, mode = "3840x2160@119.91", position = "3840x0", scale = 1 })
-hl.monitor({ output = "HDMI-A-2", mode = "2560x720@60.266", position = "4960x2160", scale = 1.6 })  -- Xeneon Edge, centered under DP-2
+hl.monitor({ output = "HDMI-A-2", mode = "2560x720@60.266", position = "4480x2160", scale = 1 })  -- Xeneon Edge, native 2560x720, centered under DP-2
+
+-- Route the Xeneon Edge touchscreen to its own output. Without this, Wayland/Hyprland
+-- normalizes touch across the WHOLE monitor layout, so taps on the Edge land on the wrong
+-- screen. (Runtime-equivalent: hyprctl eval 'hl.device({ name=..., output=... })'.)
+hl.device({ name = "wch.cn-touchscreen", output = "HDMI-A-2" })
 
 -- Per-monitor workspaces: 1-5 -> left, 6-10 -> right
 for i = 1, 5 do
