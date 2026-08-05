@@ -39,14 +39,6 @@
             "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"/Users/vania/.config/agentglass/hooks/send_event.py\" --event-type Notification"
-          }
-        ]
       }
     ],
     "Stop": [
