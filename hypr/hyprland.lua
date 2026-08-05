@@ -43,6 +43,15 @@ for i = 6, 10 do
     hl.workspace_rule({ workspace = tostring(i), monitor = rightMon })
 end
 
+-- Named app workspaces, all pinned to the right monitor (DP-2). The matching window
+-- rules (see WINDOW RULES below) route each app into its own workspace.
+hl.workspace_rule({ workspace = "name:slack",    monitor = rightMon })
+hl.workspace_rule({ workspace = "name:telegram", monitor = rightMon })
+hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
+hl.workspace_rule({ workspace = "name:osrs",     monitor = rightMon })
+hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
+hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
+
 ------------------------------------------------------------------------
 -- ENVIRONMENT
 ------------------------------------------------------------------------
@@ -228,6 +237,11 @@ for i = 1, 10 do
     hl.bind(mainMod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i, follow = false }))
 end
 
+-- Jump straight to a named app workspace (SUPER+ALT layer; the SUPER+T / SUPER+R layout binds stay put).
+hl.bind(mainMod .. " + ALT + S", hl.dsp.focus({ workspace = "name:slack" }))
+hl.bind(mainMod .. " + ALT + T", hl.dsp.focus({ workspace = "name:telegram" }))
+hl.bind(mainMod .. " + ALT + R", hl.dsp.focus({ workspace = "name:osrs" }))
+
 -- scroll through workspaces
 hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e+1" }))
@@ -242,8 +256,16 @@ hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
 -- Ignore maximize requests from all apps
 hl.window_rule({ name = "suppress-maximize", match = { class = ".*" }, suppress_event = "maximize" })
 
--- Slack -> its own named workspace
+-- App -> its own named workspace (all pinned to DP-2 via workspace_rule above).
 hl.window_rule({ name = "slack-workspace", match = { class = "^(slack)$" }, workspace = "name:slack" })
+-- Telegram Desktop's class carries a per-install hash suffix (org.telegram.desktop._<hash>), so match a prefix.
+hl.window_rule({ name = "telegram-workspace", match = { class = "^(org\\.telegram\\.desktop.*)$" }, workspace = "name:telegram" })
+-- Discord: WebCord is the daily client (autostarts); also route the official discord client if opened.
+hl.window_rule({ name = "discord-workspace", match = { class = "^(WebCord|discord)$" }, workspace = "name:discord" })
+-- OSRS: RuneLite runs under XWayland; class is the dashified Java main class net.runelite.client.RuneLite.
+hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-client-RuneLite)$" }, workspace = "name:osrs" })
+hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
+hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
 
 -- Sensible minimum size for floating popups (oauth logins etc.)
 hl.window_rule({ name = "float-minsize", match = { float = true }, min_size = { 300, 200 } })
