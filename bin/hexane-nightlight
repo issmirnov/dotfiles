@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+"""hexane-nightlight — sun-tracked gentle backlight dimming for the Dell U3225QEs.
+
+Stateless: computes the backlight brightness for *now* from today's sun times and
+applies it via ddcutil only when it changes. Run every ~2 min by a systemd user
+timer. Independent of wlsunset (color temp is a separate gamma layer).
+
+Design: docs/hexane-nightlight-design.md
+"""
+import math
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone, timedelta
+
+# ---- config ----
+LAT, LON = 39.7392, -104.9903        # Denver (east-positive longitude; west is negative)
+DAY, NIGHT = 100, 80
+RAMP_MIN = 45
+STEP = 2
+MONITORS = ["DP7HGJ4", "6P7HGJ4"]    # DP-1, DP-2 (by DDC serial)
+STATE = os.path.expanduser("~/.cache/hexane-nightlight/last")
+
+
+def _julian(ts):        # unix seconds -> julian day
+    return ts / 86400.0 + 2440587.5
+
+
+def _unix(j):           # julian day -> unix seconds
+    return (j - 2440587.5) * 86400.0
+
+
+def _td(seconds):
+    return timedelta(seconds=seconds)
+
+
+def sun_times(day, lat, lon):
+    """(sunrise, sunset) as local tz-aware datetimes for a local date, via the
+    NOAA sunrise equation. Longitude east-positive."""
+    noon_utc = datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc)
+    n = _julian(noon_utc.timestamp()) - 2451545.0 + 0.0008
+    jstar = n - lon / 360.0                        # east-positive lon; west shifts solar noon later in UT
+    m = (357.5291 + 0.98560028 * jstar) % 360.0
+    mr = math.radians(m)
+    c = 1.9148 * math.sin(mr) + 0.0200 * math.sin(2 * mr) + 0.0003 * math.sin(3 * mr)
+    lam = (m + c + 180.0 + 102.9372) % 360.0
+    lamr = math.radians(lam)
+    jtransit = 2451545.0 + jstar + 0.0053 * math.sin(mr) - 0.0069 * math.sin(2 * lamr)
+    sin_decl = math.sin(lamr) * math.sin(math.radians(23.44))
+    decl = math.asin(sin_decl)
+    latr = math.radians(lat)
+    cos_w = ((math.sin(math.radians(-0.833)) - math.sin(latr) * sin_decl)
+             / (math.cos(latr) * math.cos(decl)))
+    cos_w = max(-1.0, min(1.0, cos_w))             # clamp: polar day/night
+    w = math.degrees(math.acos(cos_w))
+    sunrise = datetime.fromtimestamp(_unix(jtransit - w / 360.0)).astimezone()
+    sunset = datetime.fromtimestamp(_unix(jtransit + w / 360.0)).astimezone()
+    return sunrise, sunset
+
+
+def _round_step(x):
+    return int(round(x / STEP) * STEP)
+
+
+def target(now, sunrise, sunset):
+    """Brightness % for `now`, rounded to STEP. Ramps DAY<->NIGHT over RAMP_MIN;
+    evening ramp starts at sunset, morning ramp starts at sunrise."""
+    ramp = RAMP_MIN * 60
+    if sunrise <= now < sunrise + _td(ramp):            # morning ramp up
+        frac = (now - sunrise).total_seconds() / ramp
+        return _round_step(NIGHT + (DAY - NIGHT) * frac)
+    if sunrise + _td(ramp) <= now < sunset:             # day
+        return DAY
+    if sunset <= now < sunset + _td(ramp):              # evening ramp down
+        frac = (now - sunset).total_seconds() / ramp
+        return _round_step(DAY + (NIGHT - DAY) * frac)
+    return NIGHT                                         # night (incl. pre-dawn)
