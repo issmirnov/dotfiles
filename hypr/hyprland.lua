@@ -10,7 +10,10 @@
 local terminal    = "alacritty"
 local fileManager = "nemo"
 local menu        = "fuzzel"
-local browser     = "google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj --disable-features=WaylandFractionalScaleV1"
+-- NOTE: keep WaylandFractionalScaleV1 ENABLED. Disabling it while chrome-flags.conf
+-- forces --force-device-scale-factor makes Chrome paint only part of its window
+-- (transparent remainder shows the wallpaper). Verified 2026-08-04.
+local browser     = "google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj"
 
 local leftMon  = "DP-1"
 local rightMon = "DP-2"
@@ -21,6 +24,7 @@ local rightMon = "DP-2"
 hl.monitor({ output = "",       mode = "preferred",        position = "auto",   scale = "auto" })
 hl.monitor({ output = leftMon,  mode = "3840x2160@119.91", position = "0x0",    scale = 1 })
 hl.monitor({ output = rightMon, mode = "3840x2160@119.91", position = "3840x0", scale = 1 })
+hl.monitor({ output = "HDMI-A-2", mode = "2560x720@60.266", position = "4960x2160", scale = 1.6 })  -- Xeneon Edge, centered under DP-2
 
 -- Per-monitor workspaces: 1-5 -> left, 6-10 -> right
 for i = 1, 5 do
@@ -104,9 +108,9 @@ hl.config({
             sharp        = false,
         },
 
-        -- Inner glow (Hyprland 0.55+), gradient matches the active border
+        -- Inner glow disabled — was a second blue/green shimmer halo; keeping just the border.
         glow = {
-            enabled      = true,
+            enabled      = false,
             range        = 12,
             render_power = 3,
             color        = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
@@ -165,8 +169,8 @@ hl.animation({ leaf = "windows",     enabled = true, speed = 5,  spring = "bounc
 hl.animation({ leaf = "windowsIn",   enabled = true, speed = 5,  spring = "bouncy", style = "popin 80%" })
 hl.animation({ leaf = "windowsOut",  enabled = true, speed = 4,  bezier = "linear", style = "popin 80%" })
 hl.animation({ leaf = "border",      enabled = true, speed = 10, bezier = "default" })
-hl.animation({ leaf = "borderangle", enabled = true, speed = 8,  bezier = "linear", style = "loop" })   -- rotating gradient border
-hl.animation({ leaf = "glowangle",   enabled = true, speed = 8,  bezier = "linear", style = "loop" })   -- rotating glow
+hl.animation({ leaf = "borderangle", enabled = false })   -- static gradient border (no shimmer)
+hl.animation({ leaf = "glowangle",   enabled = false })   -- glow disabled
 hl.animation({ leaf = "fade",        enabled = true, speed = 3,  bezier = "default" })
 hl.animation({ leaf = "workspaces",  enabled = true, speed = 4,  spring = "bouncy", style = "slide" })
 
