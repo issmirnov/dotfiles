@@ -29,6 +29,7 @@ Singleton {
 
     // --- per-stat accents ---
     readonly property color volCol:  _v ? "#e0a43b" : "#f0c2a2"
+    readonly property color briCol:  _v ? "#e0c53b" : "#f0e0a2"
     readonly property color netCol:  _v ? "#3f7bd6" : "#a2c8f0"
     readonly property color cpuCol:  _v ? "#3fae6a" : "#a2f0c8"
     readonly property color memCol:  _v ? "#8a5cf0" : "#c8a2f0"

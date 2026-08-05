@@ -59,6 +59,7 @@ PanelWindow {
             spacing: Theme.gap
             Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "claude"; interval: 60000 }
             Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "codex"; interval: 60000 }
+            Brightness {}
             Audio {}
             Stats {}
             IdleToggle { barWindow: bar }
