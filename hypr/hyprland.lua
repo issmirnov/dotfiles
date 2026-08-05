@@ -67,7 +67,11 @@ hl.env("NVD_BACKEND", "direct")                   -- hardware video decode via l
 -- AUTOSTART (exec-once equivalents)
 ------------------------------------------------------------------------
 hl.on("hyprland.start", function()
-    hl.exec_cmd("waybar")
+    -- load hyprpm plugins (hyprbars), then re-parse so the guarded plugin block
+    -- below applies its styling/buttons (config is parsed before the plugin loads)
+    hl.exec_cmd("hyprpm reload -n && hyprctl reload")
+    -- hl.exec_cmd("waybar")   -- swapped to Quickshell; uncomment to fall back to waybar
+    hl.exec_cmd("qs")
     hl.exec_cmd(browser)
     hl.exec_cmd(terminal)
     -- night shift: wlsunset, Denver coords, 3700K night / 4500K day
@@ -75,8 +79,14 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("telegram-desktop")
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
-    hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- annotates waybar
+    -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
     hl.exec_cmd("walker --gapplication-service")         -- pre-launch launcher
+    -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
+    -- unit at ~/.dotfiles/systemd/xeneon-edge.service. Import the Wayland env into
+    -- the --user manager, clear any crash-loop lockout left from a previous session,
+    -- then (re)start the unit. The app still auto-detects the HDMI-A-2 panel by model
+    -- and fullscreens on it. Logs -> `journalctl --user -u xeneon-edge`.
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user reset-failed xeneon-edge.service; systemctl --user restart xeneon-edge.service")
     hl.exec_cmd("hypridle")
     hl.exec_cmd("noisetorch")                            -- RNN noise suppression
     hl.exec_cmd("wl-paste --watch cliphist store")       -- clipboard history (fixed)
