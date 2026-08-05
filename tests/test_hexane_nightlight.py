@@ -1,5 +1,7 @@
-import importlib.util, importlib.machinery, pathlib, unittest
+import importlib.util, importlib.machinery, os, pathlib, shutil, tempfile, unittest
 from datetime import datetime, date, timedelta
+from unittest import mock
+from zoneinfo import ZoneInfo
 
 _p = pathlib.Path(__file__).resolve().parents[1] / "bin" / "hexane-nightlight"
 # bin/hexane-nightlight has no .py extension, so give importlib an explicit loader.
@@ -17,8 +19,11 @@ class SunTimes(unittest.TestCase):
         self.assertAlmostEqual(day_len, 12.0, delta=0.3)
 
     def test_denver_early_august_plausible(self):
-        # Denver, 2026-08-04: sunrise ~06:00, sunset ~20:10 local (tolerant bounds).
+        # Denver, 2026-08-04: sunrise ~06:02, sunset ~20:11 MDT. Convert to Denver
+        # explicitly so this holds regardless of the test runner's local tz.
+        denver = ZoneInfo("America/Denver")
         sr, ss = nl.sun_times(date(2026, 8, 4), nl.LAT, nl.LON)
+        sr, ss = sr.astimezone(denver), ss.astimezone(denver)
         self.assertLess(sr, ss)
         self.assertTrue(5.5 <= sr.hour + sr.minute / 60 <= 6.5, f"sunrise {sr}")
         self.assertTrue(19.5 <= ss.hour + ss.minute / 60 <= 20.75, f"sunset {ss}")
@@ -58,6 +63,43 @@ class Target(unittest.TestCase):
 
     def test_morning_ramp_midpoint(self):
         self.assertEqual(nl.target(self.at(6, 22), self.sr, self.ss), 90)
+
+
+class Apply(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.mkdtemp()
+        self._orig = nl.STATE
+        nl.STATE = os.path.join(self._tmp, "last")
+
+    def tearDown(self):
+        nl.STATE = self._orig
+        shutil.rmtree(self._tmp, ignore_errors=True)
+
+    def test_partial_failure_retries_failed_monitor_next_tick(self):
+        # 6P7HGJ4 is "asleep" (setvcp raises); DP7HGJ4 succeeds.
+        calls = []
+
+        def fake_set(sn, val):
+            calls.append((sn, val))
+            if sn == "6P7HGJ4":
+                raise RuntimeError("asleep")
+
+        with mock.patch.object(nl, "_set_monitor", side_effect=fake_set):
+            nl.apply(80)
+            self.assertIn(("DP7HGJ4", 80), calls)   # both attempted on the first tick
+            self.assertIn(("6P7HGJ4", 80), calls)
+            calls.clear()
+            nl.apply(80)                             # next tick, same target
+        self.assertNotIn(("DP7HGJ4", 80), calls)     # succeeded panel is not re-written
+        self.assertIn(("6P7HGJ4", 80), calls)        # failed panel IS retried
+
+    def test_success_not_rewritten_when_unchanged(self):
+        with mock.patch.object(nl, "_set_monitor") as m:
+            nl.apply(80)
+            self.assertEqual(m.call_count, 2)        # both set once
+            m.reset_mock()
+            nl.apply(80)                             # unchanged target
+            self.assertEqual(m.call_count, 0)        # neither re-written
 
 
 if __name__ == "__main__":

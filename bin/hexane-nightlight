@@ -7,6 +7,7 @@ timer. Independent of wlsunset (color temp is a separate gamma layer).
 
 Design: docs/hexane-nightlight-design.md
 """
+import json
 import math
 import os
 import subprocess
@@ -79,16 +80,19 @@ def target(now, sunrise, sunset):
 
 # ---- effects ----
 def _read_state():
+    """Per-monitor last-applied brightness {serial: int}. {} if missing/legacy/corrupt."""
     try:
-        return int(open(STATE).read().strip())
+        with open(STATE) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
     except (OSError, ValueError):
-        return None
+        return {}
 
 
-def _write_state(v):
+def _write_state(state):
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     with open(STATE, "w") as f:
-        f.write(str(v))
+        json.dump(state, f)
 
 
 def _set_monitor(sn, value):
@@ -99,36 +103,50 @@ def _set_monitor(sn, value):
 def _get_monitor(sn):
     out = subprocess.run(["ddcutil", "--sn", sn, "getvcp", "0x10"],
                          check=True, capture_output=True, timeout=20, text=True).stdout
-    # "...current value =   84, max value =  100"  -> first bare integer is current
-    for tok in out.replace(",", " ").split():
-        if tok.isdigit():
-            return int(tok)
+    # "...current value =   84, max value =  100"  -> the int right after "current value"
+    # (anchored so --terse output "VCP 10 C 84 100" can't return the feature code 10)
+    if "current value" in out:
+        tail = out.split("current value", 1)[1]
+        for tok in tail.replace("=", " ").replace(",", " ").split():
+            if tok.isdigit():
+                return int(tok)
     return None
 
 
 def apply(t, dry=False):
-    """Set both monitors to t% (only if changed from last applied). Returns True on write."""
-    if _read_state() == t:
-        return False
-    changed = False
+    """Set each monitor to t%, per-monitor idempotent. A panel that fails (asleep/
+    unreachable) keeps its old state so the NEXT tick retries it, instead of being
+    marked done because its neighbor succeeded. Returns True if any write happened."""
+    state = _read_state()
+    wrote = False
     for sn in MONITORS:
+        if state.get(sn) == t:
+            continue                                # already at target; don't re-write
         try:
             if dry:
                 print(f"[dry-run] would set {sn} -> {t}%")
             else:
                 _set_monitor(sn, t)
-            changed = True
-        except Exception as e:                      # noqa: BLE001 - a flaky panel must not break the other
+                state[sn] = t                       # record ONLY on real success
+            wrote = True
+        except Exception as e:                      # noqa: BLE001 - a flaky panel must not block the other
             print(f"warn: {sn}: {e}", file=sys.stderr)
-    if changed and not dry:
-        _write_state(t)
-    return changed
+    if wrote and not dry:
+        _write_state(state)
+    return wrote
+
+
+USAGE = 'usage: hexane-nightlight [--check | --simulate "YYYY-MM-DD HH:MM" | --dry-run]'
 
 
 def main(argv):
     now = datetime.now().astimezone()
     sr, ss = sun_times(now.date(), LAT, LON)
-    if argv and argv[0] == "--check":
+    if not argv:                                    # the timer path: apply the current target
+        apply(target(now, sr, ss))
+        return 0
+    cmd = argv[0]
+    if cmd == "--check":
         print(f"now     {now:%Y-%m-%d %H:%M %Z}")
         print(f"sunrise {sr:%H:%M}   sunset {ss:%H:%M}")
         print(f"target  {target(now, sr, ss)}%")
@@ -138,14 +156,24 @@ def main(argv):
             except Exception as e:                  # noqa: BLE001
                 print(f"  {sn}: ERR {e}")
         return 0
-    if argv and argv[0] == "--simulate":
-        when = datetime.fromisoformat(argv[1]).astimezone()
+    if cmd == "--dry-run":
+        apply(target(now, sr, ss), dry=True)
+        return 0
+    if cmd == "--simulate":
+        if len(argv) < 2:
+            print(USAGE, file=sys.stderr)
+            return 2
+        try:
+            when = datetime.fromisoformat(argv[1]).astimezone()
+        except ValueError as e:
+            print(f"bad timestamp: {e}", file=sys.stderr)
+            return 2
         s_sr, s_ss = sun_times(when.date(), LAT, LON)
         print(f"{when:%Y-%m-%d %H:%M}  sunrise {s_sr:%H:%M} sunset {s_ss:%H:%M}"
               f"  -> target {target(when, s_sr, s_ss)}%")
         return 0
-    apply(target(now, sr, ss), dry=(bool(argv) and argv[0] == "--dry-run"))
-    return 0
+    print(USAGE, file=sys.stderr)                   # unknown arg: never a silent hardware write
+    return 2
 
 
 if __name__ == "__main__":
