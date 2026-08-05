@@ -1,7 +1,7 @@
 # Quickshell bar for Hyprland — design
 
 **Date:** 2026-08-05
-**Status:** approved (brainstorm complete; user said "proceed autonomously")
+**Status:** SHIPPED 2026-08-05 — default bar (waybar one uncomment away). See addendum + `project_hexane_quickshell_bar` memory for the living details/gotchas.
 **Author:** Ivan + Claude
 
 ## Motivation
@@ -133,3 +133,38 @@ watch a file for live switching, but v1 just needs the swap to be a one-liner.
   `hwmon`/`thermal_zone` at build time.
 - Launching GUIs from the agent shell is sandboxed (exit 144) — always launch/reload
   via `hyprctl dispatch exec`.
+
+## Addendum — what actually shipped (2026-08-05)
+
+Built and verified on-screen; layout ended up **flat** (no `bar/ modules/ lib/`
+subdirs — Quickshell 0.3.0 auto-imports uppercase-neighbor `.qml`, so nesting +
+qmldir were unnecessary). Beyond the v1 MVP:
+
+- **Idle-inhibitor toggle** (`IdleToggle.qml`, was out-of-scope) — native
+  `Quickshell.Wayland.IdleInhibitor`; file must NOT be named `IdleInhibitor.qml`.
+- **Center cluster:** local date/time (`Clock.qml`) + timezones ZAG·PRG·KYV, via a
+  generic **`Blocklet.qml`** i3blocks-script runner that reuses `~/.dotfiles/i3/blocklets/*`
+  verbatim (worldclock, ai_usage claude/codex, load).
+- **Google Calendar** (`lib/cal-next` + `lib/cal-notify`): merges timed events across
+  ALL ~17 calendars into **two center chips** — `● happening now · Nm left` (mint) and
+  `◷ next event <countdown>` (yellow<15m/red<5m) — plus swaync alerts at 10/5/1 min.
+  Both self-hide when empty; `cal-next current` vs `cal-next` (mode = `$1`); cache is
+  atomic + `flock`-serialized (3 callers). **LIVE.** Auth chain (all required): gws
+  `calendar.readonly` scope → delete stale
+  `token_cache.json` → `serviceusage.serviceUsageConsumer` IAM on the OAuth client's
+  project. Creds stay in `~/.config/gws`, **out of the dotfiles**.
+- **Audio popup:** left-click the volume chip opens a **draggable slider `PopupWindow`**
+  (scroll still ±5%, right-click mutes). Anchor: `edges/gravity` flags for the drop-down
+  (NOT `anchor.rect.x` — that collapses the rect); dismiss via `HyprlandFocusGrab`.
+
+Gotchas that cost real time (do not re-chase): **QTBUG-137166** — a Rectangle `border`
+on a `color:"transparent"` window blanks the whole bar (this was the "black bar", NOT a
+grim/dmabuf capture limit; grim captures fine). Hot-reload through the dir-symlink is
+flaky → **relaunch** `qs` to apply. `DesktopEntries.heuristicLookup` is a no-op here →
+icons resolve by `hasThemeIcon(class)` + `/usr/share/pixmaps/<class>` + an `overrideIcon`
+map. Full living notes in the `project_hexane_quickshell_bar` memory.
+
+### Still open
+- **Codex `CX ?`** — needs a user `codex` re-auth (access_token expired = 401).
+- Not yet in dotbot `ubuntu.conf.yaml` (currently `ln -sfn`; adding it fires the
+  vim-pluginstall hook, so deferred). Possible later: media/Mpris, network/disk blocklets.

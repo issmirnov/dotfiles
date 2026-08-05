@@ -1,27 +1,28 @@
 #!/usr/bin/env bash
-# Quickshell "next event" blocklet — soonest upcoming TIMED event across ALL calendars.
+# Quickshell calendar blocklet — two modes over one shared, all-calendars cache:
+#   cal-next            → soonest upcoming TIMED event (countdown to its START)
+#   cal-next current    → the event happening RIGHT NOW (countdown to its END)
 # i3blocks-style output: full_text, short_text, [color].
 #
-# Refreshes an events cache from `gws calendar` at most every REFRESH_TTL seconds (16
-# calendars = 16 API calls, so we don't do it every tick); the countdown itself is
-# recomputed from cache on every call (cheap). Shared by the bar chip and cal-notify.
+# Refreshes the cache from `gws calendar` at most every REFRESH_TTL seconds (17
+# calendars = 17 API calls, so not every tick); the countdown is recomputed from
+# cache on every call (cheap). Shared by both bar chips + cal-notify — writes are
+# atomic (tmp+mv) and serialized by a flock so the three callers can't stampede.
 #
 # Needs gws authed with calendar.readonly:  gws auth login --services gmail,calendar --readonly
 # Credentials live in ~/.config/gws (NOT in the dotfiles).
 set -u
+MODE="${1:-next}"
 CACHE_DIR="${CAL_CACHE_DIR:-$HOME/.cache/quickshell-cal}"
 CACHE="$CACHE_DIR/events.json"
+LOCK="$CACHE_DIR/.refresh.lock"
 REFRESH_TTL="${CAL_REFRESH_TTL:-180}"
 LOOKAHEAD_H="${CAL_LOOKAHEAD_H:-24}"
 mkdir -p "$CACHE_DIR"
 now=$(date +%s)
 
-# ---- refresh the merged, all-calendars event cache if stale ----
-refresh() {
-  local mt; mt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
-  [ -s "$CACHE" ] && [ $(( now - mt )) -lt "$REFRESH_TTL" ] && return 0
-  [ -n "${CAL_NO_FETCH:-}" ] && return 1
-
+# ---- pull every calendar's timed events into the merged cache ----
+fetch() {
   local tmin tmax ids cal ev all
   tmin=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   tmax=$(date -u -d "+${LOOKAHEAD_H} hours" +%Y-%m-%dT%H:%M:%SZ)
@@ -39,36 +40,72 @@ refresh() {
     # keep only TIMED events (start.dateTime; all-day events use start.date -> skipped)
     all=$(jq -c --argjson acc "$all" '
       $acc + [ .items[]? | select(.start.dateTime != null)
-               | { id:.id, summary:(.summary // "(busy)"), start:.start.dateTime,
+               | { id:.id, summary:(.summary // "(busy)"),
+                   start:.start.dateTime, end:(.end.dateTime // .start.dateTime),
                    link:(.hangoutLink // .htmlLink // "") } ]' <<<"$ev" 2>/dev/null) || :
   done <<<"$ids"
 
-  printf '%s' "$all" > "$CACHE"
+  printf '%s' "$all" > "$CACHE.tmp.$$" && mv -f "$CACHE.tmp.$$" "$CACHE"
+}
+
+# ---- refresh the cache if stale (TTL-gated, lock-serialized) ----
+refresh() {
+  local mt; mt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
+  [ -s "$CACHE" ] && [ $(( now - mt )) -lt "$REFRESH_TTL" ] && return 0
+  [ -n "${CAL_NO_FETCH:-}" ] && return 1
+  exec 9>"$LOCK"
+  flock -w 20 9 || return 1
+  # another caller may have refreshed while we waited on the lock
+  mt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
+  [ -s "$CACHE" ] && [ $(( now - mt )) -lt "$REFRESH_TTL" ] && return 0
+  fetch
 }
 refresh
 
-[ -s "$CACHE" ] || { printf 'cal ?\ncal ?\n#888888\n'; exit 0; }
+[ -s "$CACHE" ] || { [ "$MODE" = next ] && printf 'cal ?\ncal ?\n#888888\n'; exit 0; }
 
-# ---- soonest future event (epochs via `date`, which handles TZ offsets jq can't) ----
-best_e=0; best_s=""; best_l=""
-while IFS=$'\t' read -r st su lk; do
+# seconds -> "1h20m" / "25m" / "<1m"
+fmt() {
+  local s=$1
+  if   [ "$s" -ge 3600 ]; then printf '%dh%dm' $(( s / 3600 )) $(( (s % 3600) / 60 ))
+  elif [ "$s" -lt 60 ];   then printf '<1m'
+  else printf '%dm' $(( s / 60 )); fi
+}
+
+trunc() { local x=$1; [ "${#x}" -gt 24 ] && printf '%s…' "${x:0:23}" || printf '%s' "$x"; }
+
+# ================= CURRENT: what I'm in right now =================
+if [ "$MODE" = current ]; then
+  best_e=0; best_s=""
+  while IFS=$'\t' read -r st en su; do
+    [ -z "$st" ] || [ -z "$en" ] && continue
+    es=$(date -d "$st" +%s 2>/dev/null) || continue
+    ee=$(date -d "$en" +%s 2>/dev/null) || continue
+    { [ "$es" -le "$now" ] && [ "$now" -lt "$ee" ]; } || continue   # ongoing now
+    if [ -z "$best_s" ] || [ "$ee" -lt "$best_e" ]; then best_e=$ee; best_s=$su; fi
+  done < <(jq -r '.[]? | "\(.start)\t\(.end)\t\(.summary)"' "$CACHE" 2>/dev/null)
+
+  [ -z "$best_s" ] && { printf '\n\n'; exit 0; }                    # nothing now -> hide chip
+  rem=$(( best_e - now ))
+  printf '● %s · %s left\n' "$(trunc "$best_s")" "$(fmt "$rem")"    # full_text
+  printf '%s left\n' "$(fmt "$rem")"                                # short_text
+  printf '#a2f0c8\n'                                                # mint = happening now
+  exit 0
+fi
+
+# ================= NEXT: soonest future event =================
+best_e=0; best_s=""
+while IFS=$'\t' read -r st su; do
   [ -z "$st" ] && continue
   e=$(date -d "$st" +%s 2>/dev/null) || continue
   [ "$e" -lt "$now" ] && continue
-  if [ -z "$best_s" ] || [ "$e" -lt "$best_e" ]; then best_e=$e; best_s=$su; best_l=$lk; fi
-done < <(jq -r '.[]? | "\(.start)\t\(.summary)\t\(.link)"' "$CACHE" 2>/dev/null)
+  if [ -z "$best_s" ] || [ "$e" -lt "$best_e" ]; then best_e=$e; best_s=$su; fi
+done < <(jq -r '.[]? | "\(.start)\t\(.summary)"' "$CACHE" 2>/dev/null)
 
-# nothing upcoming -> empty output (the bar chip hides itself)
-[ -z "$best_s" ] && { printf '\n\n'; exit 0; }
-
+[ -z "$best_s" ] && { printf '\n\n'; exit 0; }                      # nothing upcoming -> hide
 rem=$(( best_e - now ))
-if [ "$rem" -ge 3600 ]; then cd="$(( rem/3600 ))h$(( (rem%3600)/60 ))m"
-elif [ "$rem" -lt 60 ]; then cd="<1m"
-else cd="$(( rem/60 ))m"; fi
-
-sum=$best_s; [ "${#sum}" -gt 24 ] && sum="${sum:0:23}…"
-printf '◷ %s  %s\n' "$sum" "$cd"     # full_text
-printf '%s\n' "$cd"                   # short_text
-if   [ "$rem" -le 300 ]; then printf '#FF6b6b\n'   # <=5m  red
-elif [ "$rem" -le 900 ]; then printf '#FFD600\n'   # <=15m yellow
+printf '◷ %s  %s\n' "$(trunc "$best_s")" "$(fmt "$rem")"            # full_text
+printf '%s\n' "$(fmt "$rem")"                                       # short_text
+if   [ "$rem" -le 300 ]; then printf '#FF6b6b\n'                    # <=5m  red
+elif [ "$rem" -le 900 ]; then printf '#FFD600\n'                    # <=15m yellow
 fi

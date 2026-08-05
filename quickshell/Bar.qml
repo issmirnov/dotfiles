@@ -38,7 +38,13 @@ PanelWindow {
                 exec: "/home/vania/.dotfiles/i3/blocklets/worldclock"
                 interval: 30000
             }
-            Blocklet {
+            Blocklet {                       // happening now (mint; hides when nothing is on)
+                flat: true
+                exec: "/home/vania/.config/quickshell/lib/cal-next"
+                args: ["current"]
+                interval: 60000
+            }
+            Blocklet {                       // next up (countdown to start)
                 flat: true
                 exec: "/home/vania/.config/quickshell/lib/cal-next"
                 interval: 60000
