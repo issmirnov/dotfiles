@@ -50,7 +50,7 @@ PanelWindow {
             Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "codex"; interval: 60000 }
             Audio {}
             Stats {}
-            IdleInhibitor { barWindow: bar }
+            IdleToggle { barWindow: bar }
             SysTray {}
         }
     }

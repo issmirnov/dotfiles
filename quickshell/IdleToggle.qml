@@ -2,6 +2,7 @@ import Quickshell.Wayland
 import QtQuick
 
 // Click to keep the system awake — holds a Wayland idle inhibitor while active.
+// (Named IdleToggle, not IdleInhibitor, to avoid colliding with Quickshell's own type.)
 Rectangle {
     id: root
     property var barWindow          // the PanelWindow this bar lives in
