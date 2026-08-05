@@ -75,3 +75,78 @@ def target(now, sunrise, sunset):
         frac = (now - sunset).total_seconds() / ramp
         return _round_step(DAY + (NIGHT - DAY) * frac)
     return NIGHT                                         # night (incl. pre-dawn)
+
+
+# ---- effects ----
+def _read_state():
+    try:
+        return int(open(STATE).read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def _write_state(v):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE, "w") as f:
+        f.write(str(v))
+
+
+def _set_monitor(sn, value):
+    subprocess.run(["ddcutil", "--sn", sn, "setvcp", "0x10", str(value)],
+                   check=True, capture_output=True, timeout=20)
+
+
+def _get_monitor(sn):
+    out = subprocess.run(["ddcutil", "--sn", sn, "getvcp", "0x10"],
+                         check=True, capture_output=True, timeout=20, text=True).stdout
+    # "...current value =   84, max value =  100"  -> first bare integer is current
+    for tok in out.replace(",", " ").split():
+        if tok.isdigit():
+            return int(tok)
+    return None
+
+
+def apply(t, dry=False):
+    """Set both monitors to t% (only if changed from last applied). Returns True on write."""
+    if _read_state() == t:
+        return False
+    changed = False
+    for sn in MONITORS:
+        try:
+            if dry:
+                print(f"[dry-run] would set {sn} -> {t}%")
+            else:
+                _set_monitor(sn, t)
+            changed = True
+        except Exception as e:                      # noqa: BLE001 - a flaky panel must not break the other
+            print(f"warn: {sn}: {e}", file=sys.stderr)
+    if changed and not dry:
+        _write_state(t)
+    return changed
+
+
+def main(argv):
+    now = datetime.now().astimezone()
+    sr, ss = sun_times(now.date(), LAT, LON)
+    if argv and argv[0] == "--check":
+        print(f"now     {now:%Y-%m-%d %H:%M %Z}")
+        print(f"sunrise {sr:%H:%M}   sunset {ss:%H:%M}")
+        print(f"target  {target(now, sr, ss)}%")
+        for sn in MONITORS:
+            try:
+                print(f"  {sn}: actual {_get_monitor(sn)}%")
+            except Exception as e:                  # noqa: BLE001
+                print(f"  {sn}: ERR {e}")
+        return 0
+    if argv and argv[0] == "--simulate":
+        when = datetime.fromisoformat(argv[1]).astimezone()
+        s_sr, s_ss = sun_times(when.date(), LAT, LON)
+        print(f"{when:%Y-%m-%d %H:%M}  sunrise {s_sr:%H:%M} sunset {s_ss:%H:%M}"
+              f"  -> target {target(when, s_sr, s_ss)}%")
+        return 0
+    apply(target(now, sr, ss), dry=(bool(argv) and argv[0] == "--dry-run"))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
