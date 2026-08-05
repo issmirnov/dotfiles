@@ -14,7 +14,9 @@ Row {
     spacing: Theme.gap
 
     Repeater {
-        model: Hyprland.workspaces.values.filter(w => w.monitor === root.hlMonitor)
+        model: Hyprland.workspaces.values
+            .filter(w => w.monitor === root.hlMonitor)
+            .sort((a, b) => a.id - b.id)
 
         Rectangle {
             id: pill
@@ -41,12 +43,29 @@ Row {
 
                 Repeater {
                     model: pill.ws.toplevels ? pill.ws.toplevels.values : []
-                    IconImage {
+                    Item {
+                        id: ic
                         required property var modelData
                         readonly property string cls: modelData.lastIpcObject ? (modelData.lastIpcObject.class || "") : ""
                         readonly property var entry: cls ? DesktopEntries.heuristicLookup(cls) : null
-                        implicitSize: Theme.iconSize
-                        source: Quickshell.iconPath(entry ? entry.icon : (cls || "application-x-executable"), "application-x-executable")
+                        readonly property string iconName: entry && entry.icon ? entry.icon : cls
+                        readonly property bool haveIcon: iconName !== "" && Quickshell.hasThemeIcon(iconName)
+                        width: Theme.iconSize
+                        height: Theme.iconSize
+                        IconImage {          // real app icon when the theme has it
+                            visible: ic.haveIcon
+                            anchors.fill: parent
+                            source: ic.haveIcon ? Quickshell.iconPath(ic.iconName) : ""
+                        }
+                        Rectangle {          // neutral dot placeholder otherwise (no broken icons)
+                            visible: !ic.haveIcon
+                            anchors.centerIn: parent
+                            width: parent.width * 0.45
+                            height: width
+                            radius: width / 2
+                            color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
+                            opacity: 0.55
+                        }
                     }
                 }
             }

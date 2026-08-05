@@ -14,7 +14,8 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens
+        // one bar per monitor, except the Corsair Xeneon Edge (it keeps its own dashboard)
+        model: Quickshell.screens.filter(s => s.name !== "HDMI-A-2")
         Bar {
             required property var modelData
             screen: modelData

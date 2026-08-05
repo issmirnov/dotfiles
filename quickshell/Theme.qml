@@ -35,13 +35,13 @@ Singleton {
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
 
     // --- metrics ---
-    readonly property int barHeight:  34
-    readonly property int barRadius:  16
-    readonly property int chipRadius: 9
-    readonly property int chipHeight: 24
-    readonly property int gap:        7
-    readonly property int marginTop:  6
-    readonly property int marginSide: 8
-    readonly property int fontSize:   12
-    readonly property int iconSize:   16
+    readonly property int barHeight:  40
+    readonly property int barRadius:  20
+    readonly property int chipRadius: 11
+    readonly property int chipHeight: 28
+    readonly property int gap:        8
+    readonly property int marginTop:  7
+    readonly property int marginSide: 9
+    readonly property int fontSize:   13
+    readonly property int iconSize:   18
 }
