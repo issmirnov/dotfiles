@@ -2,58 +2,65 @@
 # SUPER+C — Claude drop-down scratchpad on the special:scratch workspace.
 #
 # Robust toggle:
-#   • window already alive -> show/hide it (toggle the special workspace)
-#   • not alive (never opened this session, or you closed it) -> spawn it FRESH,
-#     then reveal it. Spawning fresh means it always picks up the CURRENT
-#     float/centre/purple-border window rules — a window keeps whatever rules it
-#     had at spawn, so a stale one (spawned before a config edit) looks wrong.
+#   • visible -> hide it
+#   • hidden  -> show it
+#   • not spawned yet (fresh session, or you closed it) -> spawn FRESH, then show.
+#     Fresh spawn = it always picks up the CURRENT float/centre/purple-border
+#     window rules; a window keeps whatever rules it had at spawn, so a stale one
+#     (spawned before a config edit) would look wrong.
 #
 # The window is routed onto special:scratch by a Hyprland window rule (match
-# class "scratchpad" -> workspace special:scratch, in hyprland.lua), so we can
-# spawn a plain alacritty here — no [workspace …] exec prefix / nested quoting.
+# class "scratchpad" -> workspace special:scratch, in hyprland.lua), so we spawn
+# a plain alacritty here — no [workspace …] exec prefix / nested quoting.
 #
-# MULTI-MONITOR GUARD: this box has a tiny Xeneon Edge (HDMI-A-2, only 720px
-# tall). Hyprland can auto-bind a special workspace to it, and center-ing a
-# 1500px window on a 720px screen shoves it off the bottom. So once it's shown:
-# focus it, relocate off any monitor too short to hold the window (-> DP-2), and
-# centre it. It follows focus across the two 4K panels but never strands on Edge.
+# FOLLOW_MOUSE: input:follow_mouse=1, so `togglespecialworkspace` acts on the
+# monitor the MOUSE is over — not keyboard focus. That makes a naive toggle
+# unreliable: with the pointer on the other screen it would re-summon the
+# scratchpad to the pointer instead of hiding it. So to HIDE we warp the cursor
+# onto the scratchpad's monitor, toggle, then restore the cursor.
 #
-# HYPRLAND DISPATCH NOTE: this Hyprland is Lua-configured, so `hyprctl dispatch
-# <name>` is parsed AS Lua and fails. Dispatch goes through the eval wrapper:
-#   hyprctl eval 'hl.dispatch(hl.dsp.<path>({ … }))'
+# MULTI-MONITOR GUARD: the tiny Xeneon Edge (HDMI-A-2) is only 720px tall;
+# centring a 1500px window there shoves it off-screen. On show we relocate off
+# any monitor too short for the window (-> DP-2) and centre it. Net: it follows
+# focus across the two 4K panels but never strands on the Edge.
+#
+# HYPRLAND DISPATCH NOTE: Lua-configured, so `hyprctl dispatch <name>` is parsed
+# AS Lua and fails. Dispatch goes through:  hyprctl eval 'hl.dispatch(…)'
 set -euo pipefail
 
-RIGHT_MON="DP-2"   # primary 4K panel; the relocate target — never the Xeneon Edge
+RIGHT_MON="DP-2"   # relocate target for the height guard — never the Xeneon Edge
 MIN_H=1600         # a monitor shorter than this can't hold the ~1500px window
 
 show='hl.dispatch(hl.dsp.workspace.toggle_special({ name = "scratch" }))'
-exists()      { hyprctl clients  -j | jq -e '.[]|select(.class=="scratchpad")' >/dev/null 2>&1; }
-special_mon() { hyprctl monitors -j | jq -r '.[]|select(.specialWorkspace.name=="special:scratch")|.name'; }
-special_h()   { hyprctl monitors -j | jq -r '.[]|select(.specialWorkspace.name=="special:scratch")|.height'; }
+exists()    { hyprctl clients  -j | jq -e '.[]|select(.class=="scratchpad")' >/dev/null 2>&1; }
+vis_mon()   { hyprctl monitors -j | jq -r '.[]|select(.specialWorkspace.name=="special:scratch")|.name'; }
+special_h() { hyprctl monitors -j | jq -r '.[]|select(.specialWorkspace.name=="special:scratch")|.height'; }
 
-if exists; then
-  # already alive -> just toggle its visibility
+if exists && [ -n "$(vis_mon)" ]; then
+  # ── VISIBLE -> hide it (deterministically, despite follow_mouse) ────────────
+  m=$(vis_mon)
+  pos=$(hyprctl cursorpos); ox=${pos%%,*}; oy=${pos##*,}; ox=${ox// /}; oy=${oy// /}
+  read -r mx my mw mh < <(hyprctl monitors -j | jq -r --arg m "$m" \
+    '.[]|select(.name==$m)|"\(.x) \(.y) \(.width) \(.height)"')
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((mx + mw / 2)), y = $((my + mh / 2)) }))" >/dev/null 2>&1
   hyprctl eval "$show" >/dev/null 2>&1
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $ox, y = $oy }))" >/dev/null 2>&1
 else
-  # not running -> spawn fresh (the window rule parks it on special:scratch),
-  # wait until it maps, then reveal it. Interactive zsh so ~/.local/bin is on
-  # PATH for claude; if claude exits you drop to a reusable shell.
-  setsid -f alacritty --class scratchpad \
-    --config-file ~/.config/alacritty/scratchpad.toml \
-    -e zsh -ic 'claude; exec zsh' >/dev/null 2>&1
-  for _ in $(seq 1 200); do exists && break; done   # bounded poll; hyprctl latency paces it
-  hyprctl eval "$show" >/dev/null 2>&1
-fi
-
-# If it's now VISIBLE, keep it usable: focus it, relocate off any too-short
-# monitor (the Edge), and centre it. (When we just HID it, special_mon is empty
-# and this whole block is skipped.)
-if [ -n "$(special_mon)" ]; then
-  addr=$(hyprctl clients -j | jq -r '.[]|select(.class=="scratchpad")|.address')
-  [ -n "$addr" ] && hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"address:$addr\" }))" >/dev/null 2>&1
-  h=$(special_h)
-  if [ -n "$h" ] && [ "$h" -lt "$MIN_H" ]; then
-    hyprctl eval "hl.dispatch(hl.dsp.workspace.move({ monitor = \"$RIGHT_MON\" }))" >/dev/null 2>&1
+  # ── HIDDEN (or not spawned) -> spawn if needed, show, centre, Edge-guard ─────
+  if ! exists; then
+    setsid -f alacritty --class scratchpad \
+      --config-file ~/.config/alacritty/scratchpad.toml \
+      -e zsh -ic 'claude; exec zsh' >/dev/null 2>&1
+    for _ in $(seq 1 200); do exists && break; done   # bounded poll; hyprctl latency paces it
   fi
-  hyprctl eval 'hl.dispatch(hl.dsp.window.center())' >/dev/null 2>&1
+  hyprctl eval "$show" >/dev/null 2>&1
+  if [ -n "$(vis_mon)" ]; then
+    addr=$(hyprctl clients -j | jq -r '.[]|select(.class=="scratchpad")|.address')
+    [ -n "$addr" ] && hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"address:$addr\" }))" >/dev/null 2>&1
+    h=$(special_h)
+    if [ -n "$h" ] && [ "$h" -lt "$MIN_H" ]; then
+      hyprctl eval "hl.dispatch(hl.dsp.workspace.move({ monitor = \"$RIGHT_MON\" }))" >/dev/null 2>&1
+    fi
+    hyprctl eval 'hl.dispatch(hl.dsp.window.center())' >/dev/null 2>&1
+  fi
 fi
