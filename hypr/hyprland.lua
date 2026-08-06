@@ -83,7 +83,7 @@ hl.on("hyprland.start", function()
     -- Claude scratchpad: a drop-down terminal parked on a special workspace,
     -- toggled with SUPER+C. Runs claude via an interactive zsh (so ~/.local/bin
     -- is on PATH); if claude exits you drop to a reusable shell.
-    hl.exec_cmd("[workspace special:scratch silent] alacritty --class scratchpad -e zsh -ic 'claude; exec zsh'")
+    hl.exec_cmd("[workspace special:scratch silent] alacritty --class scratchpad --config-file ~/.config/alacritty/scratchpad.toml -e zsh -ic 'claude; exec zsh'")
     -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
     -- (retired walker --gapplication-service prewarm — SUPER+Space now uses hypr-switch/fuzzel)
     -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
@@ -309,7 +309,10 @@ hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, wo
 hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
 
 -- Claude scratchpad terminal: float it centred as a drop-down (special:scratch, SUPER+C)
-hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, float = true, size = { 2400, 1500 }, center = true })
+-- with a distinct look — mauve->pink border + extra rounding (bg tint + translucency
+-- come from ~/.dotfiles/alacritty/scratchpad.toml) — so it never reads as a tiled term.
+hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, float = true, size = { 2400, 1500 }, center = true,
+  border_size = 4, border_color = { colors = { "rgba(cba6f7ff)", "rgba(f5c2e7ff)" }, angle = 45 }, rounding = 20 })
 
 -- Sensible minimum size for floating popups (oauth logins etc.)
 hl.window_rule({ name = "float-minsize", match = { float = true }, min_size = { 300, 200 } })
