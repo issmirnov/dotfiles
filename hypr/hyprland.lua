@@ -48,7 +48,7 @@ end
 hl.workspace_rule({ workspace = "name:slack",    monitor = rightMon })
 hl.workspace_rule({ workspace = "name:telegram", monitor = rightMon })
 hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
-hl.workspace_rule({ workspace = "name:osrs",     monitor = rightMon })
+-- hl.workspace_rule({ workspace = "name:osrs",     monitor = rightMon }) # disabled so that we can move it to the xeneon edge as needed
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
 
