@@ -149,8 +149,8 @@ qmldir were unnecessary). Beyond the v1 MVP:
   ALL ~17 calendars into **two center chips** — `● happening now · Nm left` (mint) and
   `◷ next event <countdown>` (yellow<15m/red<5m) — plus swaync alerts at 10/5/1 min.
   Both self-hide when empty; `cal-next current` vs `cal-next` (mode = `$1`); cache is
-  atomic + `flock`-serialized (3 callers). **LIVE.** Auth chain (all required): gws
-  `calendar.readonly` scope → delete stale
+  atomic + `flock`-serialized (3 callers), refreshed from the server every **15 min**.
+  **LIVE.** Auth chain (all required): gws `calendar.readonly` scope → delete stale
   `token_cache.json` → `serviceusage.serviceUsageConsumer` IAM on the OAuth client's
   project. Creds stay in `~/.config/gws`, **out of the dotfiles**.
 - **Audio popup:** left-click the volume chip opens a **draggable slider `PopupWindow`**
@@ -162,7 +162,10 @@ on a `color:"transparent"` window blanks the whole bar (this was the "black bar"
 grim/dmabuf capture limit; grim captures fine). Hot-reload through the dir-symlink is
 flaky → **relaunch** `qs` to apply. `DesktopEntries.heuristicLookup` is a no-op here →
 icons resolve by `hasThemeIcon(class)` + `/usr/share/pixmaps/<class>` + an `overrideIcon`
-map. Full living notes in the `project_hexane_quickshell_bar` memory.
+map. **⚠️ qs launches blocklets with a minimal `PATH` (`/usr/local/bin:/usr/bin`)** — any
+script that shells out to a `~/.local/bin` tool (e.g. `gws`) must set its own `PATH` or the
+call silently fails and the cache freezes (this exact bug showed hours-stale calendar events
+while the fetch quietly no-op'd). Full living notes in the hexane bar KB doc under `~/docs`.
 
 ### Still open
 - **Codex `CX ?`** — needs a user `codex` re-auth (access_token expired = 401).

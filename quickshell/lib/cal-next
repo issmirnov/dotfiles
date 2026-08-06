@@ -12,11 +12,15 @@
 # Needs gws authed with calendar.readonly:  gws auth login --services gmail,calendar --readonly
 # Credentials live in ~/.config/gws (NOT in the dotfiles).
 set -u
+# ⚠️ qs launches blocklets with a minimal PATH (/usr/local/bin:/usr/bin) that does NOT
+# include ~/.local/bin where `gws` lives. Without this, the fetch silently fails and the
+# cache freezes → the bar shows hours-stale events. Make gws resolvable whoever calls us.
+export PATH="$HOME/.local/bin:$PATH"
 MODE="${1:-next}"
 CACHE_DIR="${CAL_CACHE_DIR:-$HOME/.cache/quickshell-cal}"
 CACHE="$CACHE_DIR/events.json"
 LOCK="$CACHE_DIR/.refresh.lock"
-REFRESH_TTL="${CAL_REFRESH_TTL:-180}"
+REFRESH_TTL="${CAL_REFRESH_TTL:-900}"   # 15 min — calendar rarely changes and each refresh is ~17 API calls
 LOOKAHEAD_H="${CAL_LOOKAHEAD_H:-24}"
 mkdir -p "$CACHE_DIR"
 now=$(date +%s)
