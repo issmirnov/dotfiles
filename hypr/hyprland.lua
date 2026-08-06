@@ -52,6 +52,10 @@ hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
 hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
+-- Pin the SUPER+C scratchpad's special workspace to DP-2 so it can never auto-bind
+-- to the tiny Xeneon Edge (HDMI-A-2, only 720px tall) — which is what pushed the
+-- centred window way off the bottom. center=true then centres it correctly on DP-2.
+hl.workspace_rule({ workspace = "special:scratch", monitor = rightMon })
 
 ------------------------------------------------------------------------
 -- ENVIRONMENT
@@ -80,10 +84,11 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("telegram-desktop")
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
-    -- Claude scratchpad: a drop-down terminal parked on a special workspace,
-    -- toggled with SUPER+C. Runs claude via an interactive zsh (so ~/.local/bin
-    -- is on PATH); if claude exits you drop to a reusable shell.
-    hl.exec_cmd("[workspace special:scratch silent] alacritty --class scratchpad --config-file ~/.config/alacritty/scratchpad.toml -e zsh -ic 'claude; exec zsh'")
+    -- Claude scratchpad (SUPER+C): a drop-down terminal on special:scratch.
+    -- Spawned on-demand by ~/.dotfiles/hypr/scripts/hypr-scratch (not at boot),
+    -- so it's always created FRESH with the current float/centre/border window
+    -- rules — a boot-time window would keep stale styling after any config edit,
+    -- which is exactly what made it "look like just another terminal".
     -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
     -- (retired walker --gapplication-service prewarm — SUPER+Space now uses hypr-switch/fuzzel)
     -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
@@ -238,7 +243,7 @@ hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + L",         hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
-hl.bind(mainMod .. " + C",         hl.dsp.workspace.toggle_special({ name = "scratch" }))  -- claude scratchpad (SUPER+C = Claude)
+hl.bind(mainMod .. " + C",         hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-scratch"))  -- claude scratchpad (SUPER+C = Claude)
 
 -- clipboard picker + screenshots
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
@@ -308,11 +313,15 @@ hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, 
 hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
 hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
 
--- Claude scratchpad terminal: float it centred as a drop-down (special:scratch, SUPER+C)
--- with a distinct look — mauve->pink border + extra rounding (bg tint + translucency
--- come from ~/.dotfiles/alacritty/scratchpad.toml) — so it never reads as a tiled term.
-hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, float = true, size = { 2400, 1500 }, center = true,
-  border_size = 4, border_color = { colors = { "rgba(cba6f7ff)", "rgba(f5c2e7ff)" }, angle = 45 }, rounding = 20 })
+-- Claude scratchpad terminal (special:scratch, SUPER+C). One rule does it all:
+--   • workspace  -> routes the window onto the special workspace (so hypr-scratch
+--                   can spawn a plain alacritty; no [workspace …] exec prefix)
+--   • float+size+center -> a centred drop-down, never a tiled pane
+--   • thick PURPLE border + rounding -> unmistakably distinct from a normal term
+-- (deep-purple bg + translucency come from ~/.dotfiles/alacritty/scratchpad.toml)
+hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, workspace = "special:scratch",
+  float = true, size = { 2400, 1500 }, center = true,
+  border_size = 6, border_color = { colors = { "rgba(cba6f7ff)", "rgba(8839efff)" }, angle = 45 }, rounding = 20 })
 
 -- Sensible minimum size for floating popups (oauth logins etc.)
 hl.window_rule({ name = "float-minsize", match = { float = true }, min_size = { 300, 200 } })

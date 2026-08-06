@@ -122,4 +122,51 @@ Row {
             }
         }
     }
+
+    // Special-workspace badge (the SUPER+C Claude scratchpad). A monitor's
+    // special workspace is a SEPARATE overlay from its active workspace, so none
+    // of the pills above light up when it's showing — this surfaces the drop-down
+    // in the bar. Purple, to match the scratchpad's frame. Click hides it.
+    Rectangle {
+        id: special
+        readonly property var mon: root.hlMonitor
+        readonly property string specialName:
+            (mon && mon.lastIpcObject && mon.lastIpcObject.specialWorkspace)
+                ? String(mon.lastIpcObject.specialWorkspace.name || "") : ""
+        visible: specialName !== ""
+        height: Theme.chipHeight
+        width: specialRow.width + 16
+        radius: height / 2
+        color: "#cba6f7"                      // mauve — matches the scratchpad border
+
+        Row {
+            id: specialRow
+            anchors.centerIn: parent
+            spacing: 4
+            Text {
+                text: "◆ " + special.specialName.replace("special:", "")
+                color: "#241436"
+                font.pixelSize: Theme.fontSize
+                font.bold: true
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Quickshell.execDetached(["/home/vania/.dotfiles/hypr/scripts/hypr-scratch"])
+        }
+    }
+
+    // activespecial doesn't change the active workspace, so the monitor's cached
+    // ipc object can go stale — refresh it so the badge above tracks the toggle.
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            const n = event.name;
+            if (n === "activespecial" || n === "activespecialv2")
+                Hyprland.refreshMonitors();
+        }
+    }
 }

@@ -8,7 +8,7 @@
 import = ["~/.config/alacritty/alacritty.toml"]
 
 [colors.primary]
-background = "#241b2f"   # deep purple (base is #181818) — instantly recognisable
+background = "#2b1f42"   # deep purple (base is #181818) — instantly recognisable
 
 [window]
-opacity = 0.96           # subtle translucency so it reads as a floating overlay
+opacity = 0.94           # subtle translucency so it reads as a floating overlay
