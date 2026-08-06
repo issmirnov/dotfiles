@@ -68,6 +68,14 @@ refresh
 
 [ -s "$CACHE" ] || { [ "$MODE" = next ] && printf 'cal ?\ncal ?\n#888888\n'; exit 0; }
 
+# ---- staleness hint: if the cache hasn't refreshed in a while, the fetch is failing
+# (expired gws token, no network, etc.) — dim the chip and tag it `(stale)` so a frozen
+# countdown isn't mistaken for live data. Tunable via CAL_STALE_AFTER (default 2× TTL).
+STALE_AFTER="${CAL_STALE_AFTER:-$(( REFRESH_TTL * 2 ))}"
+cmt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
+sfx=""; scolor=""
+[ $(( now - cmt )) -gt "$STALE_AFTER" ] && { sfx=" (stale)"; scolor="#8a8a8a"; }
+
 # seconds -> "1h20m" / "25m" / "<1m"
 fmt() {
   local s=$1
@@ -91,9 +99,9 @@ if [ "$MODE" = current ]; then
 
   [ -z "$best_s" ] && { printf '\n\n'; exit 0; }                    # nothing now -> hide chip
   rem=$(( best_e - now ))
-  printf '● %s · %s left\n' "$(trunc "$best_s")" "$(fmt "$rem")"    # full_text
-  printf '%s left\n' "$(fmt "$rem")"                                # short_text
-  printf '#a2f0c8\n'                                                # mint = happening now
+  printf '● %s · %s left%s\n' "$(trunc "$best_s")" "$(fmt "$rem")" "$sfx"   # full_text
+  printf '%s left%s\n' "$(fmt "$rem")" "$sfx"                              # short_text
+  printf '%s\n' "${scolor:-#a2f0c8}"                                       # mint, or grey if stale
   exit 0
 fi
 
@@ -108,8 +116,9 @@ done < <(jq -r '.[]? | "\(.start)\t\(.summary)"' "$CACHE" 2>/dev/null)
 
 [ -z "$best_s" ] && { printf '\n\n'; exit 0; }                      # nothing upcoming -> hide
 rem=$(( best_e - now ))
-printf '◷ %s  %s\n' "$(trunc "$best_s")" "$(fmt "$rem")"            # full_text
-printf '%s\n' "$(fmt "$rem")"                                       # short_text
-if   [ "$rem" -le 300 ]; then printf '#FF6b6b\n'                    # <=5m  red
+printf '◷ %s  %s%s\n' "$(trunc "$best_s")" "$(fmt "$rem")" "$sfx"   # full_text
+printf '%s%s\n' "$(fmt "$rem")" "$sfx"                              # short_text
+if   [ -n "$scolor" ];   then printf '%s\n' "$scolor"              # stale -> grey
+elif [ "$rem" -le 300 ]; then printf '#FF6b6b\n'                    # <=5m  red
 elif [ "$rem" -le 900 ]; then printf '#FFD600\n'                    # <=15m yellow
 fi

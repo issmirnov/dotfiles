@@ -149,7 +149,8 @@ qmldir were unnecessary). Beyond the v1 MVP:
   ALL ~17 calendars into **two center chips** — `● happening now · Nm left` (mint) and
   `◷ next event <countdown>` (yellow<15m/red<5m) — plus swaync alerts at 10/5/1 min.
   Both self-hide when empty; `cal-next current` vs `cal-next` (mode = `$1`); cache is
-  atomic + `flock`-serialized (3 callers), refreshed from the server every **15 min**.
+  atomic + `flock`-serialized (3 callers), refreshed from the server every **15 min**
+  (chips grey out with a `(stale)` tag if a refresh hasn't landed in 2× that — `CAL_STALE_AFTER`).
   **LIVE.** Auth chain (all required): gws `calendar.readonly` scope → delete stale
   `token_cache.json` → `serviceusage.serviceUsageConsumer` IAM on the OAuth client's
   project. Creds stay in `~/.config/gws`, **out of the dotfiles**.
