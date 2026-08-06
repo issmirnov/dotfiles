@@ -52,10 +52,9 @@ hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
 hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
--- Pin the SUPER+C scratchpad's special workspace to DP-2 so it can never auto-bind
--- to the tiny Xeneon Edge (HDMI-A-2, only 720px tall) — which is what pushed the
--- centred window way off the bottom. center=true then centres it correctly on DP-2.
-hl.workspace_rule({ workspace = "special:scratch", monitor = rightMon })
+-- (No monitor pin for special:scratch — it follows the focused monitor like an
+-- i3 scratchpad. hypr-scratch re-centres it on show and bounces it off the tiny
+-- Xeneon Edge if it ever lands there, so it never needs pinning to one display.)
 
 ------------------------------------------------------------------------
 -- ENVIRONMENT

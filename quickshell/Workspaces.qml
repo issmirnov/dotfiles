@@ -15,7 +15,10 @@ Row {
 
     Repeater {
         model: Hyprland.workspaces.values
-            .filter(w => w.monitor === root.hlMonitor)
+            // Regular workspaces on this monitor only. Special workspaces (the
+            // SUPER+C scratchpad) are surfaced by the dedicated badge below — not
+            // as a normal pill — so exclude them here to avoid a duplicate label.
+            .filter(w => w.monitor === root.hlMonitor && !String(w.name).startsWith("special:"))
             // Sort by LABEL: numeric-labelled workspaces first (by value), then
             // any word-labelled one pushed to the end — including a renamed
             // numbered workspace (e.g. workspace "2" renamed to "pinley"), which
