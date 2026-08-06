@@ -52,9 +52,10 @@ hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
 hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
--- (No monitor pin for special:scratch — it follows the focused monitor like an
--- i3 scratchpad. hypr-scratch re-centres it on show and bounces it off the tiny
--- Xeneon Edge if it ever lands there, so it never needs pinning to one display.)
+-- Pin special:scratch to DP-2 so a freshly-spawned scratchpad is created on a
+-- real 4K panel, never auto-bound to the tiny 720px Xeneon Edge (the original
+-- "floats off the bottom" bug). After spawn it follows the mouse (hypr-scratch).
+hl.workspace_rule({ workspace = "special:scratch", monitor = rightMon })
 
 ------------------------------------------------------------------------
 -- ENVIRONMENT
