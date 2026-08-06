@@ -51,6 +51,7 @@ hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
 -- hl.workspace_rule({ workspace = "name:osrs",     monitor = rightMon }) # disabled so that we can move it to the xeneon edge as needed
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
+hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
 
 ------------------------------------------------------------------------
 -- ENVIRONMENT
@@ -79,6 +80,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("telegram-desktop")
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
+    -- Claude scratchpad: a drop-down terminal parked on a special workspace,
+    -- toggled with SUPER+C. Runs claude via an interactive zsh (so ~/.local/bin
+    -- is on PATH); if claude exits you drop to a reusable shell.
+    hl.exec_cmd("[workspace special:scratch silent] alacritty --class scratchpad -e zsh -ic 'claude; exec zsh'")
     -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
     -- (retired walker --gapplication-service prewarm — SUPER+Space now uses hypr-switch/fuzzel)
     -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
@@ -160,6 +165,8 @@ hl.config({
         follow_mouse  = 1,        -- was 1; changed for jetbrains historically
         mouse_refocus = true,
         sensitivity   = 0,
+        repeat_delay  = 280,     -- snappy key repeat (matches the old i3 `xset r rate 280 40`)
+        repeat_rate   = 40,
         touchpad = {
             natural_scroll = false,
         },
@@ -231,6 +238,7 @@ hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())
 hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + L",         hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
+hl.bind(mainMod .. " + C",         hl.dsp.workspace.toggle_special({ name = "scratch" }))  -- claude scratchpad (SUPER+C = Claude)
 
 -- clipboard picker + screenshots
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
@@ -262,6 +270,11 @@ end
 hl.bind(mainMod .. " + ALT + S", hl.dsp.focus({ workspace = "name:slack" }))
 hl.bind(mainMod .. " + ALT + T", hl.dsp.focus({ workspace = "name:telegram" }))
 hl.bind(mainMod .. " + ALT + R", hl.dsp.focus({ workspace = "name:osrs" }))
+hl.bind(mainMod .. " + ALT + O", hl.dsp.focus({ workspace = "name:obsidian" }))
+
+-- move the whole current workspace to the other monitor (i3 parity: mod+Shift+< / >)
+hl.bind(mainMod .. " + SHIFT + comma",  hl.dsp.workspace.move({ monitor = leftMon }))
+hl.bind(mainMod .. " + SHIFT + period", hl.dsp.workspace.move({ monitor = rightMon }))
 
 -- named workspaces via rofi (parity with i3's mod+Shift+a / mod+Shift+s):
 --   SUPER + SHIFT + A  -> rename the CURRENT workspace
@@ -293,6 +306,10 @@ hl.window_rule({ name = "discord-workspace", match = { class = "^(WebCord|discor
 hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-client-RuneLite)$" }, workspace = "name:osrs" })
 hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
 hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
+hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
+
+-- Claude scratchpad terminal: float it centred as a drop-down (special:scratch, SUPER+C)
+hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, float = true, size = { 2400, 1500 }, center = true })
 
 -- Sensible minimum size for floating popups (oauth logins etc.)
 hl.window_rule({ name = "float-minsize", match = { float = true }, min_size = { 300, 200 } })

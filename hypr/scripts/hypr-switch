@@ -43,6 +43,7 @@ apps=(
   $'Telegram\tTelegram\ttelegram'
   $'bolt\tBolt\tbolt'
   $'runelite\tOSRS\trunelite'
+  $'obsidian\tObsidian\tobsidian'
 )
 
 # ── build parallel actions[] / labels[] ─────────────────────────────────────
