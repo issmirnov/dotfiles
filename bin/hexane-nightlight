@@ -21,6 +21,7 @@ RAMP_MIN = 45
 STEP = 2
 MONITORS = ["DP7HGJ4", "6P7HGJ4"]    # DP-1, DP-2 (by DDC serial)
 STATE = os.path.expanduser("~/.cache/hexane-nightlight/last")
+OVERRIDE = os.path.expanduser("~/.cache/hexane-nightlight/override")
 
 
 def _julian(ts):        # unix seconds -> julian day
@@ -92,7 +93,47 @@ def _read_state():
 def _write_state(state):
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     with open(STATE, "w") as f:
-        json.dump(state, f)
+        f.write(json.dumps(state))
+
+
+def _read_override():
+    """The manual-override marker dict, or None if absent/corrupt."""
+    try:
+        with open(OVERRIDE) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) and "since" in d else None
+    except (OSError, ValueError):
+        return None
+
+
+def _clear_override():
+    try:
+        os.remove(OVERRIDE)
+    except OSError:
+        pass
+
+
+def _most_recent_sunrise(now, lat, lon):
+    """Sunrise bounding the current 'day': today's if now is past it, else yesterday's."""
+    sr_today, _ = sun_times(now.date(), lat, lon)
+    if now >= sr_today:
+        return sr_today
+    sr_yest, _ = sun_times(now.date() - timedelta(days=1), lat, lon)
+    return sr_yest
+
+
+def override_state(ovr, now, lat=LAT, lon=LON):
+    """'absent' | 'held' | 'expired'. A manual override is honored until the
+    first sunrise after it was set (daily re-arm)."""
+    if not ovr:
+        return "absent"
+    try:
+        since = datetime.fromisoformat(ovr["since"])
+    except (KeyError, TypeError, ValueError):
+        return "absent"
+    if since.tzinfo is None:
+        since = since.astimezone()
+    return "expired" if since < _most_recent_sunrise(now, lat, lon) else "held"
 
 
 def _set_monitor(sn, value):
@@ -136,20 +177,38 @@ def apply(t, dry=False):
     return wrote
 
 
+def run_tick(now, sr, ss):
+    """Timer-path decision. Honor a manual override (skip + blank the cache so a
+    later re-arm force-applies); re-arm an expired one; otherwise apply schedule.
+    Returns 'held' | 'rearm' | 'apply'."""
+    st = override_state(_read_override(), now)
+    if st == "held":
+        if _read_state():
+            _write_state({})
+        return "held"
+    if st == "expired":
+        _clear_override()
+    apply(target(now, sr, ss))
+    return "rearm" if st == "expired" else "apply"
+
+
 USAGE = 'usage: hexane-nightlight [--check | --simulate "YYYY-MM-DD HH:MM" | --dry-run]'
 
 
 def main(argv):
     now = datetime.now().astimezone()
     sr, ss = sun_times(now.date(), LAT, LON)
-    if not argv:                                    # the timer path: apply the current target
-        apply(target(now, sr, ss))
+    if not argv:                                    # the timer path
+        run_tick(now, sr, ss)
         return 0
     cmd = argv[0]
     if cmd == "--check":
         print(f"now     {now:%Y-%m-%d %H:%M %Z}")
         print(f"sunrise {sr:%H:%M}   sunset {ss:%H:%M}")
         print(f"target  {target(now, sr, ss)}%")
+        ovr = _read_override()
+        print(f"override {override_state(ovr, now)}"
+              + (f"  since {ovr['since']}" if ovr else ""))
         for sn in MONITORS:
             try:
                 print(f"  {sn}: actual {_get_monitor(sn)}%")
