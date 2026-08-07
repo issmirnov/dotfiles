@@ -47,7 +47,7 @@ Singleton {
         watchChanges: true
         printErrors: false           // an absent marker is the normal ARMED state, not an error
         onFileChanged: reload()
-        onLoaded: root.active = (("" + view.text).indexOf("since") !== -1)
+        onLoaded: root.active = (("" + view.text()).indexOf("since") !== -1)
         onLoadFailed: root.active = false
     }
 }

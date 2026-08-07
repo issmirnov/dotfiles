@@ -70,7 +70,7 @@ Rectangle {
         onLoaded: {
             if (!bri._lastSeeded) { bri._lastSeeded = true; return; }   // ignore initial load
             if (AutoDim.active || bri.dragging) return;                 // HELD or dragging → keep our value
-            const m = ("" + lastFile.text).match(/"DP7HGJ4"\s*:\s*(\d+)/);
+            const m = ("" + lastFile.text()).match(/"DP7HGJ4"\s*:\s*(\d+)/);
             if (m) bri._follow(parseInt(m[1]));
         }
     }
@@ -121,11 +121,26 @@ Rectangle {
         visible: false
         color: "transparent"
 
+        // Click-away dismiss via Hyprland's focus grab. Two gotchas, both handled here:
+        //  1) HyprlandFocusGrab flips its OWN `active` to false when the grab is dismissed,
+        //     which permanently breaks a declarative `active: popup.visible` binding (it
+        //     never re-arms on the next open). So drive `active` imperatively instead.
+        //  2) Arming the grab in the same tick the popup becomes visible is too early — the
+        //     surface isn't mapped yet, the grab never really engages, and `cleared` never
+        //     fires. Arm it a beat later (grabArm).
         HyprlandFocusGrab {
+            id: grab
             windows: [popup]
-            active: popup.visible
             onCleared: popup.visible = false
         }
+        Connections {
+            target: popup
+            function onVisibleChanged() {
+                if (popup.visible) grabArm.restart();
+                else { grabArm.stop(); grab.active = false; }   // don't arm a grab on a closed popup
+            }
+        }
+        Timer { id: grabArm; interval: 150; onTriggered: grab.active = popup.visible }
 
         Rectangle {
             anchors.fill: parent

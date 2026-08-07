@@ -62,12 +62,23 @@ Rectangle {
         visible: false
         color: "transparent"
 
-        // dismiss when the user clicks anywhere outside the popup (Hyprland)
+        // dismiss when the user clicks anywhere outside the popup (Hyprland). NOTE: drive
+        // `active` imperatively AND arm a beat after the popup maps — a declarative
+        // `active: popup.visible` binding gets clobbered when the grab self-clears, and
+        // arming in the same tick the popup opens is too early for `cleared` to ever fire.
         HyprlandFocusGrab {
+            id: grab
             windows: [popup]
-            active: popup.visible
             onCleared: popup.visible = false
         }
+        Connections {
+            target: popup
+            function onVisibleChanged() {
+                if (popup.visible) grabArm.restart();
+                else { grabArm.stop(); grab.active = false; }
+            }
+        }
+        Timer { id: grabArm; interval: 150; onTriggered: grab.active = popup.visible }
 
         Rectangle {
             anchors.fill: parent
