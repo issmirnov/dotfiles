@@ -93,7 +93,7 @@ Rename the **current** workspace via a rofi prompt (`hl.dsp.workspace.rename`).
 
 ### `hypr-move` — SUPER+SHIFT+S
 Move the **focused window** to a chosen/typed workspace (existing ones are
-offered; type a new name to create-and-follow).
+offered; type a new name to create-and-move). Always silent — focus stays put.
 
 ## Related
 

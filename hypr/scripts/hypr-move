@@ -8,11 +8,9 @@
 # type a new name to create-and-move in one step.
 #   - a purely numeric entry -> that numbered workspace (e.g. 3)
 #   - anything else          -> a NAMED workspace
-# Follow behaviour:
-#   - target already exists -> move silently, stay put (i3-move behaviour;
-#                              same as the SUPER+SHIFT+[0-9] binds)
-#   - target is NEW         -> create it and FOLLOW the window there, so the
-#                              freshly-made workspace isn't left off-screen
+# Always moves silently and stays put (i3-move behaviour; same as the
+# SUPER+SHIFT+[0-9] binds). A brand-new workspace is created and the window
+# sent there without following, so focus never leaves the current workspace.
 #
 # Lua-configured Hyprland: dispatch via `hyprctl eval 'hl.dispatch(hl.dsp...)'`
 # rather than `hyprctl dispatch ...` (see hypr-rename for the why).
@@ -25,14 +23,6 @@ name=$(printf '%s' "$wsjson" \
         | rofi -dmenu -i -p "Move window to workspace: ")
 [ $? -eq 0 ] && [ -n "$name" ] || exit 0
 
-# Does a workspace with this name already exist? (numbered workspaces report
-# .name == "3" etc, so a name match covers both numbered and named targets.)
-if [ "$(printf '%s' "$wsjson" | jq -r --arg n "$name" 'any(.[]; .name == $n)')" = "true" ]; then
-    follow=false        # exists -> i3-style silent move, stay put
-else
-    follow=true         # new    -> create it and switch there
-fi
-
 if [[ "$name" =~ ^[0-9]+$ ]]; then
     ws="$name"                                    # numbered workspace: bare number
 else
@@ -41,4 +31,5 @@ else
                                                   # else Hyprland errors "Invalid workspace"
                                                   # when the target doesn't exist yet
 fi
-hyprctl eval "hl.dispatch(hl.dsp.window.move({ workspace = $ws, follow = $follow }))"
+# Always a silent move — never follow, even for a freshly created workspace.
+hyprctl eval "hl.dispatch(hl.dsp.window.move({ workspace = $ws, follow = false }))"
