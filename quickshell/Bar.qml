@@ -64,6 +64,7 @@ PanelWindow {
             Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "claude:claude_isgmirnov"; interval: 60000 }
             Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "codex"; interval: 60000 }
             Brightness {}
+            AutoDimToggle {}
             Audio {}
             Stats {}
             IdleToggle { barWindow: bar }
