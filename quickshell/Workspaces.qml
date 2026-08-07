@@ -92,6 +92,8 @@ Row {
                                 return "file:///usr/share/pixmaps/Zoom.png";
                             if (c.indexOf("nemo") !== -1)                 // Nemo file manager (Adwaita theme has no 'nemo' icon; .desktop uses system-file-manager)
                                 return "file:///usr/share/icons/hicolor/scalable/apps/nemo.svg";
+                            if (c.indexOf("foot") === 0)                  // foot terminal (class 'foot'/'footclient'; icon only in hicolor, not the active Adwaita theme nor /usr/share/pixmaps, so it isn't resolved natively the way Alacritty is)
+                                return "file:///usr/share/icons/hicolor/scalable/apps/foot.svg";
                             return "";
                         }
                         readonly property var entry: cls ? DesktopEntries.heuristicLookup(cls) : null
