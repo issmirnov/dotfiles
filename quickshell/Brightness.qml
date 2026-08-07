@@ -19,6 +19,7 @@ Rectangle {
     property int applied: -1      // last value written to the panels
     property int _writing: -1     // value of the in-flight write
     property bool dragging: false
+    property bool _lastSeeded: false   // ignore the FileView's initial load; startup getvcp is the seed
 
     height: Theme.chipHeight
     width: t.width + 16
@@ -59,7 +60,30 @@ Rectangle {
             }
         }
     }
+    // follow nightlight's ramps live: when ARMED and not dragging, adopt the value it
+    // wrote to DP-1. Event-driven (inotify) — no polling. HELD → ignore (user's value wins).
+    FileView {
+        id: lastFile
+        path: "/home/vania/.cache/hexane-nightlight/last"
+        watchChanges: true
+        onFileChanged: reload()
+        onLoaded: {
+            if (!bri._lastSeeded) { bri._lastSeeded = true; return; }   // ignore initial load
+            if (AutoDim.active || bri.dragging) return;                 // HELD or dragging → keep our value
+            const m = ("" + lastFile.text).match(/"DP7HGJ4"\s*:\s*(\d+)/);
+            if (m) bri._follow(parseInt(m[1]));
+        }
+    }
     Component.onCompleted: readProc.running = true
+
+    // when auto-dim re-arms (marker cleared by the toggle or nightlight), re-read the
+    // panel so the slider snaps to whatever nightlight just applied — race-free.
+    Connections {
+        target: AutoDim
+        function onActiveChanged() {
+            if (!AutoDim.active) readProc.running = true;
+        }
+    }
 
     function _kick() {
         if (writeProc.running || bri.value === bri.applied) return;
@@ -70,11 +94,16 @@ Rectangle {
         bri.value = Math.max(0, Math.min(100, Math.round(v)));
         bri._kick();
     }
+    // adopt an external (nightlight) value without writing DDC or marking an override
+    function _follow(v) {
+        bri.value = Math.max(0, Math.min(100, v));
+        bri.applied = bri.value;
+    }
 
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
-        onWheel: (wheel) => bri.set(bri.value + (wheel.angleDelta.y > 0 ? 5 : -5))
+        onWheel: (wheel) => { bri.set(bri.value + (wheel.angleDelta.y > 0 ? 5 : -5)); AutoDim.pause(bri.value); }
         onClicked: {
             if (!popup.visible) readProc.running = true;   // refresh to truth on open
             popup.visible = !popup.visible;
@@ -160,7 +189,7 @@ Rectangle {
                     MouseArea {
                         anchors.fill: parent
                         function applyAt(mx) { bri.set(mx / width * 100); }
-                        onPressed: (m) => { bri.dragging = true; applyAt(m.x); }
+                        onPressed: (m) => { bri.dragging = true; applyAt(m.x); AutoDim.pause(bri.value); }
                         onPositionChanged: (m) => { if (pressed) applyAt(m.x); }
                         onReleased: { bri.dragging = false; bri._kick(); }
                     }
