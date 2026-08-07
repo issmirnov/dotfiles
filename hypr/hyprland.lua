@@ -7,7 +7,7 @@
 ------------------------------------------------------------------------
 -- PROGRAMS
 ------------------------------------------------------------------------
-local terminal    = "alacritty"
+local terminal    = "foot"  -- default terminal (SUPER+Return + boot); was alacritty. Scratchpad (SUPER+C) & cliphist picker stay alacritty.
 -- GDK_DPI_SCALE enlarges nemo's fonts (~40%) at 4K scale=1 without touching other
 -- GTK apps or global scaling. Fonts only; icons/layout unchanged. Tune the number
 -- (1.25 = subtler, 1.6 = bigger). NOTE: nemo is single-instance, so close any open
