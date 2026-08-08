@@ -5,13 +5,18 @@ import QtQuick
 
 // Per-monitor workspace pills: number + icons of the windows on that workspace.
 // Click switches to the workspace via HyprlandWorkspace.activate() (correct on Lua Hyprland).
-Row {
+Flow {
     id: root
     property var barScreen
     readonly property var hlMonitor: barScreen ? Hyprland.monitorFor(barScreen) : null
 
-    height: Theme.chipHeight
-    spacing: Theme.gap
+    // Two decks tall; pills wrap top-row-first. Width budget stops short of the
+    // centered clock (top) / calendar (bottom) so pills never slide under them —
+    // constrained by the WIDER centered cluster (the calendar). TUNE `wsBudget`.
+    property int wsBudget: Math.max(220, (parent ? parent.width : 1200) / 2 - 420)
+    height: Theme.barHeight
+    width: wsBudget
+    spacing: 0            // vertical row-gap = deck-cell padding only; horizontal pill gap baked into cell width below
 
     Repeater {
         model: Hyprland.workspaces.values
@@ -33,11 +38,17 @@ Row {
                 return b.id - a.id;
             })
 
-        Rectangle {
-            id: pill
+        Item {
+            id: cell
             required property var modelData
-            readonly property var ws: modelData
+            implicitWidth: pill.width + Theme.gap   // trailing gap = horizontal pill spacing (Flow spacing is 0)
+            height: Theme.deckHeight            // deck-tall band; pill vCentered → sits on the deck center
+
+            Rectangle {
+            id: pill
+            readonly property var ws: cell.modelData
             readonly property bool focused: ws.focused
+            anchors.verticalCenter: parent.verticalCenter
 
             height: Theme.chipHeight
             width: inner.width + 16
@@ -126,6 +137,7 @@ Row {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: pill.ws.activate()
+            }
             }
         }
     }

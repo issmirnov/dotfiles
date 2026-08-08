@@ -38,7 +38,8 @@ Singleton {
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
 
     // --- metrics ---
-    readonly property int barHeight:  46
+    readonly property int deckHeight: chipHeight + 8          // pill + 4px pad each side (=40); ↑ this to loosen the inter-row gap, ↓ to tighten
+    readonly property int barHeight:  deckHeight * 2          // two decks touching, no middle gap (=80, was 90)
     readonly property int barRadius:  22
     readonly property int chipRadius: 12
     readonly property int chipHeight: 32
