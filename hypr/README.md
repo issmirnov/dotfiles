@@ -9,6 +9,111 @@ Hyprland is configured in **Lua** (not the deprecated `hyprlang` `.conf` format)
 | `hyprlock.conf` | Lock screen (still hyprlang `.conf` — hyprlock reads its own file). |
 | `hypridle.conf` | Idle → lock (5 min) / DPMS off (10 min). Still hyprlang `.conf`. |
 | `scripts/` | Helper scripts bound to keys (see below). |
+| `hyprsunset.conf` | Blue-light filter profiles (day 4500K / night 3200K). Read by `hyprsunset`. |
+| `xdph.conf` | `xdg-desktop-portal-hyprland` config (screencast). |
+
+## 📦 Provisioning a new box — required packages & setup
+
+Everything below is what this setup **actually** touches, verified against
+`hyprland.lua` (autostart + keybinds) and `scripts/`. Install these and the config
+comes up as expected.
+
+### Official repo — `sudo pacman -S …`
+
+**Compositor & session**
+
+| Package | Why |
+|---|---|
+| `hyprland` | Compositor. Session file `/usr/share/wayland-sessions/hyprland.desktop`. |
+| `hyprlock` | Lock screen — `hyprlock.conf` (SUPER+L, hypridle). |
+| `hypridle` | Idle → lock / DPMS — `hypridle.conf`. |
+| `hyprsunset` | Blue-light filter — `hyprsunset.conf`. **Replaced wlsunset** (Aug 2026). |
+| `xdg-desktop-portal` + `xdg-desktop-portal-hyprland` + `xdg-desktop-portal-gtk` | Screencast (Chrome/Meet) + file pickers. ⚠️ Portals restart **first** at boot — see the env-race note above line 87 in `hyprland.lua`. |
+
+**Shell — bar / wallpaper / launcher / notifications**
+
+| Package | Why |
+|---|---|
+| `quickshell` | Status bar (default; `qs`). |
+| `waybar` | Fallback bar (commented autostart). |
+| `swaybg` | Per-monitor wallpapers (hyprpaper's parser was dead → swaybg). |
+| `fuzzel` | Wayland-native launcher — `hypr-switch` (SUPER+Space). |
+| `rofi` | Text prompts for `hypr-rename` / `hypr-move` (SUPER+SHIFT+A/S). |
+| `dunst` | Notifications (grimblast `--notify`, etc.). |
+
+**Clipboard / screenshots / scripting**
+
+| Package | Why |
+|---|---|
+| `cliphist` + `wl-clipboard` + `fzf` | Clipboard history: `wl-paste --watch cliphist store`; picker = SUPER+SHIFT+P (alacritty + fzf). |
+| `jq` | `hyprctl -j` parsing throughout `scripts/`. |
+
+**Terminals**
+
+| Package | Why |
+|---|---|
+| `foot` | Default terminal (SUPER+Return + boot). |
+| `alacritty` | Scratchpad (SUPER+C) + cliphist picker + fallback. |
+
+**Hardware / audio**
+
+| Package | Why |
+|---|---|
+| `ddcutil` | DDC/CI backlight (`hexane-nightlight` dimming). Needs `i2c-dev` module + user in `i2c` group. |
+| `pipewire` + `pipewire-pulse` + `wireplumber` | Audio + screenshare (`WebRTCPipeWireCapturer`). |
+
+**Trays / file manager / fonts**
+
+| Package | Why |
+|---|---|
+| `network-manager-applet` | `nm-applet --indicator` (network tray). |
+| `blueman` | `blueman-applet` (bluetooth tray). |
+| `nemo` | File manager (SUPER+X, via `env GDK_DPI_SCALE=1.4 nemo`). ⚠️ `open .`/xdg-open bypass that scale — needs a `nemo.desktop` override (see the **nemo font scaling** gotcha below). |
+| `ttf-jetbrains-mono-nerd` | UI + terminal font (JetBrainsMono Nerd Font). |
+| `otf-font-awesome` | Font Awesome **7** glyphs (bar, dunst). ⚠️ restart procs after font changes (fontconfig). |
+
+### AUR — `yay -S …`
+
+| Package | Why |
+|---|---|
+| `google-chrome` | Browser (`google-chrome-stable`, Wayland/ozone flags in `hyprland.lua`). |
+| `webcord` | Discord client (Electron; avoids the segfault a plain client hits here). |
+| `grimblast-git` | Screenshots (XF86Tools binds). `grimshot` also installed as an alt. |
+| `noisetorch` | RNN mic noise suppression. |
+| `slack-desktop`, `spotify` | Apps. (Telegram = official `telegram-desktop`.) |
+
+### hyprpm plugin — `hyprbars` (window title bars)
+
+Compiles against Hyprland headers, so it needs sudo and a rebuild on every upgrade
+(also documented at `hyprland.lua:368`):
+
+```sh
+hyprpm update
+hyprpm add https://github.com/hyprwm/hyprland-plugins
+hyprpm enable hyprbars
+hyprpm reload -n
+# after EVERY hyprland upgrade (ABI break → plugin silently vanishes):
+hyprpm update && hyprpm reload -n
+```
+
+### Custom `systemd --user` units (`~/.dotfiles/systemd/` → symlink + `enable --now`)
+
+| Unit | Purpose |
+|---|---|
+| `xeneon-edge.service` | Xeneon Edge dashboard (auto-detects HDMI-A-2, fullscreens). |
+| `mx-mouse-watchdog.service` | MX Vertical BT auto-reconnect. |
+| `hexane-nightlight.service` + `.timer` | Sun-tracked backlight **dimming** (ddcutil) — orthogonal to hyprsunset's **colour**. |
+| `xdg-desktop-portal-gtk.service.d/` | Drop-in override for the GTK portal. |
+
+### The Lua config is native — no loader needed
+
+Native Lua config landed in **Hyprland 0.55** (mid-2026): the compositor embeds a
+Lua 5.4 runtime and, **if `~/.config/hypr/hyprland.lua` exists, loads it instead of
+`hyprland.conf`** (checked once at startup — restart to switch formats). The `hl.*`
+API is built in, so there's nothing extra to install: a stock `hyprland` package
+(≥ 0.55; this box is 0.56.1) picks up `hyprland.lua` on its own. Legacy
+`hyprlang`/`hyprland.conf` is deprecated but still works for a release or two.
+Ref: <https://hypr.land/news/26_lua>
 
 ## ⚠️ The Lua-config runtime gotcha
 
@@ -35,6 +140,48 @@ hyprctl eval 'hl.dispatch(hl.dsp.cursor.move({ x = 5760, y = 1128 }))'
 
 `hyprctl reload` applies `hyprland.lua` changes. The `scripts/` are re-read on
 every invocation, so they need no reload.
+
+## ⚠️ nemo font scaling — `open .` vs the keybind
+
+nemo's UI is tiny at 4K / `scale = 1`, so it's launched with **`env GDK_DPI_SCALE=1.4
+nemo`** (fonts ~40 % bigger; icons/layout unchanged — tune `1.25` subtler / `1.6`
+bigger). That wrapper lives only in the **keybind**: `local fileManager` in
+`hyprland.lua` (SUPER+X).
+
+**The trap:** `xdg-open` / `open .` (alias `open`→`xdg-open`) / any app that opens a
+folder goes through **`nemo.desktop`**, whose stock `Exec=nemo %U` has *no* scale → it
+renders small. And nemo is **single-instance**, so whichever launcher starts the
+primary process wins for the entire session — open one folder from the terminal and
+everything is small "again", even if you later use the keybind.
+
+**Fix — a user desktop-entry override** (⚠️ *not* tracked in this repo; it's a
+`~/.local/share` file, so a freshly-provisioned box will hit the bug until you recreate
+it). Shadow the system entry so **every** launch path carries the same scale:
+
+`~/.local/share/applications/nemo.desktop` (wins over `/usr/share/applications/nemo.desktop`):
+
+```ini
+[Desktop Entry]
+Name=Files
+Exec=env GDK_DPI_SCALE=1.4 nemo %U
+Icon=system-file-manager
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Utility;Core;
+MimeType=inode/directory;application/x-gnome-saved-search;
+Actions=open-home;open-computer;open-trash;
+# + each [Desktop Action] (open-home/open-computer/open-trash) Exec also prefixed
+#   with `env GDK_DPI_SCALE=1.4`
+```
+
+Then `update-desktop-database ~/.local/share/applications`. Verify with
+`xdg-open <dir>` → `tr '\0' '\n' </proc/$(pgrep -x nemo)/environ | grep GDK_DPI_SCALE`
+(should read `1.4`). Two caveats:
+
+- **Only takes effect when no nemo is already running** — single-instance reuses the
+  live process's env, so `nemo --quit` (or close every window) first.
+- **Keep the `1.4` here identical to `hyprland.lua`'s `fileManager`** or the two launch
+  paths diverge again.
 
 ## Scripts
 
