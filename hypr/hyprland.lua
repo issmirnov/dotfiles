@@ -102,8 +102,9 @@ hl.on("hyprland.start", function()
     -- "no screen capture" by probing mid-restart above (bounded ~10s, then launches).
     hl.exec_cmd("for _ in $(seq 1 50); do gdbus introspect --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop 2>/dev/null | grep -q portal.ScreenCast && break; sleep 0.2; done; exec " .. browser)
     hl.exec_cmd(terminal)
-    -- night shift: wlsunset, Denver coords, 3700K night / 4500K day
-    hl.exec_cmd("wlsunset -l 39.7392 -L -104.9903 -t 3700 -T 4500")
+    -- night shift: hyprsunset (native); temps/times live in hyprsunset.conf (day 4500K / night 3200K).
+    -- NOTE: hyprsunset switches on fixed wall-clock times, not astronomical sunset like wlsunset did.
+    hl.exec_cmd("hyprsunset")
     hl.exec_cmd("telegram-desktop")
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
@@ -390,12 +391,17 @@ if hl.plugin ~= nil and hl.plugin.hyprbars ~= nil then
                 bar_padding    = 12,
                 bar_part_of_window         = true,
                 bar_precedence_over_border = true,
-                on_double_click = "hyprctl dispatch fullscreen 1",
+                -- double-click title bar → toggle maximize (fills tile area, keeps the bar).
+                -- eval-wrapped: legacy `hyprctl dispatch fullscreen` is dead on Lua Hyprland.
+                -- internal=1 = FSMODE_MAXIMIZED; re-requesting the same state toggles it off.
+                on_double_click = "hyprctl eval 'hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 1, client = -1 }))'",
             },
         },
     })
 
-    -- Right-aligned window buttons (first added renders rightmost): close, maximize.
-    hl.plugin.hyprbars.add_button({ bg_color = "rgb(ac4242)", fg_color = "rgb(ffffff)", size = 14, icon = "󰖭", action = "hyprctl dispatch killactive" })
-    hl.plugin.hyprbars.add_button({ bg_color = "rgb(f4bf75)", fg_color = "rgb(181818)", size = 14, icon = "󰖯", action = "hyprctl dispatch fullscreen 1" })
+    -- Window buttons (close/maximize) intentionally omitted: their `hyprctl dispatch …`
+    -- actions use legacy syntax that no-ops on this Lua-configured Hyprland, so the
+    -- buttons did nothing when clicked. Title text alone distinguishes windows. To
+    -- re-add functional buttons, use an eval-wrapped action, e.g.
+    --   action = "hyprctl eval 'hl.dispatch(hl.dsp.window.close())'"
 end
