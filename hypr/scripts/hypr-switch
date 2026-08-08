@@ -39,7 +39,7 @@ set -euo pipefail
 # would do nothing). Launch entries are for apps that aren't open yet.
 apps=(
   $'slack\tSlack\tslack'
-  $'google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj\tChrome\tchrome'
+  $'google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj,WebRTCPipeWireCapturer\tChrome\tchrome'
   $'Telegram\tTelegram\ttelegram'
   $'bolt\tBolt\tbolt'
   $'runelite\tOSRS\trunelite'

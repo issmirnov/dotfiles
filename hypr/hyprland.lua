@@ -17,7 +17,13 @@ local menu        = "~/.dotfiles/hypr/scripts/hypr-switch"  -- SUPER+Space switc
 -- NOTE: keep WaylandFractionalScaleV1 ENABLED. Disabling it while chrome-flags.conf
 -- forces --force-device-scale-factor makes Chrome paint only part of its window
 -- (transparent remainder shows the wallpaper). Verified 2026-08-04.
-local browser     = "google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj"
+-- WebRTCPipeWireCapturer forces Chrome onto the xdg-desktop-portal ScreenCast path
+-- for getDisplayMedia (insurance; likely default-on in current Chrome). The actual
+-- 2026-08-07 "can't share whole screen, only a tab" breakage was the PORTAL itself
+-- coming up without ScreenCast due to a boot env race — see "PORTALS FIRST" in the
+-- AUTOSTART block. Keep this in the SAME --enable-features as WaylandLinuxDrmSyncobj:
+-- Chrome's cmdline is last-value-wins per switch, so a 2nd --enable-features clobbers.
+local browser     = "google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj,WebRTCPipeWireCapturer"
 
 local leftMon  = "DP-1"
 local rightMon = "DP-2"
@@ -72,12 +78,29 @@ hl.env("NVD_BACKEND", "direct")                   -- hardware video decode via l
 -- AUTOSTART (exec-once equivalents)
 ------------------------------------------------------------------------
 hl.on("hyprland.start", function()
+    -- PORTALS FIRST — must run before the portal clients below (qs/browser/webcord).
+    -- Push the Wayland session env into the D-Bus + systemd --user activation env,
+    -- then (re)start the portal stack so the frontend re-scans backends WITH that env.
+    -- If xdg-desktop-portal auto-activates without XDG_CURRENT_DESKTOP it can't match
+    -- the Hyprland backend and comes up with NO ScreenCast interface → Chrome/Meet
+    -- "can only share a tab, not a whole screen" (diagnosed 2026-08-07).
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user restart xdg-desktop-portal-hyprland.service; sleep 1; systemctl --user restart xdg-desktop-portal.service")
     -- load hyprpm plugins (hyprbars), then re-parse so the guarded plugin block
     -- below applies its styling/buttons (config is parsed before the plugin loads)
     hl.exec_cmd("hyprpm reload -n && hyprctl reload")
+    -- per-monitor wallpapers (swaybg): DP-1 = 8K Polygon, DP-2 = flipped 8K Polygon.
+    -- HDMI-A-2 (Xeneon Edge, 2560x720) = Study_02_Mac mountains, PRE-CROPPED to the panel's
+    -- 3.556:1 strip (study-02-mac-edge.png) so the peaks show — a plain swaybg fill would
+    -- centre-crop them out. NOTE: the xeneon-edge dashboard fullscreens over this when active.
+    -- NOTE: hyprpaper 0.8.4 (hyprtoolkit rewrite) silently ignored its config on this
+    -- box (parsed 0 directives, "no target" for every monitor) -> swaybg instead:
+    -- one robust process, images passed on argv, no config/daemon/IPC to break.
+    hl.exec_cmd("swaybg -o DP-1 -i /home/vania/Pictures/wallpapers/8k-polygon.png -m fill -o DP-2 -i /home/vania/Pictures/wallpapers/8k-polygon-flip.png -m fill -o HDMI-A-2 -i /home/vania/Pictures/wallpapers/study-02-mac-edge.png -m fill")
     -- hl.exec_cmd("waybar")   -- swapped to Quickshell; uncomment to fall back to waybar
     hl.exec_cmd("qs")
-    hl.exec_cmd(browser)
+    -- gate Chrome on the portal actually advertising ScreenCast, so it can't cache
+    -- "no screen capture" by probing mid-restart above (bounded ~10s, then launches).
+    hl.exec_cmd("for _ in $(seq 1 50); do gdbus introspect --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop 2>/dev/null | grep -q portal.ScreenCast && break; sleep 0.2; done; exec " .. browser)
     hl.exec_cmd(terminal)
     -- night shift: wlsunset, Denver coords, 3700K night / 4500K day
     hl.exec_cmd("wlsunset -l 39.7392 -L -104.9903 -t 3700 -T 4500")
