@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>localhost.tmux-resurrect</string>
+    <!-- Restore tmux sessions at LOGIN (macOS has no boot-without-login). A
+         login shell resolves $PATH so the homebrew tmux is found; run-shell
+         restore.sh mirrors the Linux systemd unit's ExecStartPost. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>-lc</string>
+        <string>tmux start-server; tmux run-shell "$HOME/.dotfiles/tmux/plugins/tmux-resurrect/scripts/restore.sh"</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

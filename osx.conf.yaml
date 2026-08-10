@@ -21,3 +21,9 @@
     ~/Library/Fonts/SourceCodePro-Regular.otf: fonts/SourceCodePro-Regular.otf
     ~/Library/Preferences/espanso: espanso
     ~/bin/lock: bin/osx_lock
+    ~/Library/LaunchAgents/localhost.tmux-resurrect.plist: MacOS-LaunchAgents/localhost.tmux-resurrect.plist
+
+- shell:
+    # tmux-resurrect login-restore (macOS): (re)load the launchd agent. macOS has
+    # no boot-without-login, so this fires at login (RunAtLoad in the plist).
+    - ['launchctl unload ~/Library/LaunchAgents/localhost.tmux-resurrect.plist 2>/dev/null; launchctl load -w ~/Library/LaunchAgents/localhost.tmux-resurrect.plist', "Load tmux-resurrect login-restore agent (launchd)"]

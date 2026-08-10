@@ -13,3 +13,9 @@
 [submodule "ubersicht/simple-bar"]
 	path = ubersicht/simple-bar
 	url = https://github.com/Jean-Tinland/simple-bar
+[submodule "tmux/plugins/tmux-resurrect"]
+	path = tmux/plugins/tmux-resurrect
+	url = https://github.com/tmux-plugins/tmux-resurrect.git
+[submodule "tmux/plugins/tmux-continuum"]
+	path = tmux/plugins/tmux-continuum
+	url = https://github.com/tmux-plugins/tmux-continuum.git
