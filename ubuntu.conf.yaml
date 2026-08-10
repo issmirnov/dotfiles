@@ -14,7 +14,6 @@
     ~/.config/ghostty: ghostty
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
-    ~/.config/gammastep: gammastep
     ~/.config/greenclip.toml: greenclip/greenclip.toml
     ~/.config/onagre: onagre
     ~/.config/rofi: rofi

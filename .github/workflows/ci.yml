@@ -1,0 +1,47 @@
+name: CI
+
+# Migrated from CircleCI (.circleci/config.yml). Mirrors the two jobs that ran
+# there: a full `./install` smoke test on a clean Ubuntu, plus a zsh-shebang lint.
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  # Smoke-test the dotbot install end-to-end on a clean Ubuntu: link everything,
+  # install vim plugins, run the per-OS shell steps. Catches broken symlink
+  # targets and install steps that fail on a fresh machine.
+  install-dotfiles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install prerequisites
+        run: sudo apt-get update && sudo apt-get install -y python3 git wget vim curl zsh jq
+      - name: Expose checkout at ~/.dotfiles
+        # Some scripts hardcode $HOME/.dotfiles (e.g. i3/genconf does
+        # ROOT="$HOME/.dotfiles/i3"), and the dotbot link targets assume the repo
+        # lives there. CircleCI used working_directory: ~/.dotfiles and Travis did
+        # `ln -s $TRAVIS_BUILD_DIR $HOME/.dotfiles`; mirror that so genconf writes
+        # i3/config into the checkout instead of a nonexistent ~/.dotfiles.
+        run: ln -sfn "$GITHUB_WORKSPACE" "$HOME/.dotfiles"
+      - name: Prepare link-target dirs
+        run: mkdir -p ~/.i3 ~/.config
+      - name: Install bat (sharkdp)
+        run: |
+          U=$(curl -sSL https://api.github.com/repos/sharkdp/bat/releases/latest \
+            | jq -r -c 'first(.assets[] | select(.browser_download_url | contains("bat_") and contains("amd64.deb") and (contains("musl") | not))) | .browser_download_url')
+          wget "$U"
+          sudo dpkg -i "$(basename "$U")"
+      - name: Run install script
+        run: cd "$HOME/.dotfiles" && ./install
+      - name: Lint zsh shebangs
+        run: cd "$HOME/.dotfiles/zsh" && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1; fi
+
+  # Fast, standalone lint so a shebang regression is flagged even if the full
+  # install job fails earlier for an unrelated reason.
+  check-zsh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint zsh shebangs
+        run: cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1; fi
