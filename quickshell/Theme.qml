@@ -36,6 +36,7 @@ Singleton {
     readonly property color tempCol: _v ? "#e0743b" : "#f0a2b8"
     readonly property color loadCol: _v ? "#5cc8d0" : "#a2e0dc"
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
+    readonly property color awakeCol:_v ? "#e0973b" : "#f0c489"   // idle-inhibitor "awake" (warm amber)
 
     // --- metrics ---
     readonly property int deckHeight: chipHeight + 8          // pill + 4px pad each side (=40); ↑ this to loosen the inter-row gap, ↓ to tighten
