@@ -41,9 +41,10 @@ PanelWindow {
                 // One chip per Anthropic account so each carries its own color (sl can be
                 // red while ig stays green). `claude:<name>` renders + colors that account
                 // solo; a bare "claude" would bundle both under the single worst color.
-                Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "claude:claude-smirnovlabs"; interval: 60000 }
-                Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "claude:claude_isgmirnov"; interval: 60000 }
-                Blocklet { exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"; instance: "codex"; interval: 60000 }
+                // Each usage chip drops down a 5h + weekly meter popup on click (UsageChip.qml).
+                UsageChip { instance: "claude:claude-smirnovlabs" }
+                UsageChip { instance: "claude:claude_isgmirnov" }
+                UsageChip { instance: "codex" }
                 Brightness {}
                 AutoDimToggle {}
                 Audio {}

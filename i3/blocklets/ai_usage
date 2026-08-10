@@ -101,27 +101,115 @@ render_claude() {
   for ((i = 1; i < ${#segs[@]}; i++)); do full="$full  ${segs[i]}"; done
   printf '%s\n%s\n%s\n' "$full" "CC ${gmax}%" "$(pct_color "$gmax")"
 }
+# Render whichever usage windows the codex API actually exposes (it may return only one,
+# e.g. a weekly window with secondary=null — don't demand both or the chip shows "?").
+# Each window is labeled by its real limit_window_seconds when present (5h / wk / Nh),
+# else positionally (primary=5h, secondary=wk) to preserve the older window-less shape.
+# Weekly windows get a pace token; a window >=50% adds a reset countdown. Color/short_text
+# track the worst window. Returns 1 only when NO window has data.
 render_codex() {
-  local json=$1 five wk seg5 segw worst color r wk_after wk_window pace
-  five=$(jq -r '.rate_limit.primary_window.used_percent // empty'   <<<"$json" 2>/dev/null); five=${five%.*}
-  wk=$(jq -r   '.rate_limit.secondary_window.used_percent // empty' <<<"$json" 2>/dev/null); wk=${wk%.*}
-  { [ -z "$five" ] || [ -z "$wk" ]; } && return 1
-  seg5="5h ${five}%"; segw="wk ${wk}%"
-  if [ "$five" -ge 50 ]; then
-    r=$(jq -r '.rate_limit.primary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); r=${r%.*}
-    [ -n "$r" ] && [ "$r" -gt 0 ] && seg5="$seg5 ($(fmt_reset "$r"))"
-  fi
-  wk_after=$(jq -r '.rate_limit.secondary_window.reset_after_seconds // empty' <<<"$json" 2>/dev/null); wk_after=${wk_after%.*}
-  wk_window=$(jq -r '.rate_limit.secondary_window.limit_window_seconds // empty' <<<"$json" 2>/dev/null); wk_window=${wk_window%.*}; wk_window=${wk_window:-604800}
-  pace=$(pace_sym "$wk" "$wk_after" "$wk_window")
-  [ -n "$pace" ] && segw="$segw $pace"
-  if [ "$wk" -ge 50 ] && [ -n "$wk_after" ] && [ "$wk_after" -gt 0 ]; then
-    segw="$segw ($(fmt_reset "$wk_after"))"
-  fi
-  worst=$five; [ "$wk" -gt "$worst" ] && worst=$wk
-  color=$(pct_color "$worst")
-  printf '%s\n%s\n%s\n' "CX $seg5 $segw" "CX ${five}/${wk}" "$color"
+  local json=$1 win pos pct rs w lbl seg pace weekly gmax=-1
+  local -a segs=() pcts=()
+  pos=0
+  for win in primary_window secondary_window; do
+    pos=$(( pos + 1 ))
+    pct=$(jq -r ".rate_limit.$win.used_percent // empty"        <<<"$json" 2>/dev/null); pct=${pct%.*}
+    [ -z "$pct" ] && continue
+    rs=$(jq -r  ".rate_limit.$win.reset_after_seconds // -1"    <<<"$json" 2>/dev/null); rs=${rs%.*}; rs=${rs:--1}
+    w=$(jq -r   ".rate_limit.$win.limit_window_seconds // empty" <<<"$json" 2>/dev/null); w=${w%.*}
+    if [ -n "$w" ]; then
+      if   [ "$w" -le 18000 ];  then lbl="5h"; weekly=0
+      elif [ "$w" -ge 518400 ]; then lbl="wk"; weekly=1
+      else lbl="$(( w / 3600 ))h"; weekly=0; fi
+    else
+      if [ "$pos" -eq 1 ]; then lbl="5h"; weekly=0; else lbl="wk"; weekly=1; fi
+      w=604800
+    fi
+    seg="$lbl ${pct}%"
+    if [ "$weekly" -eq 1 ] && [ "$rs" -ge 0 ]; then
+      pace=$(pace_sym "$pct" "$rs" "$w"); [ -n "$pace" ] && seg="$seg $pace"
+    fi
+    [ "$pct" -ge 50 ] && [ "$rs" -gt 0 ] && seg="$seg ($(fmt_reset "$rs"))"
+    segs+=("$seg"); pcts+=("$pct")
+    [ "$pct" -gt "$gmax" ] && gmax=$pct
+  done
+  [ "$gmax" -lt 0 ] && return 1
+  local full="CX ${segs[0]}" short="CX ${pcts[0]}" i
+  for ((i = 1; i < ${#segs[@]}; i++)); do full="$full ${segs[i]}"; short="$short/${pcts[i]}"; done
+  printf '%s\n%s\n%s\n' "$full" "$short" "$(pct_color "$gmax")"
 }
+# Raw provider JSON for the detail popups: fresh cache, else fetch (cache on success),
+# else stale cache. Same acquisition as main() but returns the JSON instead of rendering.
+load_json() {
+  local ttl cache mtime json
+  case "$PROVIDER" in codex) ttl=120;; *) ttl=180;; esac
+  mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$PROVIDER.json"
+  mtime=$(stat -c %Y "$cache" 2>/dev/null)
+  if [ -n "$mtime" ] && [ $(( $(date +%s) - mtime )) -lt "$ttl" ]; then cat "$cache"; return 0; fi
+  json=$("fetch_$PROVIDER")
+  if "validate_$PROVIDER" "$json"; then printf '%s' "$json" > "$cache"; printf '%s' "$json"; return 0; fi
+  if [ "$PROVIDER" = "codex" ] && json=$(codex_rollout_json) && [ -n "$json" ]; then printf '%s' "$json"; return 0; fi
+  [ -f "$cache" ] && { cat "$cache"; return 0; }
+  return 1
+}
+
+# Seconds until an ISO timestamp resets (echo -1 when absent/null/past). $1 = timestamp.
+reset_secs() {
+  local ts=${1:-} now e
+  { [ -z "$ts" ] || [ "$ts" = "null" ]; } && { echo -1; return; }
+  e=$(date -d "$ts" +%s 2>/dev/null) || { echo -1; return; }
+  now=$(date +%s); e=$(( e - now )); [ "$e" -lt 0 ] && e=-1; echo "$e"
+}
+
+# Popup detail JSON for ONE Anthropic account: its 5h + weekly windows. Input: ccflare JSON.
+# Shape: {title, windows:[{label,pct,reset_s,pace}, ...]}
+detail_claude() {
+  local json=$1 name five sev five_ts sev_ts tag fs ws pace
+  # NOTE: emit "null" (not "") for missing timestamps below. Tab is IFS-whitespace, so a
+  # `read` over @tsv COLLAPSES consecutive tabs and drops empty middle fields — an empty
+  # five_ts would slide the weekly timestamp into the 5h slot. reset_secs maps "null"->-1.
+  IFS=$'\t' read -r name five sev five_ts sev_ts < <(jq -r --arg acct "$ACCT" '
+      [ .[] | select(.provider=="anthropic") | select($acct=="" or .name==$acct) ]
+      | sort_by( [ (.usageData.five_hour.utilization // 0), (.usageData.seven_day.utilization // 0) ] | max )
+      | reverse | .[0]
+      | [ .name,
+          (.usageData.five_hour.utilization // 0),
+          (.usageData.seven_day.utilization // 0),
+          (.usageData.five_hour.resets_at // "null"),
+          (.usageData.seven_day.resets_at // "null") ] | @tsv' <<<"$json" 2>/dev/null)
+  [ -z "$name" ] && return 1
+  five=${five%.*}; sev=${sev%.*}; five=${five:-0}; sev=${sev:-0}
+  tag=$(short_tag "$name")
+  fs=$(reset_secs "$five_ts"); ws=$(reset_secs "$sev_ts")
+  pace=""; [ "$ws" -ge 0 ] && pace=$(pace_sym "$sev" "$ws" 604800)
+  jq -cn --arg title "CC $tag · ${name#claude[-_]}" \
+     --argjson five "$five" --argjson fs "$fs" \
+     --argjson wk "$sev" --argjson ws "$ws" --arg pace "$pace" '
+     {title:$title,
+      windows:[ {label:"5h", pct:$five, reset_s:$fs, pace:""},
+                {label:"7d", pct:$wk,   reset_s:$ws, pace:$pace} ]}'
+}
+
+# Popup detail JSON for codex: whatever usage windows the API exposes, labeled by window
+# size (<=5h, weekly, else Nh). Skips null windows; pace only on the weekly window.
+detail_codex() {
+  local json=$1 wins="[]" win pct rs w lbl pace
+  for win in primary_window secondary_window; do
+    pct=$(jq -r ".rate_limit.$win.used_percent // empty" <<<"$json" 2>/dev/null); pct=${pct%.*}
+    [ -z "$pct" ] && continue
+    rs=$(jq -r ".rate_limit.$win.reset_after_seconds // -1"    <<<"$json" 2>/dev/null); rs=${rs%.*}; rs=${rs:--1}
+    w=$(jq -r  ".rate_limit.$win.limit_window_seconds // 604800" <<<"$json" 2>/dev/null); w=${w%.*};  w=${w:-604800}
+    if   [ "$w" -le 18000 ];  then lbl="5h"
+    elif [ "$w" -ge 518400 ]; then lbl="wk"
+    else lbl="$(( w / 3600 ))h"; fi
+    pace=""; [ "$w" -ge 518400 ] && [ "$rs" -ge 0 ] && pace=$(pace_sym "$pct" "$rs" "$w")
+    wins=$(jq -c --argjson pct "$pct" --argjson rs "$rs" --arg lbl "$lbl" --arg pace "$pace" \
+      '. + [{label:$lbl, pct:$pct, reset_s:$rs, pace:$pace}]' <<<"$wins")
+  done
+  [ "$wins" = "[]" ] && return 1
+  jq -cn --argjson wins "$wins" '{title:"Codex", windows:$wins}'
+}
+
 main() {
   local provider="$PROVIDER" ttl cache json
   case "$provider" in codex) ttl=120;; *) ttl=180;; esac
@@ -219,6 +307,8 @@ case "${1:-}" in
   __tag)    short_tag "${2:-}"; exit 0 ;;
   __pace)   pace_sym "${2:-}" "${3:-}" "${4:-604800}"; exit 0 ;;
   __render)     "render_$PROVIDER" "$(cat)"; exit $? ;;
+  __detail)     if json=$(load_json) && out=$("detail_$PROVIDER" "$json"); then printf '%s\n' "$out"
+                else printf '{"title":"%s","windows":[]}\n' "$(label)"; fi; exit 0 ;;
   __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;
 esac
