@@ -1,0 +1,239 @@
+#!/usr/bin/env python3
+"""hexane-nightlight — sun-tracked gentle backlight dimming for the Dell U3225QEs.
+
+Stateless: computes the backlight brightness for *now* from today's sun times and
+applies it via ddcutil only when it changes. Run every ~2 min by a systemd user
+timer. Independent of wlsunset (color temp is a separate gamma layer).
+
+Design: docs/hexane-nightlight-design.md
+"""
+import json
+import math
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone, timedelta
+
+# ---- config ----
+LAT, LON = 39.7392, -104.9903        # Denver (east-positive longitude; west is negative)
+DAY, NIGHT = 100, 80
+RAMP_MIN = 45
+STEP = 2
+MONITORS = ["DP7HGJ4", "6P7HGJ4"]    # DP-1, DP-2 (by DDC serial)
+STATE = os.path.expanduser("~/.cache/hexane-nightlight/last")
+OVERRIDE = os.path.expanduser("~/.cache/hexane-nightlight/override")
+
+
+def _julian(ts):        # unix seconds -> julian day
+    return ts / 86400.0 + 2440587.5
+
+
+def _unix(j):           # julian day -> unix seconds
+    return (j - 2440587.5) * 86400.0
+
+
+def _td(seconds):
+    return timedelta(seconds=seconds)
+
+
+def sun_times(day, lat, lon):
+    """(sunrise, sunset) as local tz-aware datetimes for a local date, via the
+    NOAA sunrise equation. Longitude east-positive."""
+    noon_utc = datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc)
+    n = _julian(noon_utc.timestamp()) - 2451545.0 + 0.0008
+    jstar = n - lon / 360.0                        # east-positive lon; west shifts solar noon later in UT
+    m = (357.5291 + 0.98560028 * jstar) % 360.0
+    mr = math.radians(m)
+    c = 1.9148 * math.sin(mr) + 0.0200 * math.sin(2 * mr) + 0.0003 * math.sin(3 * mr)
+    lam = (m + c + 180.0 + 102.9372) % 360.0
+    lamr = math.radians(lam)
+    jtransit = 2451545.0 + jstar + 0.0053 * math.sin(mr) - 0.0069 * math.sin(2 * lamr)
+    sin_decl = math.sin(lamr) * math.sin(math.radians(23.44))
+    decl = math.asin(sin_decl)
+    latr = math.radians(lat)
+    cos_w = ((math.sin(math.radians(-0.833)) - math.sin(latr) * sin_decl)
+             / (math.cos(latr) * math.cos(decl)))
+    cos_w = max(-1.0, min(1.0, cos_w))             # clamp: polar day/night
+    w = math.degrees(math.acos(cos_w))
+    sunrise = datetime.fromtimestamp(_unix(jtransit - w / 360.0)).astimezone()
+    sunset = datetime.fromtimestamp(_unix(jtransit + w / 360.0)).astimezone()
+    return sunrise, sunset
+
+
+def _round_step(x):
+    return int(round(x / STEP) * STEP)
+
+
+def target(now, sunrise, sunset):
+    """Brightness % for `now`, rounded to STEP. Ramps DAY<->NIGHT over RAMP_MIN;
+    evening ramp starts at sunset, morning ramp starts at sunrise."""
+    ramp = RAMP_MIN * 60
+    if sunrise <= now < sunrise + _td(ramp):            # morning ramp up
+        frac = (now - sunrise).total_seconds() / ramp
+        return _round_step(NIGHT + (DAY - NIGHT) * frac)
+    if sunrise + _td(ramp) <= now < sunset:             # day
+        return DAY
+    if sunset <= now < sunset + _td(ramp):              # evening ramp down
+        frac = (now - sunset).total_seconds() / ramp
+        return _round_step(DAY + (NIGHT - DAY) * frac)
+    return NIGHT                                         # night (incl. pre-dawn)
+
+
+# ---- effects ----
+def _read_state():
+    """Per-monitor last-applied brightness {serial: int}. {} if missing/legacy/corrupt."""
+    try:
+        with open(STATE) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def _write_state(state):
+    os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    with open(STATE, "w") as f:
+        f.write(json.dumps(state))
+
+
+def _read_override():
+    """The manual-override marker dict, or None if absent/corrupt."""
+    try:
+        with open(OVERRIDE) as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) and "since" in d else None
+    except (OSError, ValueError):
+        return None
+
+
+def _clear_override():
+    try:
+        os.remove(OVERRIDE)
+    except OSError:
+        pass
+
+
+def _most_recent_sunrise(now, lat, lon):
+    """Sunrise bounding the current 'day': today's if now is past it, else yesterday's."""
+    sr_today, _ = sun_times(now.date(), lat, lon)
+    if now >= sr_today:
+        return sr_today
+    sr_yest, _ = sun_times(now.date() - timedelta(days=1), lat, lon)
+    return sr_yest
+
+
+def override_state(ovr, now, lat=LAT, lon=LON):
+    """'absent' | 'held' | 'expired'. A manual override is honored until the
+    first sunrise after it was set (daily re-arm)."""
+    if not ovr:
+        return "absent"
+    try:
+        since = datetime.fromisoformat(ovr["since"])
+    except (KeyError, TypeError, ValueError):
+        return "absent"
+    if since.tzinfo is None:
+        since = since.astimezone()
+    return "expired" if since < _most_recent_sunrise(now, lat, lon) else "held"
+
+
+def _set_monitor(sn, value):
+    subprocess.run(["ddcutil", "--sn", sn, "setvcp", "0x10", str(value)],
+                   check=True, capture_output=True, timeout=20)
+
+
+def _get_monitor(sn):
+    out = subprocess.run(["ddcutil", "--sn", sn, "getvcp", "0x10"],
+                         check=True, capture_output=True, timeout=20, text=True).stdout
+    # "...current value =   84, max value =  100"  -> the int right after "current value"
+    # (anchored so --terse output "VCP 10 C 84 100" can't return the feature code 10)
+    if "current value" in out:
+        tail = out.split("current value", 1)[1]
+        for tok in tail.replace("=", " ").replace(",", " ").split():
+            if tok.isdigit():
+                return int(tok)
+    return None
+
+
+def apply(t, dry=False):
+    """Set each monitor to t%, per-monitor idempotent. A panel that fails (asleep/
+    unreachable) keeps its old state so the NEXT tick retries it, instead of being
+    marked done because its neighbor succeeded. Returns True if any write happened."""
+    state = _read_state()
+    wrote = False
+    for sn in MONITORS:
+        if state.get(sn) == t:
+            continue                                # already at target; don't re-write
+        try:
+            if dry:
+                print(f"[dry-run] would set {sn} -> {t}%")
+            else:
+                _set_monitor(sn, t)
+                state[sn] = t                       # record ONLY on real success
+            wrote = True
+        except Exception as e:                      # noqa: BLE001 - a flaky panel must not block the other
+            print(f"warn: {sn}: {e}", file=sys.stderr)
+    if wrote and not dry:
+        _write_state(state)
+    return wrote
+
+
+def run_tick(now, sr, ss):
+    """Timer-path decision. Honor a manual override (skip + blank the cache so a
+    later re-arm force-applies); re-arm an expired one; otherwise apply schedule.
+    Returns 'held' | 'rearm' | 'apply'."""
+    st = override_state(_read_override(), now)
+    if st == "held":
+        if _read_state():
+            _write_state({})
+        return "held"
+    if st == "expired":
+        _clear_override()
+    apply(target(now, sr, ss))
+    return "rearm" if st == "expired" else "apply"
+
+
+USAGE = 'usage: hexane-nightlight [--check | --simulate "YYYY-MM-DD HH:MM" | --dry-run]'
+
+
+def main(argv):
+    now = datetime.now().astimezone()
+    sr, ss = sun_times(now.date(), LAT, LON)
+    if not argv:                                    # the timer path
+        run_tick(now, sr, ss)
+        return 0
+    cmd = argv[0]
+    if cmd == "--check":
+        print(f"now     {now:%Y-%m-%d %H:%M %Z}")
+        print(f"sunrise {sr:%H:%M}   sunset {ss:%H:%M}")
+        print(f"target  {target(now, sr, ss)}%")
+        ovr = _read_override()
+        print(f"override {override_state(ovr, now)}"
+              + (f"  since {ovr['since']}" if ovr else ""))
+        for sn in MONITORS:
+            try:
+                print(f"  {sn}: actual {_get_monitor(sn)}%")
+            except Exception as e:                  # noqa: BLE001
+                print(f"  {sn}: ERR {e}")
+        return 0
+    if cmd == "--dry-run":
+        apply(target(now, sr, ss), dry=True)
+        return 0
+    if cmd == "--simulate":
+        if len(argv) < 2:
+            print(USAGE, file=sys.stderr)
+            return 2
+        try:
+            when = datetime.fromisoformat(argv[1]).astimezone()
+        except ValueError as e:
+            print(f"bad timestamp: {e}", file=sys.stderr)
+            return 2
+        s_sr, s_ss = sun_times(when.date(), LAT, LON)
+        print(f"{when:%Y-%m-%d %H:%M}  sunrise {s_sr:%H:%M} sunset {s_ss:%H:%M}"
+              f"  -> target {target(when, s_sr, s_ss)}%")
+        return 0
+    print(USAGE, file=sys.stderr)                   # unknown arg: never a silent hardware write
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

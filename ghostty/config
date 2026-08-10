@@ -1,0 +1,15 @@
+# Ghostty — matches the Alacritty + tmux Catppuccin Mocha setup.
+# Signed/notarized on macOS (no Gatekeeper hassle); cross-platform with Linux.
+
+font-family = JetBrainsMono Nerd Font Mono
+font-size = 15
+theme = Catppuccin Mocha
+
+# macOS: Option key sends Alt (word-wise motion in zsh/readline). Ignored on Linux.
+macos-option-as-alt = true
+
+# Linux/NVIDIA: don't share one long-lived process across all windows. Ghostty's
+# single-instance process leaks GL surface resources over time and eventually fails
+# new surfaces with error.SystemResources (blank black pane). Per-window processes
+# keep any leak contained to the window it happened in; new windows always start clean.
+gtk-single-instance = false

@@ -3,7 +3,7 @@
 # monitor layout is [1][2]
 set $left DP-0
 set $right DP-2
-exec xrandr -d :0 --output $right --auto --output $left --auto --output $right --right-of $left
+exec xrandr -d :0 --output $left --auto --primary --output $right --auto --right-of $left
 
 # layout
 workspace 1 output $left
@@ -19,15 +19,18 @@ workspace 9 output $right
 workspace 10 output $right
 
 #  App Bindings ########
+
+# ($mod+Return -> Ghostty is handled in profiles/hexane by rewriting $terminal;
+#  a second bindsym here would collide with base's and i3 errors on the duplicate.)
+
 assign [class="^Standard Notes$"] notes
 
 # Studio
 assign [class="^jetbrains-studio$"] studio
 workspace studio output $left
 
-# Telegram
+# Telegram (base already sets `workspace telegram output $right`; don't redeclare it or i3 errors)
 assign [class="^TelegramDesktop$"] telegram
-workspace telegram output $right
 exec "/usr/bin/telegram-desktop"
 
 # startup apps
@@ -96,8 +99,8 @@ bindsym $MOD+l exec "xset dpms force off"
 # xsecurelock + hibernate
 bindsym $MOD+Shift+h exec "(xsecurelock) && sleep 1 && systemctl hibernate"
 
-# xss-lock will respond to DPMS events to lock the screen
-exec_always --no-startup-id "xss-lock -- xsecurelock"
+# xss-lock runs the locker; the xeneon-lock wrapper recovers the Edge touchscreen on unlock
+exec_always --no-startup-id "xss-lock -- $HOME/.local/bin/xeneon-lock"
 
 # start up discord and obsidiann
 exec_always --no-startup-id "/usr/bin/obsidian"
@@ -116,4 +119,4 @@ exec_always --no-startup-id "/usr/bin/whatsie"
 #
 
 # Secondary xrandr trigger as first one seems to faile
-exec xrandr --output $left --auto --output $right --auto --output $right --right-of $left
+exec xrandr --output $left --auto --primary --output $right --auto --right-of $left

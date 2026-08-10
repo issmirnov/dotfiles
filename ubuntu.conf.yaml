@@ -11,11 +11,13 @@
 - link:
     ~/.Xresources: x/Xresources
     ~/.config/alacritty: alacritty
+    ~/.config/ghostty: ghostty
     ~/.config/espanso: espanso
     ~/.config/fontconfig/fonts.conf: fonts/fonts.conf
     ~/.config/gammastep: gammastep
     ~/.config/greenclip.toml: greenclip/greenclip.toml
     ~/.config/onagre: onagre
+    ~/.config/rofi: rofi
     ~/.config/hypr: hypr
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
@@ -34,4 +36,11 @@
 
 
 - shell:
-    - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v ~/.fonts) || echo "no fc-cache command"', "Regenerate font cache."]
+    # Arch: JetBrainsMono Nerd Font from the official 'extra' repo (verify pkg name on your box)
+    - ['command -v pacman >/dev/null && sudo pacman -S --needed --noconfirm ttf-jetbrains-mono-nerd || echo "pacman not found; install JetBrainsMono Nerd Font manually"', "Install JetBrainsMono Nerd Font (Arch)"]
+    # Ghostty: in the Arch 'extra' repo; note falls back to AUR if unavailable
+    - ['command -v pacman >/dev/null && (sudo pacman -S --needed --noconfirm ghostty || echo "ghostty not in pacman repos; install via AUR (ghostty)") || echo "pacman not found; install Ghostty manually"', "Install Ghostty (Arch)"]
+    # Rebuild ALL font caches, not just ~/.fonts: the Noto Color Emoji scan-strip in
+    # fonts/fonts.conf must also apply to the system copy (/usr/share/fonts/noto, from
+    # noto-fonts-emoji) or that copy keeps space/digits and the word-gaps persist.
+    - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate all font caches."]

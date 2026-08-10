@@ -13,3 +13,9 @@ benchmarks/test-data/
 benchmarks/results-*.md
 benchmarks/results-*.log
 benchmarks/comparison/
+
+# aider cruft
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.*/
+.superpowers/

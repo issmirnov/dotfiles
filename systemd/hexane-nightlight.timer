@@ -1,0 +1,9 @@
+[Unit]
+Description=Run hexane-nightlight every 2 minutes
+
+[Timer]
+OnCalendar=*:0/2
+Persistent=true
+
+[Install]
+WantedBy=timers.target

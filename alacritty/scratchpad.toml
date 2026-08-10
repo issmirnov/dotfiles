@@ -1,0 +1,14 @@
+# Scratchpad variant of the alacritty config. Imports the base config, then
+# overrides the background to a distinct deep-purple + slight translucency so the
+# SUPER+C claude drop-down never looks like just another tiled terminal. Paired
+# with a mauve->pink Hyprland border (see the scratchpad window rule in
+# ~/.dotfiles/hypr/hyprland.lua). Launched via:
+#   alacritty --class scratchpad --config-file ~/.config/alacritty/scratchpad.toml
+[general]
+import = ["~/.config/alacritty/alacritty.toml"]
+
+[colors.primary]
+background = "#2b1f42"   # deep purple (base is #181818) — instantly recognisable
+
+[window]
+opacity = 0.94           # subtle translucency so it reads as a floating overlay

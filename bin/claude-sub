@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# claude-sub — Claude Code in subscription/OAuth mode (Remote Control + claude.ai
+# connectors work; ccflare analytics do NOT — the two are mutually exclusive per session).
+# Scrubs the ccflare proxy auth vars so the healthy OAuth login wins; that's the
+# precondition for /remote-control to arm.
+# Ref: ~/docs/docs/systems/hexane/claude-code-ccflare-direct-oauth-bypass.md
+exec env -u ANTHROPIC_API_KEY -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL claude "$@"

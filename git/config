@@ -212,8 +212,8 @@
 	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/monorepo
 	directory = /mnt/data1/Personal/Projects/elude/elude-github-export/elude-ios-app
 [credential "https://github.com"]
-	helper =
+	helper = 
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper =
+	helper = 
 	helper = !/usr/bin/gh auth git-credential

@@ -31,7 +31,12 @@
     ~/.zshenv: zsh/config/paths.zsh # for non interactive commands
     ~/bin/tm: tmux/tmux-menu
     ~/bin/dotbin: bin # symlink whole bin folder, recursive fpath should pick up all files
+    ~/.local/bin/xeneon-lock: bin/xeneon-lock # i3 xss-lock locker wrapper (pins XSECURELOCK_FONT so the auth prompt renders)
+    ~/.local/bin/hexane-nightlight: bin/hexane-nightlight # sun-tracked night backlight dim (ddcutil)
+    ~/.config/systemd/user/hexane-nightlight.service: systemd/hexane-nightlight.service
+    ~/.config/systemd/user/hexane-nightlight.timer: systemd/hexane-nightlight.timer
     ~/.config/chrome-flags.conf: chrome/chrome-flags.conf
+    ~/.config/dunst/dunstrc: dunst/dunstrc # base copy of /etc default; pins font to DejaVu Sans Mono so notification digits don't fall back to the emoji font
     ~/.claude/statusline-command.sh: claude/statusline-command.sh
     ~/.claude/settings.json: claude/settings.json
 

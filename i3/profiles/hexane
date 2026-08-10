@@ -1,2 +1,8 @@
 snippets=(hexane gnome)
 source $ROOT/profiles/_builder
+
+# Terminal stays the base default (alacritty). Ghostty was the daily driver here, but
+# on this NVIDIA/X11 box its single-instance process leaks GL surfaces and eventually
+# opens blank (error.SystemResources), so $mod+Return + autostart stay on alacritty.
+# Ghostty is still launchable by name (its config sets gtk-single-instance=false to
+# keep any future leak contained to a single window).

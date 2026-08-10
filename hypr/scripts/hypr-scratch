@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# SUPER+C — Claude drop-down scratchpad on the special:scratch workspace.
+#
+#   • not spawned yet -> spawn FRESH (a window rule routes it onto special:scratch)
+#     so it always gets the current float/centre/purple-border rules, then show it.
+#   • hidden          -> show it on the monitor you're on, centred.
+#   • visible         -> hide it.
+#
+# ⚠️  CRITICAL GOTCHA (this cost hours): the special workspace's name must be
+# passed to the toggle dispatcher as a STRING POSITIONAL arg:
+#       hl.dsp.workspace.toggle_special("scratch")      ✅ toggles special:scratch
+# The table/keyword form SILENTLY IGNORES the name and toggles the DEFAULT
+# unnamed special ("special:special") instead:
+#       hl.dsp.workspace.toggle_special({ name = "scratch" })   ❌ wrong workspace
+# That mis-toggle is why the scratchpad "wouldn't hide" and a phantom
+# "special:special" kept appearing — it was this script all along.
+#
+# FOLLOW_MOUSE: input:follow_mouse=1 makes the toggle act on the monitor the
+# MOUSE is over. Showing follows the mouse (natural). To HIDE reliably even when
+# the pointer has wandered to the other screen, we warp the cursor onto the
+# scratchpad's monitor, toggle, then restore the cursor.
+#
+# HYPRLAND DISPATCH NOTE: Lua-configured, so `hyprctl dispatch <name>` is parsed
+# AS Lua and fails. Dispatch goes through:  hyprctl eval 'hl.dispatch(…)'
+set -euo pipefail
+
+tog='hl.dispatch(hl.dsp.workspace.toggle_special("scratch"))'
+exists()  { hyprctl clients  -j | jq -e '.[]|select(.class=="scratchpad")' >/dev/null 2>&1; }
+vis_mon() { hyprctl monitors -j | jq -r '.[]|select(.specialWorkspace.name=="special:scratch")|.name'; }
+recentre() {                                   # focus the scratchpad, centre it on its monitor
+  local a; a=$(hyprctl clients -j | jq -r '.[]|select(.class=="scratchpad")|.address')
+  [ -n "$a" ] && hyprctl eval "hl.dispatch(hl.dsp.focus({ window = \"address:$a\" }))" >/dev/null 2>&1
+  hyprctl eval 'hl.dispatch(hl.dsp.window.center())' >/dev/null 2>&1
+}
+
+if ! exists; then
+  # spawn fresh (interactive zsh so ~/.local/bin is on PATH for claude; if claude
+  # exits you drop to a reusable shell). The window rule parks it on special:scratch.
+  setsid -f alacritty --class scratchpad \
+    --config-file ~/.config/alacritty/scratchpad.toml \
+    -e zsh -ic 'claude; exec zsh' >/dev/null 2>&1
+  for _ in $(seq 1 200); do exists && break; done   # bounded poll; hyprctl latency paces it
+  [ -z "$(vis_mon)" ] && hyprctl eval "$tog" >/dev/null 2>&1   # show if it didn't auto-show
+  recentre
+  exit 0
+fi
+
+vm=$(vis_mon)
+if [ -n "$vm" ]; then
+  # VISIBLE -> hide it. Warp onto its monitor first (follow_mouse), then restore.
+  pos=$(hyprctl cursorpos); ox=${pos%%,*}; oy=${pos##*,}; ox=${ox// /}; oy=${oy// /}
+  read -r mx my mw mh < <(hyprctl monitors -j | jq -r --arg m "$vm" \
+    '.[]|select(.name==$m)|"\(.x) \(.y) \(.width) \(.height)"')
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $((mx + mw / 2)), y = $((my + mh / 2)) }))" >/dev/null 2>&1
+  hyprctl eval "$tog" >/dev/null 2>&1
+  hyprctl eval "hl.dispatch(hl.dsp.cursor.move({ x = $ox, y = $oy }))" >/dev/null 2>&1
+else
+  # HIDDEN -> show on the monitor the mouse is on, then centre.
+  hyprctl eval "$tog" >/dev/null 2>&1
+  [ -n "$(vis_mon)" ] && recentre
+fi

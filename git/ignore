@@ -21,3 +21,5 @@
 .idea/tasks.xml
 node_modules/
 bower_components/
+
+**/.claude/settings.local.json

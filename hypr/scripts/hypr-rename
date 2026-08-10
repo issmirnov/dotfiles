@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Name the CURRENT Hyprland workspace via a rofi prompt.
+# Wayland port of ~/.dotfiles/i3/scripts/i3-rename, extended so that giving a
+# NUMBERED workspace a WORD name turns it into a *pure named* workspace
+# (negative id) instead of a renamed-numbered one that still squats the numeric
+# slot — a renamed-in-place ws keeps its id, so `SUPER+SHIFT+<n>` / typing that
+# number would still land on it. Converting frees the slot for real numbered use.
+# Bound to SUPER+SHIFT+A in ~/.dotfiles/hypr/hyprland.lua.
+#
+# Behaviour:
+#   numbered ws (positive id) + word name -> CONVERT: move its windows onto
+#       name:<x> (a fresh negative-id workspace) and follow, freeing the slot.
+#       name:<x> is created on the focused monitor — which, since we act on the
+#       ACTIVE workspace, is that workspace's own monitor — so it stays put.
+#   already-named ws, or a numeric name   -> plain in-place rename.
+#
+# NOTE: this Hyprland is Lua-configured, so dispatchers go through
+#   hyprctl eval 'hl.dispatch(hl.dsp.<path>({ ... }))'  (NOT `hyprctl dispatch`),
+#   a named target must be name:<x>, and zsh doesn't word-split — iterate window
+#   addresses with `while read`.
+
+name=$(printf '' | rofi -dmenu -p "Name workspace: ")
+[ $? -eq 0 ] && [ -n "$name" ] || exit 0
+
+id=$(hyprctl activeworkspace -j | jq -r '.id')
+[ -n "$id" ] || exit 0
+
+# Escape for a Lua double-quoted string literal.
+esc=${name//\\/\\\\}; esc=${esc//\"/\\\"}
+
+if [ "$id" -gt 0 ] && ! [[ "$name" =~ ^[0-9]+$ ]]; then
+    # Numbered workspace + word name -> convert to a pure named workspace.
+    hyprctl clients -j \
+        | jq -r --argjson w "$id" '.[] | select(.workspace.id == $w) | .address' \
+        | while IFS= read -r a; do
+            [ -n "$a" ] || continue
+            hyprctl eval "hl.dispatch(hl.dsp.window.move({ workspace = \"name:$esc\", follow = false, window = \"address:$a\" }))"
+        done
+    hyprctl eval "hl.dispatch(hl.dsp.focus({ workspace = \"name:$esc\" }))"
+else
+    # Already named (negative id), or a numeric target -> relabel in place.
+    hyprctl eval "hl.dispatch(hl.dsp.workspace.rename({ workspace = $id, name = \"$esc\" }))"
+fi

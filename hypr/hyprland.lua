@@ -1,0 +1,407 @@
+-- Hyprland configuration (Lua).
+-- Migrated from hyprland.conf on 2026-08-04. Targets Hyprland >= 0.56.
+-- hyprlang (.conf) is deprecated since 0.55; this is the current format.
+-- Docs: https://wiki.hypr.land/Configuring/Start/
+-- NOTE: hyprlock / hypridle still use their own .conf files — those stay as-is.
+
+------------------------------------------------------------------------
+-- PROGRAMS
+------------------------------------------------------------------------
+local terminal    = "foot"  -- default terminal (SUPER+Return + boot); was alacritty. Scratchpad (SUPER+C) & cliphist picker stay alacritty.
+-- GDK_DPI_SCALE enlarges nemo's fonts (~40%) at 4K scale=1 without touching other
+-- GTK apps or global scaling. Fonts only; icons/layout unchanged. Tune the number
+-- (1.25 = subtler, 1.6 = bigger). NOTE: nemo is single-instance, so close any open
+-- nemo window before a new value takes effect.
+local fileManager = "env GDK_DPI_SCALE=1.4 nemo"
+local menu        = "~/.dotfiles/hypr/scripts/hypr-switch"  -- SUPER+Space switcher: windows+workspaces+fav apps (fuzzel dmenu); was "fuzzel"
+-- NOTE: keep WaylandFractionalScaleV1 ENABLED. Disabling it while chrome-flags.conf
+-- forces --force-device-scale-factor makes Chrome paint only part of its window
+-- (transparent remainder shows the wallpaper). Verified 2026-08-04.
+-- WebRTCPipeWireCapturer forces Chrome onto the xdg-desktop-portal ScreenCast path
+-- for getDisplayMedia (insurance; likely default-on in current Chrome). The actual
+-- 2026-08-07 "can't share whole screen, only a tab" breakage was the PORTAL itself
+-- coming up without ScreenCast due to a boot env race — see "PORTALS FIRST" in the
+-- AUTOSTART block. Keep this in the SAME --enable-features as WaylandLinuxDrmSyncobj:
+-- Chrome's cmdline is last-value-wins per switch, so a 2nd --enable-features clobbers.
+local browser     = "google-chrome-stable --ozone-platform=wayland --enable-features=WaylandLinuxDrmSyncobj,WebRTCPipeWireCapturer"
+
+local leftMon  = "DP-1"
+local rightMon = "DP-2"
+
+------------------------------------------------------------------------
+-- MONITORS  (https://wiki.hypr.land/Configuring/Basics/Monitors/)
+------------------------------------------------------------------------
+hl.monitor({ output = "",       mode = "preferred",        position = "auto",   scale = "auto" })
+hl.monitor({ output = leftMon,  mode = "3840x2160@119.91", position = "0x0",    scale = 1 })
+hl.monitor({ output = rightMon, mode = "3840x2160@119.91", position = "3840x0", scale = 1 })
+hl.monitor({ output = "HDMI-A-2", mode = "2560x720@60.266", position = "4480x2160", scale = 1 })  -- Xeneon Edge, native 2560x720, centered under DP-2
+
+-- Route the Xeneon Edge touchscreen to its own output. Without this, Wayland/Hyprland
+-- normalizes touch across the WHOLE monitor layout, so taps on the Edge land on the wrong
+-- screen. (Runtime-equivalent: hyprctl eval 'hl.device({ name=..., output=... })'.)
+hl.device({ name = "wch.cn-touchscreen", output = "HDMI-A-2" })
+
+-- Per-monitor workspaces: 1-5 -> left, 6-10 -> right
+for i = 1, 5 do
+    hl.workspace_rule({ workspace = tostring(i), monitor = leftMon })
+end
+for i = 6, 10 do
+    hl.workspace_rule({ workspace = tostring(i), monitor = rightMon })
+end
+
+-- Named app workspaces, all pinned to the right monitor (DP-2). The matching window
+-- rules (see WINDOW RULES below) route each app into its own workspace.
+hl.workspace_rule({ workspace = "name:slack",    monitor = rightMon })
+hl.workspace_rule({ workspace = "name:telegram", monitor = rightMon })
+hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
+-- hl.workspace_rule({ workspace = "name:osrs",     monitor = rightMon }) # disabled so that we can move it to the xeneon edge as needed
+hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
+hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
+hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
+-- Pin special:scratch to DP-2 so a freshly-spawned scratchpad is created on a
+-- real 4K panel, never auto-bound to the tiny 720px Xeneon Edge (the original
+-- "floats off the bottom" bug). After spawn it follows the mouse (hypr-scratch).
+hl.workspace_rule({ workspace = "special:scratch", monitor = rightMon })
+
+------------------------------------------------------------------------
+-- ENVIRONMENT
+------------------------------------------------------------------------
+hl.env("XCURSOR_SIZE", "24")
+hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")           -- change to qt6ct if you switch
+hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
+-- nvidia (current wiki recommendation is just these two + the decode backend)
+hl.env("LIBVA_DRIVER_NAME", "nvidia")
+hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")
+hl.env("NVD_BACKEND", "direct")                   -- hardware video decode via libva-nvidia-driver
+
+------------------------------------------------------------------------
+-- AUTOSTART (exec-once equivalents)
+------------------------------------------------------------------------
+hl.on("hyprland.start", function()
+    -- PORTALS FIRST — must run before the portal clients below (qs/browser/webcord).
+    -- Push the Wayland session env into the D-Bus + systemd --user activation env,
+    -- then (re)start the portal stack so the frontend re-scans backends WITH that env.
+    -- If xdg-desktop-portal auto-activates without XDG_CURRENT_DESKTOP it can't match
+    -- the Hyprland backend and comes up with NO ScreenCast interface → Chrome/Meet
+    -- "can only share a tab, not a whole screen" (diagnosed 2026-08-07).
+    hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user restart xdg-desktop-portal-hyprland.service; sleep 1; systemctl --user restart xdg-desktop-portal.service")
+    -- load hyprpm plugins (hyprbars), then re-parse so the guarded plugin block
+    -- below applies its styling/buttons (config is parsed before the plugin loads)
+    hl.exec_cmd("hyprpm reload -n && hyprctl reload")
+    -- per-monitor wallpapers (swaybg): DP-1 = 8K Polygon, DP-2 = flipped 8K Polygon.
+    -- HDMI-A-2 (Xeneon Edge, 2560x720) = Study_02_Mac mountains, PRE-CROPPED to the panel's
+    -- 3.556:1 strip (study-02-mac-edge.png) so the peaks show — a plain swaybg fill would
+    -- centre-crop them out. NOTE: the xeneon-edge dashboard fullscreens over this when active.
+    -- NOTE: hyprpaper 0.8.4 (hyprtoolkit rewrite) silently ignored its config on this
+    -- box (parsed 0 directives, "no target" for every monitor) -> swaybg instead:
+    -- one robust process, images passed on argv, no config/daemon/IPC to break.
+    hl.exec_cmd("swaybg -o DP-1 -i /home/vania/Pictures/wallpapers/8k-polygon.png -m fill -o DP-2 -i /home/vania/Pictures/wallpapers/8k-polygon-flip.png -m fill -o HDMI-A-2 -i /home/vania/Pictures/wallpapers/study-02-mac-edge.png -m fill")
+    -- hl.exec_cmd("waybar")   -- swapped to Quickshell; uncomment to fall back to waybar
+    hl.exec_cmd("qs")
+    -- gate Chrome on the portal actually advertising ScreenCast, so it can't cache
+    -- "no screen capture" by probing mid-restart above (bounded ~10s, then launches).
+    hl.exec_cmd("for _ in $(seq 1 50); do gdbus introspect --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop 2>/dev/null | grep -q portal.ScreenCast && break; sleep 0.2; done; exec " .. browser)
+    hl.exec_cmd(terminal)
+    -- night shift: hyprsunset (native); temps/times live in hyprsunset.conf (day 4500K / night 3200K).
+    -- NOTE: hyprsunset switches on fixed wall-clock times, not astronomical sunset like wlsunset did.
+    hl.exec_cmd("hyprsunset")
+    hl.exec_cmd("telegram-desktop")
+    hl.exec_cmd("slack")
+    hl.exec_cmd("webcord")
+    -- Claude scratchpad (SUPER+C): a drop-down terminal on special:scratch.
+    -- Spawned on-demand by ~/.dotfiles/hypr/scripts/hypr-scratch (not at boot),
+    -- so it's always created FRESH with the current float/centre/border window
+    -- rules — a boot-time window would keep stale styling after any config edit,
+    -- which is exactly what made it "look like just another terminal".
+    -- hl.exec_cmd("workstyle >/tmp/workstyle.log 2>&1")   -- waybar-only; Quickshell reads clients directly
+    -- (retired walker --gapplication-service prewarm — SUPER+Space now uses hypr-switch/fuzzel)
+    -- Xeneon Edge dashboard: now supervised by systemd --user (Restart=on-failure);
+    -- unit at ~/.dotfiles/systemd/xeneon-edge.service. Import the Wayland env into
+    -- the --user manager, clear any crash-loop lockout left from a previous session,
+    -- then (re)start the unit. The app still auto-detects the HDMI-A-2 panel by model
+    -- and fullscreens on it. Logs -> `journalctl --user -u xeneon-edge`.
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user reset-failed xeneon-edge.service; systemctl --user restart xeneon-edge.service")
+    hl.exec_cmd("hypridle")
+    hl.exec_cmd("noisetorch")                            -- RNN noise suppression
+    hl.exec_cmd("wl-paste --watch cliphist store")       -- clipboard history (fixed)
+    hl.exec_cmd("nm-applet --indicator")                 -- network tray
+    hl.exec_cmd("blueman-applet")                        -- bluetooth tray
+end)
+
+------------------------------------------------------------------------
+-- LOOK AND FEEL  (https://wiki.hypr.land/Configuring/Basics/Variables/)
+------------------------------------------------------------------------
+hl.config({
+    general = {
+        gaps_in     = 5,
+        gaps_out    = 6,
+        border_size = 4,
+        col = {
+            active_border   = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
+            inactive_border = "rgba(595959aa)",
+        },
+        layout        = "dwindle",
+        allow_tearing = false,
+    },
+
+    decoration = {
+        rounding       = 15,
+        rounding_power = 4,      -- iOS-style squircle corners (was 2.0)
+
+        dim_inactive = false,    -- don't dim windows on the unfocused monitor
+        dim_strength = 0.1,
+
+        blur = {
+            enabled  = true,
+            size     = 5,
+            passes   = 3,
+            noise    = 0.012,
+            contrast = 0.90,
+            vibrancy = 0.1696,
+            xray     = true,     -- cheaper floating-window blur
+        },
+
+        shadow = {
+            enabled      = true,
+            range        = 4,
+            render_power = 3,
+            offset       = { 0, 0 },
+            color        = 0x00000080,
+            sharp        = false,
+        },
+
+        -- Inner glow disabled — was a second blue/green shimmer halo; keeping just the border.
+        glow = {
+            enabled      = false,
+            range        = 12,
+            render_power = 3,
+            color        = { colors = { "rgba(33ccffee)", "rgba(00ff99ee)" }, angle = 45 },
+        },
+
+        -- Motion blur on move/resize (Hyprland 0.56+)
+        motion_blur = {
+            enabled = true,
+            samples = 7,
+        },
+    },
+
+    animations = {
+        enabled = true,
+    },
+
+    input = {
+        kb_layout     = "us",
+        follow_mouse  = 1,        -- was 1; changed for jetbrains historically
+        mouse_refocus = true,
+        sensitivity   = 0,
+        repeat_delay  = 280,     -- snappy key repeat (matches the old i3 `xset r rate 280 40`)
+        repeat_rate   = 40,
+        touchpad = {
+            natural_scroll = false,
+        },
+    },
+
+    -- No scroll debounce: every wheel tick fires immediately, rapid spins cycle
+    -- multiple workspaces. Bump to ~15 if a single detent ever overshoots.
+    binds = {
+        scroll_event_delay = 0,
+    },
+
+    dwindle = {
+        preserve_split = true,
+    },
+
+    master = {
+        new_status = "master",
+        new_on_top = true,
+        mfact      = 0.5,
+    },
+
+    misc = {
+        force_default_wallpaper    = -1,     -- disable the anime mascot wallpapers
+        mouse_move_focuses_monitor = true,
+        focus_on_activate          = false,  -- stop telegram etc. stealing focus
+    },
+
+    ecosystem = {
+        no_update_news = true,   -- no "what's new" popup on version bumps
+    },
+})
+
+------------------------------------------------------------------------
+-- ANIMATIONS  (springs = the good stuff Lua unlocks)
+------------------------------------------------------------------------
+hl.curve("linear",   { type = "bezier", points = { { 0, 0 }, { 1, 1 } } })
+hl.curve("smooth",   { type = "bezier", points = { { 0.05, 0.9 }, { 0.1, 1.05 } } })
+hl.curve("bouncy",   { type = "spring", mass = 1, stiffness = 320, dampening = 18 })  -- overshoot/bounce
+hl.curve("snappy",   { type = "spring", mass = 1, stiffness = 600, dampening = 40 })  -- fast settle, minimal bounce
+
+hl.animation({ leaf = "windows",     enabled = true, speed = 5,  spring = "bouncy" })
+hl.animation({ leaf = "windowsIn",   enabled = true, speed = 5,  spring = "bouncy", style = "popin 80%" })
+hl.animation({ leaf = "windowsOut",  enabled = true, speed = 4,  bezier = "linear", style = "popin 80%" })
+hl.animation({ leaf = "border",      enabled = true, speed = 10, bezier = "default" })
+hl.animation({ leaf = "borderangle", enabled = false })   -- static gradient border (no shimmer)
+hl.animation({ leaf = "glowangle",   enabled = false })   -- glow disabled
+hl.animation({ leaf = "fade",        enabled = true, speed = 3,  bezier = "default" })
+-- Disabled = instant switch. Named app workspaces (slack/telegram/osrs) get negative
+-- ids, so Hyprland's id-ordered slide brought them in from the wrong side (they slid
+-- from the LEFT despite sitting on the right of the bar). The leaf is global with no
+-- per-workspace override, so instant is the trade for correct direction everywhere.
+hl.animation({ leaf = "workspaces",  enabled = false, speed = 4,  spring = "snappy", style = "slide" })
+
+------------------------------------------------------------------------
+-- KEYBINDINGS  (https://wiki.hypr.land/Configuring/Basics/Binds/)
+------------------------------------------------------------------------
+local mainMod = "SUPER"
+
+hl.bind(mainMod .. " + Return",    hl.dsp.exec_cmd(terminal))
+hl.bind(mainMod .. " + Q",         hl.dsp.window.close())
+hl.bind(mainMod .. " + X",         hl.dsp.exec_cmd(fileManager))
+hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd(browser .. " --profile-directory=Default --new-window"))
+hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.float({ action = "toggle" }))
+hl.bind(mainMod .. " + T",         hl.dsp.layout("orientationnext"))
+hl.bind(mainMod .. " + R",         hl.dsp.layout("rollnext"), { release = true })
+hl.bind(mainMod .. " + F",         hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
+hl.bind(mainMod .. " + Space",     hl.dsp.exec_cmd(menu))
+hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())
+hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
+hl.bind(mainMod .. " + L",         hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
+hl.bind(mainMod .. " + C",         hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-scratch"))  -- claude scratchpad (SUPER+C = Claude)
+
+-- clipboard picker + screenshots
+hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
+hl.bind("XF86Tools",                   hl.dsp.exec_cmd("grimblast --notify --freeze copysave area ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind("SHIFT + XF86Tools",           hl.dsp.exec_cmd("grimblast --notify copysave output ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind(mainMod .. " + XF86Tools",     hl.dsp.exec_cmd("grimblast --notify copysave active ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+
+-- move focus
+hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
+hl.bind(mainMod .. " + right", hl.dsp.focus({ direction = "right" }))
+hl.bind(mainMod .. " + up",    hl.dsp.focus({ direction = "up" }))
+hl.bind(mainMod .. " + down",  hl.dsp.focus({ direction = "down" }))
+hl.bind(mainMod .. " + Tab",   hl.dsp.window.cycle_next())
+
+-- move windows
+hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }))
+hl.bind(mainMod .. " + SHIFT + right", hl.dsp.window.move({ direction = "right" }))
+hl.bind(mainMod .. " + SHIFT + up",    hl.dsp.window.move({ direction = "up" }))
+hl.bind(mainMod .. " + SHIFT + down",  hl.dsp.window.move({ direction = "down" }))
+
+-- workspaces: SUPER + [0-9] to switch, SUPER + SHIFT + [0-9] to move (silent)
+for i = 1, 10 do
+    local key = i % 10   -- 10 maps to key 0
+    hl.bind(mainMod .. " + " .. key,             hl.dsp.focus({ workspace = i }))
+    hl.bind(mainMod .. " + SHIFT + " .. key,     hl.dsp.window.move({ workspace = i, follow = false }))
+end
+
+-- Jump straight to a named app workspace (SUPER+ALT layer; the SUPER+T / SUPER+R layout binds stay put).
+hl.bind(mainMod .. " + ALT + S", hl.dsp.focus({ workspace = "name:slack" }))
+hl.bind(mainMod .. " + ALT + T", hl.dsp.focus({ workspace = "name:telegram" }))
+hl.bind(mainMod .. " + ALT + R", hl.dsp.focus({ workspace = "name:osrs" }))
+hl.bind(mainMod .. " + ALT + O", hl.dsp.focus({ workspace = "name:obsidian" }))
+
+-- move the whole current workspace to the other monitor (i3 parity: mod+Shift+< / >)
+hl.bind(mainMod .. " + SHIFT + comma",  hl.dsp.workspace.move({ monitor = leftMon }))
+hl.bind(mainMod .. " + SHIFT + period", hl.dsp.workspace.move({ monitor = rightMon }))
+
+-- named workspaces via rofi (parity with i3's mod+Shift+a / mod+Shift+s):
+--   SUPER + SHIFT + A  -> rename the CURRENT workspace
+--   SUPER + SHIFT + S  -> move the FOCUSED window to a chosen/typed workspace
+hl.bind(mainMod .. " + SHIFT + A", hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-rename"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-move"))
+
+-- scroll through workspaces
+hl.bind(mainMod .. " + mouse_down", hl.dsp.focus({ workspace = "e-1" }))
+hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e+1" }))
+
+-- move/resize with mouse
+hl.bind(mainMod .. " + mouse:272", hl.dsp.window.drag(),   { mouse = true })
+hl.bind(mainMod .. " + mouse:273", hl.dsp.window.resize(), { mouse = true })
+
+------------------------------------------------------------------------
+-- WINDOW RULES  (https://wiki.hypr.land/Configuring/Basics/Window-Rules/)
+------------------------------------------------------------------------
+-- Ignore maximize requests from all apps
+hl.window_rule({ name = "suppress-maximize", match = { class = ".*" }, suppress_event = "maximize" })
+
+-- App -> its own named workspace (all pinned to DP-2 via workspace_rule above).
+hl.window_rule({ name = "slack-workspace", match = { class = "^(slack)$" }, workspace = "name:slack" })
+-- Telegram Desktop's class carries a per-install hash suffix (org.telegram.desktop._<hash>), so match a prefix.
+hl.window_rule({ name = "telegram-workspace", match = { class = "^(org\\.telegram\\.desktop.*)$" }, workspace = "name:telegram" })
+-- Discord: WebCord is the daily client (autostarts); also route the official discord client if opened.
+hl.window_rule({ name = "discord-workspace", match = { class = "^(WebCord|discord)$" }, workspace = "name:discord" })
+-- OSRS: RuneLite runs under XWayland; class is the dashified Java main class net.runelite.client.RuneLite.
+hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-client-RuneLite)$" }, workspace = "name:osrs" })
+hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
+hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
+hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
+
+-- Claude scratchpad terminal (special:scratch, SUPER+C). One rule does it all:
+--   • workspace  -> routes the window onto the special workspace (so hypr-scratch
+--                   can spawn a plain alacritty; no [workspace …] exec prefix)
+--   • float+size+center -> a centred drop-down, never a tiled pane
+--   • thick PURPLE border + rounding -> unmistakably distinct from a normal term
+-- (deep-purple bg + translucency come from ~/.dotfiles/alacritty/scratchpad.toml)
+hl.window_rule({ name = "scratchpad-float", match = { class = "^(scratchpad)$" }, workspace = "special:scratch",
+  float = true, size = { 2400, 1500 }, center = true,
+  border_size = 6, border_color = { colors = { "rgba(cba6f7ff)", "rgba(8839efff)" }, angle = 45 }, rounding = 20 })
+
+-- Sensible minimum size for floating popups (oauth logins etc.)
+hl.window_rule({ name = "float-minsize", match = { float = true }, min_size = { 300, 200 } })
+
+-- Border color accents for floating / fullscreen
+hl.window_rule({ name = "float-border",      match = { float = true },      border_color = { colors = { "rgba(32CD32AA)", "rgba(7CFC0077)" }, angle = 0 } })
+hl.window_rule({ name = "fullscreen-border", match = { fullscreen = true }, border_color = { colors = { "rgba(FF0000AA)", "rgba(88080877)" }, angle = 0 } })
+hl.window_rule({ name = "fullscreen-bordersize", match = { fullscreen = true }, border_size = 8 })
+
+-- Center jetbrains IDE windows
+hl.window_rule({ name = "jetbrains-center", match = { class = "jetbrains-idea" }, center = true })
+
+------------------------------------------------------------------------
+-- PLUGINS  (https://wiki.hypr.land/Plugins/Using-Plugins/)
+------------------------------------------------------------------------
+-- hyprbars: real per-window title bars, so tiled windows (especially the many
+-- Claude-Code terminals) are distinguishable at a glance. The title text comes
+-- from the app itself (alacritty has dynamic_title = true).
+--
+-- Install once (needs sudo — hyprpm compiles against Hyprland headers):
+--     hyprpm update
+--     hyprpm add https://github.com/hyprwm/hyprland-plugins
+--     hyprpm enable hyprbars
+--     hyprpm reload -n
+-- After every Hyprland upgrade, rebuild:  hyprpm update && hyprpm reload -n
+--
+-- The guard keeps this block inert until the plugin is actually loaded, so a
+-- config reload never errors when hyprbars is missing (e.g. right after a
+-- Hyprland upgrade, before the rebuild). The `hyprpm reload -n` in the autostart
+-- block loads the plugin on login, which triggers the config re-parse that then
+-- applies everything below.
+if hl.plugin ~= nil and hl.plugin.hyprbars ~= nil then
+    hl.config({
+        plugin = {
+            hyprbars = {
+                bar_height      = 34,
+                bar_color       = "rgb(1a1a1a)",
+                col             = { text = "rgb(d8d8d8)" },  -- plugin:hyprbars:col.text (title color)
+                bar_text_size   = 15,
+                bar_text_font   = "JetBrainsMono Nerd Font Propo",  -- proportional (nicer than Mono), keeps Nerd glyphs
+                bar_text_weight = 500,                             -- medium weight = crisper titles
+                bar_text_align  = "left",
+                bar_padding    = 12,
+                bar_part_of_window         = true,
+                bar_precedence_over_border = true,
+                -- double-click title bar → toggle maximize (fills tile area, keeps the bar).
+                -- eval-wrapped: legacy `hyprctl dispatch fullscreen` is dead on Lua Hyprland.
+                -- internal=1 = FSMODE_MAXIMIZED; re-requesting the same state toggles it off.
+                on_double_click = "hyprctl eval 'hl.dispatch(hl.dsp.window.fullscreen_state({ internal = 1, client = -1 }))'",
+            },
+        },
+    })
+
+    -- Window buttons (close/maximize) intentionally omitted: their `hyprctl dispatch …`
+    -- actions use legacy syntax that no-ops on this Lua-configured Hyprland, so the
+    -- buttons did nothing when clicked. Title text alone distinguishes windows. To
+    -- re-add functional buttons, use an eval-wrapped action, e.g.
+    --   action = "hyprctl eval 'hl.dispatch(hl.dsp.window.close())'"
+end

@@ -1,0 +1,36 @@
+#!/bin/sh
+# xeneon-lock — hexane xss-lock locker wrapper.
+#
+# Runs the real locker (xsecurelock), then, once the screen is UNLOCKED, recovers the
+# Corsair Xeneon Edge touchscreen. The Edge's wch.cn touch digitizer only lives on USB
+# while the panel has active video; xsecurelock DPMS-blanks during the lock, which drops
+# it off the bus. After unlock we re-power the outputs so the panel re-trains and the
+# digitizer re-enumerates on the core pointer.
+#
+# Auto-lock and DPMS/power-saving timers are left untouched — this only fires AFTER the
+# locker exits, so the normal lock-on-idle behaviour is preserved.
+#
+# Wired in via i3: exec_always --no-startup-id "xss-lock -- $HOME/.local/bin/xeneon-lock"
+# (source of truth: ~/.dotfiles/i3/snippets/hexane).
+
+# Pin a concrete text font for the auth prompt. auth_x11 opens its font by generic
+# name; hexane's fontconfig strong-appends Noto Color Emoji to every family, so a
+# generic lookup (fc-match monospace) resolves to an emoji font with no text glyphs
+# -> the password prompt renders invisibly (white-on-black over the black saver) and
+# you end up typing blind. A concrete family sidesteps the broken fallback entirely.
+export XSECURELOCK_FONT="DejaVu Sans Mono"
+
+xsecurelock          # blocks until the screen is unlocked
+
+export DISPLAY="${DISPLAY:-:0}"
+xset dpms force on 2>/dev/null    # wake outputs; the Edge re-powers its touch controller
+
+# Wait up to ~8s for the digitizer to reappear (USB re-enumeration after re-power).
+i=0
+while [ "$i" -lt 16 ]; do
+    if xinput list --name-only 2>/dev/null | grep -qi "wch.cn TouchScreen"; then
+        break
+    fi
+    sleep 0.5
+    i=$((i + 1))
+done
