@@ -33,6 +33,7 @@
     ~/.xbindkeysrc: xbindkeys/xbindkeysrc
     ~/bin/hop: i3/scripts/hop
     ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
+    ~/.config/systemd/user/tmux.service: systemd/tmux.service
 
 
 - shell:
@@ -44,3 +45,9 @@
     # fonts/fonts.conf must also apply to the system copy (/usr/share/fonts/noto, from
     # noto-fonts-emoji) or that copy keeps space/digits and the word-gaps persist.
     - ['([ -x "$(command -v fc-cache)" ] && fc-cache -f -v) || echo "no fc-cache command"', "Regenerate all font caches."]
+
+- shell:
+    # tmux-resurrect boot-restore (Linux): enable the --user unit + lingering so
+    # it starts at boot without a login session. Idempotent; safe to re-run.
+    - ['systemctl --user daemon-reload && systemctl --user enable tmux.service', "Enable tmux-resurrect boot-restore (systemd --user)"]
+    - ['loginctl enable-linger "$USER" 2>/dev/null || sudo loginctl enable-linger "$USER"', "Linger so the tmux service starts at boot pre-login"]

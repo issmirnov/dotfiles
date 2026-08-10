@@ -1,0 +1,17 @@
+[Unit]
+Description=tmux server (detached; sessions restored by tmux-resurrect at boot)
+Documentation=man:tmux(1)
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Start the bare server (exit-empty off in tmux.conf keeps it alive), then
+# restore synchronously via resurrect's restore.sh through `tmux run-shell`
+# (sets $TMUX so the socket resolves) -- the same path as prefix+Ctrl-r. The
+# leading `-` makes systemd ignore restore.sh's noisy non-zero exit.
+ExecStart=/usr/bin/tmux start-server
+ExecStartPost=-/usr/bin/tmux run-shell %h/.dotfiles/tmux/plugins/tmux-resurrect/scripts/restore.sh
+ExecStop=/usr/bin/tmux kill-server
+
+[Install]
+WantedBy=default.target
