@@ -28,7 +28,7 @@ sec_mem() {
 }
 
 sec_temp() {
-  # collect priority-tagged rows: 0 = always shown (pkg/nvme/gpu), 1 = per-core (keep hottest 3)
+  # priority-tagged rows: 0 CPU pkg, 1 GPU, 2 NVMe, 3 per-core (hottest 3 kept)
   rows=""
   for h in /sys/class/hwmon/hwmon*; do
     [ -r "$h/name" ] || continue; nm=$(<"$h/name")
@@ -38,18 +38,19 @@ sec_temp() {
         for f in "$h"/temp[2-9]_input "$h"/temp1[0-9]_input; do
           [ -r "$f" ] || continue
           lbl="${f%_input}_label"; l=$([ -r "$lbl" ] && cat "$lbl" || echo core)
-          rows+="1|$l|$(( $(<"$f")/1000 ))|"$'\n'
+          rows+="3|$l|$(( $(<"$f")/1000 ))|"$'\n'
         done ;;
       nvme)
-        [ -r "$h/temp1_input" ] && rows+="0|NVMe|$(( $(<"$h/temp1_input")/1000 ))|"$'\n' ;;
+        [ -r "$h/temp1_input" ] && rows+="2|NVMe|$(( $(<"$h/temp1_input")/1000 ))|"$'\n' ;;
     esac
   done
   # GPU temp + fan% via nvidia-smi (the fan field only appears on this row)
   g=$(nvidia-smi --query-gpu=temperature.gpu,fan.speed --format=csv,noheader,nounits 2>/dev/null | head -1)
-  [ -n "$g" ] && rows+="0|GPU|${g%%,*}|${g##*, }"$'\n'
+  [ -n "$g" ] && rows+="1|GPU|${g%%,*}|${g##*, }"$'\n'
 
-  { printf '%s' "$rows" | grep '^0|'
-    printf '%s' "$rows" | grep '^1|' | sort -t'|' -k3 -nr | head -3; } \
+  # fixed rows in priority order (CPU pkg → GPU → NVMe), then the 3 hottest cores
+  { printf '%s' "$rows" | grep -vE '^3\|' | sort -t'|' -k1,1n
+    printf '%s' "$rows" | grep '^3|' | sort -t'|' -k3,3nr | head -3; } \
   | awk -F'|' '
       BEGIN{ printf "{\"sensors\":[" }
       NF{ l=$2; gsub(/\\/,"\\\\",l); gsub(/"/,"\\\"",l)
