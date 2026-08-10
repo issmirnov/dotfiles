@@ -15,6 +15,23 @@ Singleton {
     property real netTx: 0
     property real load: 0    // 1-min load average
 
+    // --- rolling history for the stat-chip sparklines (~2 min at the 2s poll) ---
+    readonly property int histLen: 60
+    property var cpuHist: []
+    property var memHist: []
+    property var tempHist: []
+    property var loadHist: []
+    property var netRxHist: []
+    property var netTxHist: []
+
+    // push onto a *copy* — mutating an array in place does not notify QML bindings
+    function _push(arr, v) {
+        var a = arr.slice();
+        a.push(v);
+        while (a.length > sys.histLen) a.shift();
+        return a;
+    }
+
     property var _cpu   // { idle, total }
     property var _net   // { rx, tx, t }
 
@@ -61,5 +78,12 @@ Singleton {
             }
         }
         sys._net = { rx: rx, tx: tx, t: now };
+
+        sys.cpuHist   = sys._push(sys.cpuHist,   sys.cpuPct);
+        sys.memHist   = sys._push(sys.memHist,   sys.memPct);
+        sys.tempHist  = sys._push(sys.tempHist,  sys.tempC);
+        sys.loadHist  = sys._push(sys.loadHist,  sys.load);
+        sys.netRxHist = sys._push(sys.netRxHist, sys.netRx);
+        sys.netTxHist = sys._push(sys.netTxHist, sys.netTx);
     }
 }
