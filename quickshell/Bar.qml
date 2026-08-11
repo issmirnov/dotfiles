@@ -46,7 +46,6 @@ PanelWindow {
                 UsageChip { instance: "claude:claude_isgmirnov" }
                 UsageChip { instance: "codex" }
                 Brightness {}
-                AutoDimToggle {}
                 Audio {}
                 Stats {}
                 IdleToggle { barWindow: bar }

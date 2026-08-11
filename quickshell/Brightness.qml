@@ -155,20 +155,29 @@ Rectangle {
                 anchors.rightMargin: 12
                 spacing: 10
 
-                // label pill (matches Audio's mute-pill footprint; glyph-safe)
+                // auto-dim toggle (sits where Audio's mute pill sits): 🔓 auto =
+                // hexane-nightlight drives brightness on its sun ramps; 🔒 held =
+                // locked to your value until the next sunrise. Folded in from what
+                // used to be a standalone "auto" chip in the bar (AutoDimToggle).
                 Rectangle {
-                    id: lblPill
+                    id: autoPill
                     anchors.verticalCenter: parent.verticalCenter
                     height: 26
-                    width: lt.width + 16
+                    width: 34
                     radius: 13
-                    color: Theme.surface
+                    color: AutoDim.active ? Theme.briCol : Theme.surface
+                    Behavior on color { ColorAnimation { duration: 120 } }
                     Text {
-                        id: lt
                         anchors.centerIn: parent
-                        text: "bri"
-                        color: Theme.text
-                        font.pixelSize: 13
+                        text: AutoDim.active ? "🔒" : "🔓"
+                        color: AutoDim.active ? Theme.chipText : Theme.subtext
+                        font.pixelSize: 14
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: AutoDim.active ? AutoDim.arm() : AutoDim.pause(bri.value)
                     }
                 }
 
@@ -176,7 +185,7 @@ Rectangle {
                 Item {
                     id: slider
                     anchors.verticalCenter: parent.verticalCenter
-                    width: row.width - lblPill.width - pct.width - row.spacing * 2
+                    width: row.width - autoPill.width - pct.width - row.spacing * 2
                     height: parent.height
 
                     Rectangle {
