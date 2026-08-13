@@ -152,7 +152,11 @@ hl.config({
         dim_strength = 0.1,
 
         blur = {
-            enabled  = true,
+            -- DISABLED 2026-08-13: the Aug-12 -Syu bumped NVIDIA 610.43.03 -> 610.57.04, and
+            -- the reboot that activated it regressed blur compositing -> hyprbars title bars
+            -- flicker transparent on window-open. Not a config bug. Re-enable (true) once a
+            -- fixed NVIDIA driver ships, or after rolling back to 610.43.03 (still cached).
+            enabled  = false,
             size     = 5,
             passes   = 3,
             noise    = 0.012,
@@ -180,7 +184,9 @@ hl.config({
 
         -- Motion blur on move/resize (Hyprland 0.56+)
         motion_blur = {
-            enabled = true,
+            -- DISABLED 2026-08-13 with blur above: motion blur is a blur-family effect and
+            -- flickers on the same NVIDIA 610.57.04 regression. Re-enable together with blur.
+            enabled = false,
             samples = 7,
         },
     },
