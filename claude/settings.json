@@ -37,6 +37,10 @@
           {
             "type": "command",
             "command": "notify-send 'Claude Code' 'Needs your attention' --icon=dialog-information --urgency=normal"
+          },
+          {
+            "type": "command",
+            "command": "printf '\\a' 2>/dev/null > /dev/tty"
           }
         ]
       }
