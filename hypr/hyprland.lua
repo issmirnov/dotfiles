@@ -259,11 +259,11 @@ hl.bind(mainMod .. " + Q",         hl.dsp.window.close())
 hl.bind(mainMod .. " + X",         hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd(browser .. " --profile-directory=Default --new-window"))
 hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.float({ action = "toggle" }))
-hl.bind(mainMod .. " + T",         hl.dsp.layout("orientationnext"))
-hl.bind(mainMod .. " + R",         hl.dsp.layout("rollnext"), { release = true })
+hl.bind(mainMod .. " + T",         hl.dsp.layout("swapsplit"))    -- swap focused pane with its split sibling (rebound 2026-08-11 from broken orientationnext)
+hl.bind(mainMod .. " + R",         hl.dsp.layout("movetoroot"))   -- promote focused window to a top-level half; warns (no popup) + no-ops if already at root (rebound 2026-08-11 from broken rollnext)
 hl.bind(mainMod .. " + F",         hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" }))
 hl.bind(mainMod .. " + Space",     hl.dsp.exec_cmd(menu))
-hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())
+-- hl.bind(mainMod .. " + P",         hl.dsp.window.pseudo())                         -- DISABLED 2026-08-11: pseudotile made windows "quarter-size on half the screen"; unused
 hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + L",         hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
@@ -271,9 +271,9 @@ hl.bind(mainMod .. " + C",         hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hyp
 
 -- clipboard picker + screenshots
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
-hl.bind("XF86Tools",                   hl.dsp.exec_cmd("grimblast --notify --freeze copysave area ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
-hl.bind("SHIFT + XF86Tools",           hl.dsp.exec_cmd("grimblast --notify copysave output ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
-hl.bind(mainMod .. " + XF86Tools",     hl.dsp.exec_cmd("grimblast --notify copysave active ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind("XF86Tools",                   hl.dsp.exec_cmd("grimblast --freeze copysave area ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind("SHIFT + XF86Tools",           hl.dsp.exec_cmd("grimblast copysave output ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+hl.bind(mainMod .. " + XF86Tools",     hl.dsp.exec_cmd("grimblast copysave active ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
 
 -- move focus
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
