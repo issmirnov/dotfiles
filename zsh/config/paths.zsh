@@ -46,4 +46,6 @@ done
 unset elem
 
 # export final result
-export PATH="$JAVA_BIN:$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$RUST_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+# ${VAR:+$VAR:} appends only when VAR is set, so an unmatched $OSTYPE (JAVA_BIN/TEX
+# unset) can't leave an empty PATH element — which would put CWD ahead of trusted dirs.
+export PATH="${JAVA_BIN:+$JAVA_BIN:}$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:${TEX:+$TEX:}$GOPATH/bin:$GOLANG_BIN:$RUST_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
