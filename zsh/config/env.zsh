@@ -14,8 +14,10 @@ export PI_CACHE_RETENTION=long
 # OS-dependent locations
 if [[ $OSTYPE == 'linux-gnu' ]]; then
 	ANSIBLE_ROLES_PATH='/etc/ansible'
+	export JAVA_HOME='/usr/lib/jvm/java-21-openjdk'
 elif [[ $OSTYPE == darwin* ]]; then
 	ANSIBLE_ROLES_PATH='/usr/local/etc/ansible'
+	export JAVA_HOME='/opt/homebrew/opt/openjdk@21'
 fi
 
 # Customize github.com/djui/alias-tips
