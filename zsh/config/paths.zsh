@@ -7,10 +7,13 @@ SYSTEM="/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
 PYTHON="$HOME/.local/bin:$HOME/Library/Python/3.9/bin" # pip install target for linux and macos
 
 # OS-dependent  paths.
+# JAVA_BIN lists 21 before 17 so `java` resolves to 21 (matches JAVA_HOME in env.zsh).
 if [[ $OSTYPE == 'linux-gnu' ]]; then
   TEX="/usr/texbin"
+  JAVA_BIN="/usr/lib/jvm/java-21-openjdk/bin:/usr/lib/jvm/java-17-openjdk/bin"
 elif [[ $OSTYPE == darwin* ]]; then
   TEX="/usr/local/texlive/2014/bin/universal-darwin"
+  JAVA_BIN="/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/opt/openjdk@17/bin"
 fi
 
 # additional autocompletions
@@ -43,4 +46,6 @@ done
 unset elem
 
 # export final result
-export PATH="$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:$TEX:$GOPATH/bin:$GOLANG_BIN:$RUST_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
+# ${VAR:+$VAR:} appends only when VAR is set, so an unmatched $OSTYPE (JAVA_BIN/TEX
+# unset) can't leave an empty PATH element — which would put CWD ahead of trusted dirs.
+export PATH="${JAVA_BIN:+$JAVA_BIN:}$USER_BIN:$DOT_BIN:$GOPATH/bin:$NPM_PATH:$BREW:$SNAP_BIN:$PYTHON:${TEX:+$TEX:}$GOPATH/bin:$GOLANG_BIN:$RUST_BIN:$FZF_PREFIX/fzf/bin:$SYSTEM"
