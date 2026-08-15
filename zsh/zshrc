@@ -34,6 +34,11 @@ if ! zgen saved; then
   		zgen oh-my-zsh plugins/$p
   	done
 
+	# fzf-tab: render the completion menu in fzf, with previews (config: zsh/config/fzf-tab.zsh).
+	# Load after compinit (OMZ runs it) and before widget-wrapping plugins:
+	# zsh-autosuggestions (next) and zsh-syntax-highlighting (last).
+	zgen load Aloxaf/fzf-tab
+
 	zgen load ~/.dotfiles/zsh/config/zsh-autosuggestions.zsh
 	zgen load zsh-users/zsh-autosuggestions
 	zgen load zsh-users/zsh-completions
@@ -58,6 +63,27 @@ done
 
 # Enable all completions
 autoload -U compinit && compinit
+
+########################################################
+# Modern shell stack (trialing on dev-2). Init AFTER the final compinit above:
+#  - carapace registers a completer -> must run post-compinit.
+#  - atuin is set up after fzf (sourced in the config loop above) so atuin owns
+#    Ctrl-R; our vicmd `/` and `r` fzf-history bindings stay for side-by-side use.
+#  - fzf-tab is loaded in the zgen block; its zstyles live in config/fzf-tab.zsh.
+# Everything is guarded by command -v, so an un-provisioned host is unaffected.
+
+# carapace: cross-shell completions for 1000+ CLIs, bridging to our existing
+# zsh/OMZ completers so nothing we already have is lost.
+if command -v carapace >/dev/null 2>&1; then
+  export CARAPACE_BRIDGES='zsh,bash,fish,inshellisense'
+  source <(carapace _carapace zsh)
+fi
+
+# atuin: SQLite-backed history + fuzzy Ctrl-R. --disable-up-arrow preserves our
+# custom up-line-or-history widget (zsh/config/bindkeys.zsh).
+if command -v atuin >/dev/null 2>&1; then
+  eval "$(atuin init zsh --disable-up-arrow)"
+fi
 
 # As per instructions, load this last so that it wraps ZLE widgets.
 # source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
