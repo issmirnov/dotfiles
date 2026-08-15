@@ -85,6 +85,14 @@ if command -v atuin >/dev/null 2>&1; then
   eval "$(atuin init zsh --disable-up-arrow)"
 fi
 
+# fzf's completion.zsh (loaded via zsh/config/fzf.zsh) rebinds Tab to
+# fzf-completion, which shadows fzf-tab. Re-point Tab at fzf-tab now that fzf has
+# loaded. This drops fzf's `**<TAB>` trigger in favour of fzf-tab on plain Tab;
+# fzf's Ctrl-T / Ctrl-R / Alt-C bindings are untouched.
+if (( $+widgets[fzf-tab-complete] )); then
+  bindkey '^I' fzf-tab-complete
+fi
+
 # As per instructions, load this last so that it wraps ZLE widgets.
 # source ~/.dotfiles/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 

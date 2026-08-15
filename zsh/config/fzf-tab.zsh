@@ -6,9 +6,12 @@
 #
 # Docs: https://github.com/Aloxaf/fzf-tab
 
-# fzf-tab replaces zsh's built-in menu selection; OMZ enables `menu select`,
-# which conflicts, so turn it off.
+# fzf-tab replaces zsh's built-in menu selection; OMZ enables `menu select` at a
+# more specific pattern (':completion:*:*:*:*:*') that would otherwise outrank a
+# generic override, so disable it at BOTH the exact OMZ pattern (equal
+# specificity — last definition wins) and the generic one.
 zstyle ':completion:*' menu no
+zstyle ':completion:*:*:*:*:*' menu no
 
 # Inherit our FZF_DEFAULT_OPTS (colours/height from zsh/config/fzf.zsh) instead
 # of fzf-tab's private defaults, so the picker matches the rest of our fzf UI.
