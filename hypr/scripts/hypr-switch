@@ -44,6 +44,7 @@ apps=(
   $'bolt\tBolt\tbolt'
   $'runelite\tOSRS\trunelite'
   $'obsidian\tObsidian\tobsidian'
+  $'zapzap\tWhatsApp (ZapZap)\tzapzap'
 )
 
 # ── build parallel actions[] / labels[] ─────────────────────────────────────

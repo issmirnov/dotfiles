@@ -58,6 +58,7 @@ hl.workspace_rule({ workspace = "name:discord",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:spotify",  monitor = rightMon })
 hl.workspace_rule({ workspace = "name:signal",   monitor = rightMon })
 hl.workspace_rule({ workspace = "name:obsidian", monitor = rightMon })
+hl.workspace_rule({ workspace = "name:whatsapp", monitor = rightMon })
 -- Pin special:scratch to DP-2 so a freshly-spawned scratchpad is created on a
 -- real 4K panel, never auto-bound to the tiny 720px Xeneon Edge (the original
 -- "floats off the bottom" bug). After spawn it follows the mouse (hypr-scratch).
@@ -342,6 +343,8 @@ hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-clie
 hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
 hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
 hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
+-- ZapZap: native WhatsApp desktop client (Qt); stable WM class "ZapZap".
+hl.window_rule({ name = "whatsapp-workspace", match = { class = "^(ZapZap)$" }, workspace = "name:whatsapp" })
 
 -- Claude scratchpad terminal (special:scratch, SUPER+C). One rule does it all:
 --   • workspace  -> routes the window onto the special workspace (so hypr-scratch
