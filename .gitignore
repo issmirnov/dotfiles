@@ -19,3 +19,6 @@ benchmarks/comparison/
 .aider.input.history
 .aider.tags.cache.*/
 .superpowers/
+
+# claude
+.claude/worktrees/*
