@@ -64,7 +64,7 @@ refresh() {
   [ -s "$CACHE" ] && [ $(( now - mt )) -lt "$REFRESH_TTL" ] && return 0
   fetch
 }
-refresh
+refresh; refreshed=$?   # refreshed: 0 = cache is current; non-zero = could not refresh (fetch failed / skipped)
 
 [ -s "$CACHE" ] || { [ "$MODE" = next ] && printf 'cal ?\ncal ?\n#888888\n'; exit 0; }
 
@@ -73,8 +73,15 @@ refresh
 # countdown isn't mistaken for live data. Tunable via CAL_STALE_AFTER (default 2× TTL).
 STALE_AFTER="${CAL_STALE_AFTER:-$(( REFRESH_TTL * 2 ))}"
 cmt=$(stat -c %Y "$CACHE" 2>/dev/null || echo 0)
-sfx=""; scolor=""
-[ $(( now - cmt )) -gt "$STALE_AFTER" ] && { sfx=" (stale)"; scolor="#8a8a8a"; }
+age=$(( now - cmt ))
+# Stale when the cache is old AND we couldn't freshen it this run. `refreshed` (refresh()'s
+# exit) is non-zero when the fetch failed — expired/revoked gws token, no network — so a dead
+# token trips staleness after just one TTL instead of waiting out STALE_AFTER. The age gates
+# keep a briefly-old-but-healthy cache from flapping to (stale).
+sfx=""; scolor=""; stale=0
+if [ "$age" -gt "$STALE_AFTER" ] || { [ "$refreshed" -ne 0 ] && [ "$age" -ge "$REFRESH_TTL" ]; }; then
+  stale=1; sfx=" (stale)"; scolor="#8a8a8a"
+fi
 
 # seconds -> "1h20m" / "25m" / "<1m"
 fmt() {
@@ -114,7 +121,14 @@ while IFS=$'\t' read -r st su; do
   if [ -z "$best_s" ] || [ "$e" -lt "$best_e" ]; then best_e=$e; best_s=$su; fi
 done < <(jq -r '.[]? | "\(.start)\t\(.summary)"' "$CACHE" 2>/dev/null)
 
-[ -z "$best_s" ] && { printf '\n\n'; exit 0; }                      # nothing upcoming -> hide
+if [ -z "$best_s" ]; then                                          # nothing upcoming
+  # Cache stale (token out / fetch failing) → surface a visible `cal ?` health marker rather
+  # than hiding. A frozen cache whose events have all passed would otherwise vanish silently —
+  # the exact failure that hid a dead gws token for days. When the data is fresh, still hide.
+  if [ "$stale" = 1 ]; then printf 'cal ?%s\ncal ?\n%s\n' "$sfx" "${scolor:-#8a8a8a}"
+  else printf '\n\n'; fi
+  exit 0
+fi
 rem=$(( best_e - now ))
 printf '◷ %s  %s%s\n' "$(trunc "$best_s")" "$(fmt "$rem")" "$sfx"   # full_text
 printf '%s%s\n' "$(fmt "$rem")" "$sfx"                              # short_text
