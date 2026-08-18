@@ -11,6 +11,10 @@ Documentation=https://github.com/Smirnov-Labs/xeneon-edge-linux
 # correct modelling and light up automatically if a session target is ever
 # wired (e.g. via uwsm). Give up (leave it down for investigation via
 # `journalctl --user -u xeneon-edge`) if it dies 5x inside 60s.
+# Restart=always (not on-failure): on 2026-08-16 the process exited cleanly
+# (exit 0, no crash/OOM/reboot) and on-failure left it dark for ~2 days.
+# always also recovers a clean self-exit, while still honoring a deliberate
+# `systemctl --user stop` (systemd never auto-restarts an operator stop).
 After=graphical-session.target
 PartOf=graphical-session.target
 StartLimitIntervalSec=60
@@ -21,7 +25,7 @@ Type=simple
 Environment=GDK_BACKEND=wayland
 Environment=PYTHONPATH=%h/Projects/smirnovlabs/xeneon-edge-linux
 ExecStart=/usr/bin/python3 -m xeneon_edge --config %h/.config/xeneon-edge/config.toml
-Restart=on-failure
+Restart=always
 RestartSec=5
 
 [Install]
