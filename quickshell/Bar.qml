@@ -1,9 +1,18 @@
 import Quickshell
+import Quickshell.Hyprland
 import QtQuick
 
 // One floating, rounded bar for a single monitor. Pure layout — data lives in the modules.
 PanelWindow {
     id: bar
+
+    // Active special workspace ON THIS monitor ("special:stash"/"special:scratch"; "" when
+    // none is summoned). Drives the orange stash cue on the bar background below. Kept fresh
+    // by Workspaces.qml's activespecial → refreshMonitors() (same monitor object).
+    readonly property var hlMonitor: screen ? Hyprland.monitorFor(screen) : null
+    readonly property string activeSpecial:
+        (hlMonitor && hlMonitor.lastIpcObject && hlMonitor.lastIpcObject.specialWorkspace)
+            ? String(hlMonitor.lastIpcObject.specialWorkspace.name || "") : ""
 
     // TODO: exclude the Xeneon Edge (HDMI-A-2) once rendering is confirmed — a `visible`
     // binding on `screen` caused a binding loop, so gate at the model level in shell.qml.
@@ -16,7 +25,12 @@ PanelWindow {
     Rectangle {
         anchors.fill: parent
         radius: Theme.barRadius
-        color: Theme.barBg
+        // Orange while special:stash is summoned on this monitor (loud overlay cue);
+        // normal surface otherwise. Smooth fade so the flip isn't jarring.
+        color: bar.activeSpecial === "special:stash" ? Theme.stashBar
+             : bar.activeSpecial === "special:scratch" ? Theme.scratchBar
+             : Theme.barBg
+        Behavior on color { ColorAnimation { duration: 150 } }
         // NOTE: intentionally NO `border` — a Rectangle border on a transparent Quickshell
         // window triggers QTBUG-137166 ("hole in my window") and blanks the entire bar.
 

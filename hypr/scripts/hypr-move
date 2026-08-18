@@ -4,9 +4,11 @@
 #   (i3 did: i3-msg "move window to workspace $name").
 # Bound to SUPER+SHIFT+S in ~/.dotfiles/hypr/hyprland.lua.
 #
-# Existing workspaces are offered (special: workspaces excluded); you can also
-# type a new name to create-and-move in one step.
+# Existing workspaces are offered — plus special:stash (the tiling stash overlay),
+# even when it's empty. special:scratch (the Claude dropdown) is intentionally hidden
+# so windows aren't dumped into it. You can also type a new name to create-and-move.
 #   - a purely numeric entry -> that numbered workspace (e.g. 3)
+#   - special:NAME           -> that special (overlay) workspace, e.g. special:stash
 #   - anything else          -> a NAMED workspace
 # Always moves silently and stays put (i3-move behaviour; same as the
 # SUPER+SHIFT+[0-9] binds). A brand-new workspace is created and the window
@@ -17,14 +19,22 @@
 
 wsjson=$(hyprctl workspaces -j)
 
-name=$(printf '%s' "$wsjson" \
-        | jq -r '.[] | select(.name | startswith("special:") | not) | .name' \
+# Offer all existing workspaces EXCEPT special:scratch (the Claude dropdown — don't
+# let windows land there and re-break its single-window script), and always surface
+# special:stash even when empty so the first window can be sent in by picking it.
+name=$( { printf 'special:stash\n'; printf '%s' "$wsjson" | jq -r '.[] | select(.name != "special:scratch") | .name'; } \
+        | awk 'NF && !seen[$0]++' \
         | sort -n \
         | rofi -dmenu -i -p "Move window to workspace: ")
 [ $? -eq 0 ] && [ -n "$name" ] || exit 0
 
 if [[ "$name" =~ ^[0-9]+$ ]]; then
     ws="$name"                                    # numbered workspace: bare number
+elif [[ "$name" == special:* ]]; then
+    esc=${name//\\/\\\\}; esc=${esc//\"/\\\"}
+    ws="\"$esc\""                                 # special (overlay) workspace: pass the
+                                                  # special:NAME verbatim — it has its OWN
+                                                  # prefix, so do NOT wrap it in name:
 else
     esc=${name//\\/\\\\}; esc=${esc//\"/\\\"}
     ws="\"name:$esc\""                            # named workspace: MUST use name: prefix,

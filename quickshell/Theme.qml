@@ -39,6 +39,15 @@ Singleton {
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
     readonly property color awakeCol:_v ? "#e0973b" : "#f0c489"   // idle-inhibitor "awake" (warm amber)
 
+    // --- special-workspace cues — the bar bg + the ◆ badge recolor while a special
+    // workspace is summoned, so it's obvious at a glance WHICH overlay is up (the
+    // dim_special backdrop alone reads subtle behind a full-screen tiling overlay):
+    //   special:stash  -> ORANGE   ·   special:scratch (Claude dropdown) -> RED
+    readonly property color stashBar:     _v ? "#7a3d0a" : "#8a4712"   // bar bg while special:stash is up
+    readonly property color stashBadge:   _v ? "#f5a742" : "#f0a94a"   // ◆ stash badge fill (amber)
+    readonly property color scratchBar:   _v ? "#7a1420" : "#8f1d29"   // bar bg while special:scratch is up (red)
+    readonly property color scratchBadge: _v ? "#f5606e" : "#ef6d78"   // ◆ scratch badge fill (red)
+
     // --- metrics ---
     readonly property int deckHeight: chipHeight + 8          // pill + 4px pad each side (=40); ↑ this to loosen the inter-row gap, ↓ to tighten
     readonly property int barHeight:  deckHeight * 2          // two decks touching, no middle gap (=80, was 90)

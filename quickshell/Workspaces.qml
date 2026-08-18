@@ -173,7 +173,11 @@ Flow {
         height: Theme.chipHeight
         width: specialRow.width + 16
         radius: height / 2
-        color: "#cba6f7"                      // mauve — matches the scratchpad border
+        // Orange for the tiling stash, red for the Claude scratch — matches the bar so
+        // it's obvious which overlay is up (mauve fallback for any other special).
+        color: special.specialName === "special:stash" ? Theme.stashBadge
+             : special.specialName === "special:scratch" ? Theme.scratchBadge
+             : "#cba6f7"
 
         Row {
             id: specialRow
@@ -191,7 +195,14 @@ Flow {
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onClicked: Quickshell.execDetached(["/home/vania/.dotfiles/hypr/scripts/hypr-scratch"])
+            // Click the badge to dismiss whatever special is up: the stash toggles itself,
+            // the Claude scratch goes through its hypr-scratch show/hide/spawn manager.
+            onClicked: {
+                if (special.specialName === "special:stash")
+                    Quickshell.execDetached(["/usr/bin/hyprctl", "eval", "hl.dispatch(hl.dsp.workspace.toggle_special(\"stash\"))"]);
+                else
+                    Quickshell.execDetached(["/home/vania/.dotfiles/hypr/scripts/hypr-scratch"]);
+            }
         }
     }
 
