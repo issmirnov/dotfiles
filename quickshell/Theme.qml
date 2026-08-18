@@ -24,7 +24,8 @@ Singleton {
     readonly property color wsIdleText: _v ? "#9fb0d6" : "#b8a9e0"
     readonly property color wsActiveBg: _v ? "#f5c542" : "#c8a2f0"
     readonly property color wsActiveText: _v ? "#1a1600" : "#241436"
-    readonly property color urgent:     _v ? "#e0743b" : "#f0a2b8"
+    readonly property color urgent:     _v ? "#e0743b" : "#f0a2b8"   // (legacy full-fill hue; no longer used for pills)
+    readonly property color urgentDot:  _v ? "#f7768e" : "#f38ba0"   // soft-red corner badge on an urgent workspace pill
     readonly property color wsHoverBg:  _v ? "#33405f" : "#372f57"
 
     // --- per-stat accents ---
