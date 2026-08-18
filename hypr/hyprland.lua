@@ -342,7 +342,11 @@ hl.window_rule({ name = "discord-workspace", match = { class = "^(WebCord|discor
 hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-client-RuneLite)$" }, workspace = "name:osrs" })
 hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
 hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
-hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.Obsidian|obsidian)$" }, workspace = "name:obsidian" })
+-- Obsidian (Electron): the real runtime WM class is md.obsidian.Obsidian, NOT the
+-- md.Obsidian that obsidian.desktop's StartupWMClass advertises. The old rule used the
+-- stale desktop value, so it never matched and Obsidian leaked onto the active ws.
+-- Match either case ([oO]) + trailing segments so both forms route correctly.
+hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.[oO]bsidian.*)$" }, workspace = "name:obsidian" })
 -- ZapZap: native WhatsApp desktop client (Qt); stable WM class "ZapZap".
 hl.window_rule({ name = "whatsapp-workspace", match = { class = "^(ZapZap)$" }, workspace = "name:whatsapp" })
 
