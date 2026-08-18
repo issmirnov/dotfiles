@@ -53,8 +53,8 @@ Flow {
             height: Theme.chipHeight
             width: inner.width + 16
             radius: height / 2
-            color: ws.urgent ? Theme.urgent
-                 : focused ? Theme.wsActiveBg
+            // Urgent no longer recolors the pill — the leading dot in the Row flags it.
+            color: focused ? Theme.wsActiveBg
                  : ma.containsMouse ? Theme.wsHoverBg
                  : Theme.wsIdleBg
             Behavior on color { ColorAnimation { duration: 120 } }
@@ -64,9 +64,26 @@ Flow {
                 anchors.centerIn: parent
                 spacing: 4
 
+                // Urgent badge: soft-red leading dot. It reserves its own slot in the
+                // Row (only while urgent), so it sits at the pill's start with real
+                // padding (pill edge + Row spacing) and never overlaps the label.
+                Rectangle {
+                    id: urgentDot
+                    visible: pill.ws.urgent
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 8
+                    height: 8
+                    radius: width / 2
+                    color: Theme.urgentDot
+                    border.width: 1
+                    border.color: Theme.barBg   // thin ring so it reads on a light focused pill too
+                }
+
                 Text {
                     text: pill.ws.name
-                    color: (pill.focused || pill.ws.urgent) ? Theme.wsActiveText : Theme.wsIdleText
+                    // Colour follows focus only (urgent keeps the pill's normal bg, so
+                    // active-text here would be unreadable); bold stays as the urgent cue.
+                    color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
                     font.pixelSize: Theme.fontSize
                     font.bold: pill.focused || pill.ws.urgent
                 }
@@ -124,7 +141,7 @@ Flow {
                             width: parent.width * 0.45
                             height: width
                             radius: width / 2
-                            color: (pill.focused || pill.ws.urgent) ? Theme.wsActiveText : Theme.wsIdleText
+                            color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
                             opacity: 0.55
                         }
                     }
