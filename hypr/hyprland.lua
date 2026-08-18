@@ -63,6 +63,14 @@ hl.workspace_rule({ workspace = "name:whatsapp", monitor = rightMon })
 -- real 4K panel, never auto-bound to the tiny 720px Xeneon Edge (the original
 -- "floats off the bottom" bug). After spawn it follows the mouse (hypr-scratch).
 hl.workspace_rule({ workspace = "special:scratch", monitor = rightMon })
+-- special:stash — a general-purpose TILING scratch overlay (SUPER+S toggles it).
+-- Distinct from special:scratch (the floated Claude dropdown): windows moved here
+-- are NOT force-floated, so they tile/split via dwindle like a normal workspace.
+-- Pinned to DP-1 so it's created on a real 4K panel, never the tiny Xeneon Edge.
+-- Big gaps_out (top,right,bottom,left) inset the whole tiled block to ~75%×75%, centred,
+-- so the stash reads as a small FLOATING panel — while still tiling/splitting inside it.
+hl.workspace_rule({ workspace = "special:stash", monitor = leftMon,
+  gaps_out = { top = 150, bottom = 270, left = 480, right = 480 } })
 
 ------------------------------------------------------------------------
 -- ENVIRONMENT
@@ -151,6 +159,11 @@ hl.config({
 
         dim_inactive = false,    -- don't dim windows on the unfocused monitor
         dim_strength = 0.1,
+        -- Dim everything behind a special workspace while it's summoned, so the overlay
+        -- (SUPER+S stash, SUPER+C Claude scratch) reads as a distinct floating layer.
+        -- Independent of dim_inactive. GLOBAL to all special workspaces (not per-ws).
+        -- Hyprland default is 0.2 (too subtle to notice); 0.5 makes it clearly stand out.
+        dim_special  = 0.5,
 
         blur = {
             -- DISABLED 2026-08-13: the Aug-12 -Syu bumped NVIDIA 610.43.03 -> 610.57.04, and
@@ -275,6 +288,11 @@ hl.bind(mainMod .. " + J",         hl.dsp.layout("togglesplit"))
 hl.bind(mainMod .. " + L",         hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + U",         hl.dsp.focus({ urgent_or_last = true }))
 hl.bind(mainMod .. " + C",         hl.dsp.exec_cmd("~/.dotfiles/hypr/scripts/hypr-scratch"))  -- claude scratchpad (SUPER+C = Claude)
+-- SUPER+S: toggle special:stash, a general-purpose TILING scratch overlay. Move
+-- windows in via the hypr-move picker (SUPER+SHIFT+S). ⚠️ toggle_special takes a
+-- STRING positional arg — the { name = "stash" } table form SILENTLY toggles the
+-- default unnamed special:special instead (cost hours on the scratchpad; see hypr-scratch).
+hl.bind(mainMod .. " + S",         hl.dsp.workspace.toggle_special("stash"))                 -- tiling stash overlay (SUPER+S)
 
 -- clipboard picker + screenshots
 hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphist list | fzf | cliphist decode | wl-copy'"))
