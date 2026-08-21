@@ -63,6 +63,7 @@ PanelWindow {
                 Audio {}
                 Stats {}
                 IdleToggle { barWindow: bar }
+                Dnd {}
             }
         }
 

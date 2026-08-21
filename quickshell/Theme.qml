@@ -38,6 +38,7 @@ Singleton {
     readonly property color loadCol: _v ? "#5cc8d0" : "#a2e0dc"
     readonly property color trayCol: _v ? "#cdd7ee" : "#d7cef0"
     readonly property color awakeCol:_v ? "#e0973b" : "#f0c489"   // idle-inhibitor "awake" (warm amber)
+    readonly property color dndCol:  _v ? "#e05a6e" : "#f0a8c4"   // DND / meeting-mode chip (rose)
 
     // --- special-workspace cues — the bar bg + the ◆ badge recolor while a special
     // workspace is summoned, so it's obvious at a glance WHICH overlay is up (the

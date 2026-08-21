@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# DND / "meeting mode" control for the Quickshell bar.
+#
+#   on      swaync DND on  + mute Slack/Telegram audio + start the mute watcher
+#   off     swaync DND off + unmute them + stop the watcher
+#   toggle  flip based on the current swaync DND state
+#   status  print the current dnd state only
+#
+# Always prints the resulting dnd state ("true"/"false") as its LAST line, so the bar
+# module (Dnd.qml) can read it back and set its icon.
+#
+# Why the audio step: Slack/Telegram play their OWN notification sounds through PipeWire,
+# independent of swaync, so pausing the notification daemon silences the banner but not
+# the "ding". We resolve each app's audio-OUTPUT node by name (pw-dump) and wpctl-mute it;
+# only Stream/Output/Audio is touched, so the app's mic (Input) is left alone.
+#
+# Why the watcher: those apps tear their audio node DOWN when idle and spawn a fresh one
+# (new id) only when they actually ding -- so muting "the current node" at engage time
+# misses a cold app. While engaged we run a detached `pactl subscribe` loop that re-applies
+# the mute the instant any new stream appears, then kill it on disengage. (Design "B".)
+set -u
+
+# qs launches helpers with a minimal PATH (no ~/.local/bin); everything here is in /usr/bin,
+# but export defensively so a ~/.local/bin shadow can't silently break resolution.
+export PATH="$HOME/.local/bin:$PATH"
+
+SELF="$0"
+APPS_REGEX='slack|telegram'
+PIDFILE="${XDG_RUNTIME_DIR:-/tmp}/dnd-mode.watch.pid"
+
+dnd_state() { swaync-client -D 2>/dev/null; }   # -> "true" / "false"
+
+# object.id of every audio-OUTPUT node belonging to a target app
+app_nodes() {
+  pw-dump 2>/dev/null | jq -r --arg re "$APPS_REGEX" '
+    .[]
+    | select(.type == "PipeWire:Interface:Node")
+    | .info.props
+    | select((.["media.class"] // "") == "Stream/Output/Audio")
+    | select(((( .["application.name"]         // "") + " "
+              + (.["node.name"]                // "") + " "
+              + (.["application.process.binary"] // "")) | ascii_downcase) | test($re))
+    | .["object.id"]'
+}
+
+mute_apps() {   # $1 = 1 (mute) | 0 (unmute)
+  local id
+  for id in $(app_nodes); do
+    wpctl set-mute "$id" "$1" 2>/dev/null || true
+  done
+}
+
+start_watch() {
+  stop_watch                       # never leave two watchers running
+  # Detached, own session (setsid), stdio to /dev/null so it doesn't hold the caller's
+  # stdout pipe open (else the bar's StdioCollector would never see the stream finish).
+  setsid "$SELF" __watch </dev/null >/dev/null 2>&1 &
+  echo $! > "$PIDFILE"
+}
+
+stop_watch() {
+  local pid
+  if [ -f "$PIDFILE" ]; then
+    pid=$(cat "$PIDFILE" 2>/dev/null); rm -f "$PIDFILE"
+    # kill the whole process group (setsid made pid its leader) — but only if it's really ours
+    if [ -n "$pid" ] && ps -o args= -p "$pid" 2>/dev/null | grep -q '__watch'; then
+      kill -- -"$pid" 2>/dev/null
+    fi
+  fi
+  pkill -f "$SELF __watch" 2>/dev/null   # sweep any strays
+}
+
+# internal: block on pipewire-pulse events, re-muting targets whenever a stream appears
+watch_loop() {
+  mute_apps 1
+  pactl subscribe 2>/dev/null | while read -r line; do
+    case "$line" in
+      *sink-input*) mute_apps 1 ;;
+    esac
+  done
+}
+
+engage()    { swaync-client --dnd-on  >/dev/null 2>&1; mute_apps 1; start_watch; }
+disengage() { stop_watch; swaync-client --dnd-off >/dev/null 2>&1; mute_apps 0; }
+
+case "${1:-status}" in
+  on)      engage ;;
+  off)     disengage ;;
+  toggle)  [ "$(dnd_state)" = "true" ] && disengage || engage ;;
+  status)  : ;;
+  __watch) watch_loop; exit 0 ;;   # internal; never prints (blocks until killed)
+  *)       echo "usage: ${SELF##*/} {on|off|toggle|status}" >&2; exit 2 ;;
+esac
+
+dnd_state
