@@ -80,12 +80,25 @@ Flow {
                 }
 
                 Text {
+                    id: wsLabel
                     text: pill.ws.name
                     // Colour follows focus only (urgent keeps the pill's normal bg, so
                     // active-text here would be unreadable); bold stays as the urgent cue.
                     color: pill.focused ? Theme.wsActiveText : Theme.wsIdleText
                     font.pixelSize: Theme.fontSize
                     font.bold: pill.focused || pill.ws.urgent
+                    // Freeze the label slot to its BOLD width so toggling focus/urgent
+                    // (which flips bold on/off) never changes the pill's width. Without
+                    // this, the active pill grows a few px, shifting the Flow's wrap
+                    // point → pills hop between the two decks as you switch workspaces.
+                    width: wsLabelBold.width
+                    horizontalAlignment: Text.AlignHCenter
+                    TextMetrics {
+                        id: wsLabelBold
+                        font.pixelSize: Theme.fontSize
+                        font.bold: true
+                        text: pill.ws.name
+                    }
                 }
 
                 Repeater {
@@ -100,6 +113,8 @@ Flow {
                         // Substring match keeps this robust to per-app class quirks (hashes, case).
                         readonly property string overrideIcon: {
                             const c = cls.toLowerCase();
+                            if (c.indexOf("google-chrome") !== -1)        // Google Chrome. Class is 'Google-chrome' (capital) under XWayland but the icon file is lowercase 'google-chrome' → case-sensitive hasThemeIcon() MISSES (native-Wayland app_id is lowercase and DID resolve → icon "disappears" when the window is XWayland). Lowercased-substring override pins it either way.
+                                return "file:///usr/share/icons/hicolor/256x256/apps/google-chrome.png";
                             if (c.indexOf("runelite") !== -1)             // OSRS / RuneLite
                                 return "file:///usr/share/pixmaps/runelite.png";
                             if (c.indexOf("org.telegram.desktop") !== -1) // Telegram (per-account hash suffix)
