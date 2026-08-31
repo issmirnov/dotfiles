@@ -56,52 +56,44 @@
         ]
       },
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "SessionStart": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "PreToolUse": [
       {
-        "hooks": [
-        ],
-        "matcher": "*"
+        "matcher": "*",
+        "hooks": []
       }
     ],
     "PostToolUse": [
       {
-        "hooks": [
-        ],
-        "matcher": "*"
+        "matcher": "*",
+        "hooks": []
       }
     ],
     "SubagentStop": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "PreCompact": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "SessionEnd": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ]
   },
@@ -119,7 +111,6 @@
     "plan-utilities@smirnovlabs-claude-skills": true,
     "git-recon@smirnovlabs-claude-skills": true,
     "pr-utilities@smirnovlabs-claude-skills": true,
-    "posthog@claude-plugins-official": true,
     "episodic-memory@superpowers-marketplace": true,
     "skill-codex@skill-codex": true
   },

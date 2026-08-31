@@ -134,7 +134,11 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("noisetorch")                            -- RNN noise suppression
     hl.exec_cmd("wl-paste --watch cliphist store")       -- clipboard history (fixed)
     hl.exec_cmd("nm-applet --indicator")                 -- network tray
-    hl.exec_cmd("blueman-applet")                        -- bluetooth tray
+    -- DISABLED 2026-08-28: bt-agent.service (NoInputNoOutput, Just Works) is the SOLE
+    -- Bluetooth agent now. Running blueman-applet too registered a 2nd agent whose
+    -- pairing dialog raced bt-agent's auto-accept -> half-bonds / dropped pairings
+    -- (the MX Vertical churn). Re-enable ONLY if you also disable bt-agent.service.
+    -- hl.exec_cmd("blueman-applet")                      -- bluetooth tray
 end)
 
 ------------------------------------------------------------------------
