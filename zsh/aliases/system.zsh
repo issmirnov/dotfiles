@@ -81,6 +81,8 @@ fi
 alias copylast="fc -e - | copy" # using copy alias defined above
 
 alias ta='tmux attach -t '
+alias tls='tmux ls '
+
 
 alias space='du -sh * | sort -h'
 
