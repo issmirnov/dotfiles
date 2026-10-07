@@ -1,0 +1,50 @@
+#!/bin/bash
+# sesh-save — snapshot the current LIVE session set to ~/.local/state/sesh/snapshot.json.
+#
+# Sources (both authoritative, PID-checked — no heuristics):
+#   local  = Claude Code sessions in ~/.claude/sessions/*.json with a live PID
+#   remote = hexane tmux sessions with a live presence marker (written by hx-connect)
+#
+# Run on an interval by a LaunchAgent so the last snapshot before shutdown ~= what
+# you had open; sesh-restore rebuilds it at next login. Also runnable by hand.
+set -u
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+STATE="$HOME/.local/state/sesh"
+SNAP="$STATE/snapshot.json"
+REG="$HOME/.claude/sessions"
+MARKS="$STATE/remote"
+mkdir -p "$STATE" "$MARKS"
+command -v jq >/dev/null || exit 0
+
+# Skip the early-boot window so we never overwrite the pre-shutdown snapshot
+# before sesh-restore has rebuilt it at login (otherwise an empty login snapshot
+# would erase what you had open). Snapshots resume a few minutes in.
+boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/.*sec = \([0-9]*\).*/\1/p')
+if [ -n "$boot" ] && [ "$(( $(date +%s) - boot ))" -lt 180 ]; then exit 0; fi
+
+# Local: live Claude sessions (registry carries sessionId + cwd + pid).
+local_json=$(
+  for j in "$REG"/*.json; do
+    [ -e "$j" ] || continue
+    pid=$(jq -r '.pid // empty' "$j" 2>/dev/null)
+    { [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; } || continue
+    jq -c '{id: .sessionId, cwd: (.cwd // "")}' "$j" 2>/dev/null
+  done | jq -s 'map(select(.id != null)) | unique_by(.id)'
+)
+[ -n "$local_json" ] || local_json='[]'
+
+# Remote: prune markers whose PID is dead, then collect the survivors.
+for m in "$MARKS"/*; do
+  [ -e "$m" ] || continue
+  mpid=$(cat "$m" 2>/dev/null)
+  { [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; } || rm -f "$m"
+done
+remote_json=$(
+  for m in "$MARKS"/*; do [ -e "$m" ] || continue; basename "$m"; done \
+    | jq -R '{session: .}' | jq -s 'unique_by(.session)'
+)
+[ -n "$remote_json" ] || remote_json='[]'
+
+jq -n --argjson l "$local_json" --argjson r "$remote_json" --arg ts "$(date -u +%FT%TZ)" \
+  '{saved_at:$ts, local:$l, remote:$r}' > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"

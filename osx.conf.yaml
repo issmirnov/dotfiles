@@ -22,6 +22,12 @@
     ~/Library/Preferences/espanso: espanso
     ~/bin/lock: bin/osx_lock
     ~/Library/LaunchAgents/localhost.tmux-resurrect.plist: MacOS-LaunchAgents/localhost.tmux-resurrect.plist
+    # sesh session auto-restore: sesh-save snapshots the LIVE set (local Claude +
+    # open hexane mosh windows) every 2 min; sesh-restore rebuilds it at login.
+    # launchd auto-loads both at next login (everything in ~/Library/LaunchAgents).
+    # Replaced the old static-list hx-restore / cc-restore agents.
+    ~/Library/LaunchAgents/localhost.sesh-save.plist: MacOS-LaunchAgents/localhost.sesh-save.plist
+    ~/Library/LaunchAgents/localhost.sesh-restore.plist: MacOS-LaunchAgents/localhost.sesh-restore.plist
 
 - shell:
     # tmux-resurrect login-restore (macOS): (re)load the launchd agent. macOS has

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>localhost.sesh-save</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/vania/.dotfiles/bin/sesh-save</string>
+  </array>
+
+  <!-- Snapshot the live session set every 2 min. Deliberately NO RunAtLoad: the
+       early-boot guard in sesh-save would skip a login run anyway, and we must
+       not clobber the pre-shutdown snapshot before sesh-restore reads it. -->
+  <key>StartInterval</key>
+  <integer>120</integer>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/vania/.local/state/sesh/save.err.log</string>
+</dict>
+</plist>

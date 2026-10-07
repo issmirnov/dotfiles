@@ -1,12 +1,19 @@
-# Ghostty — matches the Alacritty + tmux Catppuccin Mocha setup.
+# Ghostty — Solarized Dark, matching the Terminal.app "SolarizedDark" profile.
 # Signed/notarized on macOS (no Gatekeeper hassle); cross-platform with Linux.
 
 font-family = JetBrainsMono Nerd Font Mono
 font-size = 15
-theme = Catppuccin Mocha
+# NOTE: hexane's tmux status bar (~/.tmux.conf) is still Catppuccin Mocha —
+# switch that too if you want end-to-end Solarized.
+theme = iTerm2 Solarized Dark
 
 # macOS: Option key sends Alt (word-wise motion in zsh/readline). Ignored on Linux.
 macos-option-as-alt = true
+
+# Don't save/restore window layout across launches. Critical for hx-restore /
+# cc-restore: with the default (follow-macOS), each `open -na` RESTORES the
+# previous session's windows (phantom empty tabs) on top of the one it opens.
+window-save-state = never
 
 # Linux/NVIDIA: don't share one long-lived process across all windows. Ghostty's
 # single-instance process leaks GL surface resources over time and eventually fails

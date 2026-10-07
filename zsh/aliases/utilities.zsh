@@ -132,3 +132,16 @@ function cpd(){
 }
 
 alias -g Gv='| grep -v '
+
+# title ~ label the current terminal window/tab by hand (OSC 0): `title scratch`.
+# Inside tmux this is automatic — set-titles drives it from the session name.
+title() { print -n "\e]0;$1\a" }
+
+# sesh ~ unified on-demand session opener (script in dotfiles bin): fzf-pick any
+# local Claude OR hexane tmux session and open it in a new Ghostty window.
+#   sesh            → pick from everything
+#   sesh <name>     → open the first match (e.g. `sesh cc-argo`, `sesh erp`)
+# Your LIVE set is snapshotted automatically (sesh-save) and rebuilt at login
+# (sesh-restore) — no lists to curate. `revive` rebuilds the set by hand;
+# `SESH_DRYRUN=1 revive` previews it.
+alias revive='sesh-restore'

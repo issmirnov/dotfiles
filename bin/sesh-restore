@@ -1,0 +1,79 @@
+#!/bin/bash
+# sesh-restore — rebuild the last snapshot (~/.local/state/sesh/snapshot.json) as
+# Ghostty windows: local Claude sessions resumed in their dirs (`claude --resume`),
+# open hexane sessions reattached over mosh. Skips anything already live, caps the
+# count, and (for remote) waits for hexane to be reachable.
+#
+#   Runs at login via a LaunchAgent; by hand via `revive`. Preview: SESH_DRYRUN=1 revive
+#   Tunables: SESH_CAP (default 12), HX_HOST (default hexane). Log: ~/.local/state/sesh/restore.log
+set -u
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+STATE="$HOME/.local/state/sesh"
+SNAP="${SESH_SNAPSHOT:-$STATE/snapshot.json}"
+LOG="$STATE/restore.log"
+REG="$HOME/.claude/sessions"
+MARKS="$STATE/remote"
+GHOSTTY="/Applications/Ghostty.app"
+CC_CONNECT="$HOME/.dotfiles/bin/cc-connect"
+HX_CONNECT="$HOME/.dotfiles/bin/hx-connect"
+PROJECTS="$HOME/.claude/projects"
+CAP="${SESH_CAP:-12}"
+HOST="${HX_HOST:-hexane}"
+DRY="${SESH_DRYRUN:-}"
+mkdir -p "$STATE"
+log(){ printf '%s  %s\n' "$(date '+%F %T')" "$*" >>"$LOG"; }
+
+command -v jq >/dev/null || { log "FATAL: jq not found"; exit 1; }
+[ -r "$SNAP" ]  || { log "no snapshot at $SNAP; nothing to restore"; exit 0; }
+
+name_of(){ # <jsonl> <id> : latest ai-title -> first user msg -> short id
+  local t id="${2:-}"
+  t="$(jq -rc 'select(.type=="ai-title")|.aiTitle' "$1" 2>/dev/null | tail -1)"
+  [ -n "$t" ] || t="$(jq -rc 'select(.type=="user")|.message.content|if type=="array" then (map(select(.type=="text").text)|join(" ")) else tostring end' "$1" 2>/dev/null | head -1 | tr '\n\t' '  ' | sed 's/^ *//;s/ *$//' | cut -c1-48)"
+  printf '%s' "${t:-${id:0:8}}"
+}
+jsonl_for(){ ls "$PROJECTS"/*/"$1".jsonl 2>/dev/null | head -1; }
+local_running(){ local j; for j in "$REG"/*.json; do [ -e "$j" ] || continue
+  [ "$(jq -rc '.sessionId' "$j" 2>/dev/null)" = "$1" ] || continue
+  kill -0 "$(jq -rc '.pid' "$j" 2>/dev/null)" 2>/dev/null && return 0; done; return 1; }
+remote_open(){ [ -e "$MARKS/$1" ] && kill -0 "$(cat "$MARKS/$1" 2>/dev/null)" 2>/dev/null; }
+reachable(){ local ip port
+  ip=$(ssh -G "$HOST" 2>/dev/null | awk '$1=="hostname"{print $2}')
+  port=$(ssh -G "$HOST" 2>/dev/null | awk '$1=="port"{print $2}')
+  nc -z -G 3 "${ip:-$HOST}" "${port:-22}" >/dev/null 2>&1; }
+openwin(){ # <connect-script> <args...>
+  if [ -n "$DRY" ]; then printf 'DRYRUN would open: %s\n' "$*"; return; fi
+  open -na "$GHOSTTY" --args -e "$@"; sleep 1; }
+
+n=0
+# ---- local ----
+while IFS=$'\t' read -r id cwd; do
+  [ -n "$id" ] || continue
+  [ "$n" -ge "$CAP" ] && { log "cap $CAP reached; stopping"; break; }
+  if local_running "$id"; then log "skip local $id (already running)"; continue; fi
+  f="$(jsonl_for "$id")"; [ -n "$f" ] || { log "skip local $id (no transcript)"; continue; }
+  [ -n "$cwd" ] && [ "$cwd" != "null" ] || cwd="$HOME"
+  name="$(name_of "$f" "$id")"
+  log "open local '$name' ($id in $cwd)"
+  openwin "$CC_CONNECT" "$cwd" "$name" --resume "$id"
+  n=$((n + 1))
+done < <(jq -rc '.local[]? | [.id, (.cwd // "")] | @tsv' "$SNAP" 2>/dev/null)
+
+# ---- remote ----
+nremote=$(jq -rc '.remote | length' "$SNAP" 2>/dev/null)
+if [ "${nremote:-0}" -gt 0 ]; then
+  if [ -n "$DRY" ] || reachable; then
+    while IFS= read -r s; do
+      [ -n "$s" ] || continue
+      [ "$n" -ge "$CAP" ] && { log "cap $CAP reached; stopping"; break; }
+      if remote_open "$s"; then log "skip remote $s (already open)"; continue; fi
+      log "open remote $s"
+      openwin "$HX_CONNECT" "$s"
+      n=$((n + 1))
+    done < <(jq -rc '.remote[]?.session' "$SNAP" 2>/dev/null)
+  else
+    log "hexane unreachable; skipped $nremote remote session(s) (run 'revive' later)"
+  fi
+fi
+log "done: opened $n window(s)"

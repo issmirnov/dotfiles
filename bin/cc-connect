@@ -1,0 +1,21 @@
+#!/bin/bash
+# cc-connect <cwd> <name> <claude-args...> — Ghostty window command for sesh / sesh-restore.
+# cd into <cwd>, title the window "claude · <name>", then launch claude via the `ccf`
+# ccflare launcher with the given args (e.g. --resume <id>). A separate launcher so the
+# caller hands it clean argv through `open -e` (Ghostty's -e preserves spaced args).
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+cwd="${1:?usage: cc-connect <cwd> <name> <claude-args...>}"; shift
+name="${1:-claude}"; shift
+printf '\033]0;claude · %s\007' "$name"   # initial title; claude's TUI may update it
+cd "$cwd" 2>/dev/null || cd "$HOME"
+unset CLAUDE_CODE_CHILD_SESSION   # a window spawned from within Claude still saves its transcript
+
+# Launch via `ccf` (ccflare API-key routing + --dangerously-skip-permissions). ccf is a
+# function in ~/.zshrc.local (machine-local; holds the ccflare key), so source that
+# rather than hardcode the key into dotfiles. Fall back to plain claude if it's absent.
+[ -r "$HOME/.zshrc.local" ] && . "$HOME/.zshrc.local" >/dev/null 2>&1
+if type ccf >/dev/null 2>&1; then
+  ccf "$@"
+else
+  "$HOME/.local/bin/claude" --dangerously-skip-permissions "$@"
+fi

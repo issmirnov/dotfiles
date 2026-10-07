@@ -1,0 +1,152 @@
+#!/bin/bash
+# sesh [-r] [-n] [query] — open a session on demand, in the CURRENT window.
+#   no query : fzf-pick from ALL sessions (local Claude + hexane tmux)
+#   query    : open the first match (exact session/id, else substring on the label)
+#   local  → claude --resume in its dir        remote → mosh + tmux attach
+#
+# Opens in place (exec) by default; -n / SESH_NEWWIN=1 forces a new Ghostty window
+# (the behaviour sesh-restore still uses). Titling is independent of this — the OSC
+# title is emitted by cc-connect/hx-connect into whatever terminal runs them.
+#
+# Candidate derivation is cached so each run avoids a full re-scan:
+#   • local labels  → ~/.local/state/sesh/labels.tsv, keyed by (path, mtime):
+#                     an unchanged transcript is never re-parsed by jq.
+#   • hexane list   → ~/.local/state/sesh/remote.list with a short TTL; when the
+#                     tunnel is slow/down the last-known list is served instantly
+#                     (never blocks), and a failed connect is remembered briefly.
+#
+# Flags / env:
+#   -r | SESH_REFRESH=1    force a live remote refresh (ignore the TTL)
+#   -n | SESH_NEWWIN=1     open a new Ghostty window instead of the current one
+#        SESH_DRYRUN=1     print the action instead of taking it
+#        SESH_REMOTE_TTL   remote-cache TTL, seconds (default 60)
+#        SESH_NEG_TTL      negative-cache TTL after a failed connect (default 30)
+#        SESH_LIST         newest-N local transcripts to consider (default 25)
+#        SESH_SSH          ssh binary to use (default ssh; a test/CI seam)
+set -u
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+GHOSTTY="/Applications/Ghostty.app"
+CC_CONNECT="$HOME/.dotfiles/bin/cc-connect"
+HX_CONNECT="$HOME/.dotfiles/bin/hx-connect"
+PROJECTS="$HOME/.claude/projects"
+STATE="$HOME/.local/state/sesh"
+HOST="${HX_HOST:-hexane}"
+N="${SESH_LIST:-25}"
+
+_mtime(){ stat -f %m "$1" 2>/dev/null; }
+_age(){ local m; m="$(_mtime "$1")"; if [ -z "$m" ]; then echo 999999999; else echo $(( $(date +%s) - m )); fi; }
+
+# name_of <jsonl> [id] : latest ai-title -> first user msg (<=48 chars) -> short id.
+# grep-prefilters so a huge active transcript isn't fully parsed by jq.
+name_of(){
+  local t id="${2:-}"
+  t="$(grep -a 'ai-title' "$1" 2>/dev/null | tail -1 | jq -rc 'select(.type=="ai-title")|.aiTitle' 2>/dev/null)"
+  if [ -z "$t" ]; then
+    t="$(grep -a -m1 '"type":"user"' "$1" 2>/dev/null | jq -rc 'select(.type=="user")|.message.content|if type=="array" then (map(select(.type=="text").text)|join(" ")) else tostring end' 2>/dev/null | head -1 | cut -c1-48)"
+  fi
+  t="$(printf '%s' "$t" | tr '\n\t' '  ' | sed 's/^ *//;s/ *$//')"
+  printf '%s' "${t:-${id:0:8}}"
+}
+
+_cwd_of(){ grep -a -m1 '"cwd"' "$1" 2>/dev/null | jq -rc 'select(.cwd!=null)|.cwd' 2>/dev/null | head -1; }
+
+# rows: type \t key \t jsonl \t label  (caches are maintained as a side effect)
+candidates(){
+  local LABELS="$STATE/labels.tsv" RCACHE="$STATE/remote.list" RFAIL="$STATE/remote.fail"
+  mkdir -p "$STATE" 2>/dev/null
+  # ---- local: (path,mtime)-keyed label cache ----
+  local rows="" f id mt hit cwd name proj
+  : > "$LABELS.tmp" 2>/dev/null
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    id="$(basename "$f" .jsonl)"
+    mt="$(_mtime "$f")"
+    hit="$(awk -F'\t' -v p="$f" -v m="$mt" '$1==p && $2==m{print; exit}' "$LABELS" 2>/dev/null)"
+    if [ -n "$hit" ]; then
+      cwd="$(printf '%s' "$hit" | cut -f3)"
+      name="$(printf '%s' "$hit" | cut -f4)"
+    else
+      cwd="$(_cwd_of "$f")"
+      name="$(name_of "$f" "$id")"
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$f" "$mt" "$cwd" "$name" >> "$LABELS.tmp" 2>/dev/null
+    proj="${cwd##*/}"; [ -n "$cwd" ] || proj="?"
+    rows="$rows$(printf 'local\t%s\t%s\t[local] %s — %s' "$id" "$f" "$name" "${proj:-?}")"$'\n'
+  done < <(ls -t "$PROJECTS"/*/*.jsonl 2>/dev/null | head -"$N")
+  mv "$LABELS.tmp" "$LABELS" 2>/dev/null     # atomic; written before we emit (SIGPIPE-safe)
+  printf '%s' "$rows"
+
+  # ---- remote: TTL cache + negative-cache + offline fallback ----
+  local TTL="${SESH_REMOTE_TTL:-60}" NEGTTL="${SESH_NEG_TTL:-30}" attempt=0 raw s
+  if   [ -n "${SESH_REFRESH:-}" ];                              then attempt=1
+  elif [ -f "$RCACHE" ] && [ "$(_age "$RCACHE")" -lt "$TTL" ]; then attempt=0   # fresh
+  elif [ -f "$RFAIL"  ] && [ "$(_age "$RFAIL")"  -lt "$NEGTTL" ]; then attempt=0   # recent failure
+  else                                                             attempt=1
+  fi
+  if [ "$attempt" = 1 ]; then
+    # Trailing sentinel distinguishes "connected, zero sessions" from "connect failed".
+    raw="$("${SESH_SSH:-ssh}" -o ConnectTimeout=5 -o BatchMode=yes "$HOST" \
+          'tmux ls -F "#{session_name}" 2>/dev/null; echo __SESH_OK__' 2>/dev/null)"
+    if printf '%s\n' "$raw" | grep -q '__SESH_OK__'; then
+      printf '%s\n' "$raw" | grep -v '__SESH_OK__' | sed '/^[[:space:]]*$/d' > "$RCACHE.tmp" 2>/dev/null \
+        && mv "$RCACHE.tmp" "$RCACHE" 2>/dev/null
+      rm -f "$RFAIL" 2>/dev/null
+    else
+      touch "$RFAIL" 2>/dev/null
+    fi
+  fi
+  if [ -f "$RCACHE" ]; then
+    while IFS= read -r s; do
+      [ -n "$s" ] && printf 'remote\t%s\t\t[hexane] %s\n' "$s" "$s"
+    done < "$RCACHE"
+  fi
+}
+
+# do_open <cmd> <args...> : same-window (exec) by default; new window with SESH_NEWWIN.
+do_open(){
+  if [ -n "${SESH_DRYRUN:-}" ]; then
+    if [ -n "${SESH_NEWWIN:-}" ]; then printf 'would open newwin: %s\n' "$*"
+    else                               printf 'would open here: %s\n' "$*"; fi
+    return 0
+  fi
+  if [ -n "${SESH_NEWWIN:-}" ]; then
+    open -na "$GHOSTTY" --args -e "$@"
+  else
+    exec "$@"
+  fi
+}
+
+main(){
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -r|--refresh)     SESH_REFRESH=1; shift ;;
+      -n|--new-window)  SESH_NEWWIN=1;  shift ;;
+      -h|--help)        printf 'usage: sesh [-r|--refresh] [-n|--new-window] [query]\n'; return 0 ;;
+      --)               shift; break ;;
+      -*)               printf 'sesh: unknown flag %s\n' "$1" >&2; return 2 ;;
+      *)                break ;;
+    esac
+  done
+  local query="${1:-}" sel typ key f cwd
+  if [ -n "$query" ]; then
+    sel="$(candidates | awk -F'\t' -v q="$query" '$2==q || index(tolower($4),tolower(q)){print; exit}')"
+    [ -n "$sel" ] || { printf "sesh: no session matching '%s'\n" "$query" >&2; return 1; }
+  else
+    sel="$(candidates | fzf --with-nth=4.. --delimiter='\t' --prompt='sesh> ' --height=70% --reverse)" || return 0
+    [ -n "$sel" ] || { echo "nothing selected"; return 0; }
+  fi
+  typ="$(printf '%s' "$sel" | cut -f1)"
+  key="$(printf '%s' "$sel" | cut -f2)"
+  f="$(printf '%s' "$sel" | cut -f3)"
+  case "$typ" in
+    local)  cwd="$(_cwd_of "$f")"; do_open "$CC_CONNECT" "${cwd:-$HOME}" "$(name_of "$f" "$key")" --resume "$key" ;;
+    remote) do_open "$HX_CONNECT" "$key" ;;
+    *) printf 'sesh: unknown selection\n' >&2; return 1 ;;
+  esac
+}
+
+if [ "${BASH_SOURCE[0]:-}" = "${0:-}" ]; then
+  command -v jq  >/dev/null 2>&1 || { echo "sesh: needs jq"  >&2; exit 1; }
+  command -v fzf >/dev/null 2>&1 || { echo "sesh: needs fzf" >&2; exit 1; }
+  main "$@"
+fi
