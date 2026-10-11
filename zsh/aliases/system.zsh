@@ -33,8 +33,14 @@ if [[ $OSTYPE == linux-* ]]; then
         alias ins='sudo apt install'
         alias rem='sudo apt remove'
     elif [[ $OSNAME == arch || $OSNAME == archarm ]]; then
-        alias update='yay -Sy'
-        alias upgrade='sudo pacman -Syy && yay -Syu'
+        # update: safe, read-only preview of pending repo + AUR updates.
+        # checkupdates uses a throwaway temp DB (never the real one), so unlike a
+        # bare `yay -Sy` it can't leave the system in a partial-upgrade state.
+        alias update='checkupdates 2>/dev/null; yay -Qua'
+        # upgrade: full repo + AUR upgrade in one combined transaction (combinedupgrade
+        # is on). --sudoloop keeps the sudo credential alive through long AUR builds so
+        # the install step never re-prompts and times out on an unattended run.
+        alias upgrade='yay -Syu --sudoloop'
         alias ins='sudo pacman -Syy && yay -S'
         alias rem='yay -R'
     elif [[ $OSNAME == alpine ]]; then
