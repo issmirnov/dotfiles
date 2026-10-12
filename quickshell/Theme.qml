@@ -60,4 +60,15 @@ Singleton {
     readonly property int marginSide: 10
     readonly property int fontSize:   16
     readonly property int iconSize:   22
+
+    // --- dynamic "heat" ramp for load-bearing chips (cpu/temp/load) ---
+    // t in [0,1]: calm mint-green → yellow → orange → red, via an HSL hue sweep.
+    // Lightness is held high so the dark chipText stays readable across the whole ramp.
+    function heatColor(t) {
+        t = Math.max(0, Math.min(1, t));
+        var hue   = 0.40 * (1 - t);     // 144° mint-green → 0° red (through yellow/orange)
+        var sat   = 0.55 + 0.25 * t;    // calmer when idle, more saturated when hot
+        var light = 0.80 - 0.05 * t;    // stay light enough for the dark chip text
+        return Qt.hsla(hue, sat, light, 1);
+    }
 }

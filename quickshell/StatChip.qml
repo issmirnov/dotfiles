@@ -19,10 +19,34 @@ Rectangle {
     property Component contentComponent
     property var model: ({})                 // parsed sysdetail.sh JSON; delegate reads <chipId>.model
 
+    // optional live coloring: set heat in [0,1] to drive the chip off Theme.heatColor
+    // (green→red); leave it <0 to keep the static `accent` (every other chip's behaviour).
+    // `pulse` breathes a soft glow over the chip when the metric is alarming.
+    property real heat: -1
+    property bool pulse: false
+    readonly property color effAccent: heat >= 0 ? Theme.heatColor(heat) : accent
+
     height: Theme.chipHeight
     width: t.width + 16
     radius: Theme.chipRadius
-    color: accent
+    color: effAccent
+    Behavior on color { ColorAnimation { duration: 500; easing.type: Easing.InOutQuad } }
+
+    // pulse glow — a white shimmer under the text, so it brightens (not dims) when hot.
+    // Declared before the Text so the label stays crisp on top of it.
+    Rectangle {
+        anchors.fill: parent
+        radius: parent.radius
+        color: "white"
+        opacity: 0
+        visible: chip.pulse
+        SequentialAnimation on opacity {
+            running: chip.pulse
+            loops: Animation.Infinite
+            NumberAnimation { to: 0.30; duration: 650; easing.type: Easing.InOutSine }
+            NumberAnimation { to: 0.0;  duration: 650; easing.type: Easing.InOutSine }
+        }
+    }
 
     Text {
         id: t
@@ -106,7 +130,7 @@ Rectangle {
 
                 Text {
                     text: chip.label
-                    color: chip.accent
+                    color: chip.effAccent
                     font.pixelSize: Theme.fontSize
                     font.bold: true
                 }
@@ -114,7 +138,7 @@ Rectangle {
                     width: body.width
                     height: 28
                     values: chip.history
-                    stroke: chip.accent
+                    stroke: chip.effAccent
                     values2: chip.dualSpark ? chip.history2 : []
                     stroke2: Theme.subtext
                     minY: chip.sparkMin

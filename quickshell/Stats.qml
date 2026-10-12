@@ -8,6 +8,9 @@ Row {
     height: Theme.chipHeight
     spacing: Theme.gap
 
+    // CPU → heat ramp: calm green at/below 20%, fully red by ~90%.
+    readonly property real cpuHeat: Math.max(0, Math.min(1, (Sys.cpuPct - 20) / 70))
+
     // bytes/sec or cumulative bytes → compact string (adds a G tier for session totals)
     function fmt(b) {
         if (b < 1024) return Math.round(b) + "B";
@@ -59,6 +62,8 @@ Row {
         id: cpuChip
         section: "cpu"
         accent: Theme.cpuCol
+        heat: stats.cpuHeat                      // green→red by CPU load
+        pulse: Sys.cpuPct >= 85                   // breathe a glow when it's pegged
         label: "CPU " + Math.round(Sys.cpuPct) + "%"
         history: Sys.cpuHist
         sparkMin: 0
