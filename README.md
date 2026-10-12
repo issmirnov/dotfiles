@@ -57,6 +57,11 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
 - The [vim](vim/) directory is relatively standalone, and contains my attempt
   at building a sane vim config that isn't complex enough to launch nukes when
   your cat sneezes on the keyboard.
+- The [`sesh` session-restore system](docs/remote-sessions.md) reopens the
+  terminal sessions you had live, after a reboot or a laptop sleep. It resumes
+  local Claude Code sessions in place and reattaches remote `tmux` sessions over
+  `mosh`. The working set is snapshotted live, so there is no list to curate.
+  The guide is portable, so you can wire it up for your own boxes.
 
 ## Macos Window manager stack
 
