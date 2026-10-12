@@ -2,21 +2,19 @@
 # vim: set tabstop=4:softtabstop=4:shiftwidth=4:expandtab
 if [[ $OSTYPE == darwin* ]]; then
 
-alias fixbrew='sudo chown -R $(whoami):admin $(brew --prefix)/*'
+# fixbrew: last resort if brew perms break (e.g. after an errant sudo or OS migration).
+# Homebrew discourages chowning the prefix routinely -- this is a manual escape hatch.
+alias fixbrew='sudo chown -R "$(whoami)" "$(brew --prefix)"'
 
-# OSX install wrapper
+# OSX install wrapper. `brew install` auto-detects formula vs cask, so one path
+# covers both -- the old `brew cask` subcommand was removed from Homebrew.
 function osx_ins() {
-    if brew cask info $1 >/dev/null 2>/dev/null; then
-        echo "Running: brew cask install $1"
-        brew cask install $1
-        return
-    fi
-    if brew info $1 >/dev/null 2>/dev/null; then
+    if brew info "$1" >/dev/null 2>&1; then
         echo "Running: brew install $1"
-        brew install $1
-        return
+        brew install "$1"
+    else
+        echo "Package $1 not found in brew."
     fi
-    echo "Package $1 not found in brew or cask."
 }
 
 alias dfh='df -H -l | awk -F" " '"'"'{ $6="";  $7=""; $8=""; $10=""; print}'"'"' | column -t | grcat conf.df'
@@ -37,8 +35,9 @@ ch() {
   fzf --ansi --multi | sed 's#.*\(https*://\)#\1#' | xargs open
 }
 
-# upgrade casks
-alias upgrade_casks='brew cask outdated | xargs brew cask reinstall'
+# upgrade_casks: `brew cask` was removed; `brew upgrade --cask` upgrades outdated casks
+# (add --greedy to also refresh casks that normally auto-update, like Chrome).
+alias upgrade_casks='brew upgrade --cask'
 
 # updatedb
 alias updatedb='sudo /usr/libexec/locate.updatedb'

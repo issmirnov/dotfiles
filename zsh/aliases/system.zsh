@@ -28,22 +28,40 @@ if [[ $OSTYPE == linux-* ]]; then
     # mostly related to package management
     OSNAME=$(grep '^ID=' /etc/os-release | cut -d'=' -f 2 | tr -d '"')
     if [[ $OSNAME == ubuntu || $OSNAME == debian ]]; then
-        alias update='sudo apt update'
-        alias upgrade='sudo apt -y upgrade; sudo apt autoremove'
+        # update: refresh package lists, then preview what's upgradable (read-only).
+        alias update='sudo apt update && apt list --upgradable 2>/dev/null'
+        # upgrade: refresh first (plain `apt upgrade` does not), then upgrade + autoremove.
+        # `upgrade` never removes a package to satisfy another, so anything needing new or
+        # removed deps stays "kept back" -- run `sudo apt full-upgrade` by hand for those.
+        alias upgrade='sudo apt update && sudo apt -y upgrade && sudo apt -y autoremove'
         alias ins='sudo apt install'
         alias rem='sudo apt remove'
     elif [[ $OSNAME == arch || $OSNAME == archarm ]]; then
-        alias update='yay -Sy'
-        alias upgrade='sudo pacman -Syy && yay -Syu'
-        alias ins='sudo pacman -Syy && yay -S'
+        # update: safe, read-only preview of pending repo + AUR updates.
+        # checkupdates uses a throwaway temp DB (never the real one), so unlike a
+        # bare `yay -Sy` it can't leave the system in a partial-upgrade state.
+        alias update='checkupdates 2>/dev/null; yay -Qua'
+        # upgrade: full repo + AUR upgrade in one combined transaction (combinedupgrade
+        # is on). --sudoloop keeps the sudo credential alive through long AUR builds so
+        # the install step never re-prompts and times out on an unattended run.
+        alias upgrade='yay -Syu --sudoloop'
+        # ins: install a package. No `pacman -Sy` first -- refresh-then-install-one is
+        # THE pacman partial-upgrade footgun (the Arch wiki warns against it). `yay -S`
+        # installs from the current synced DB; keep the system current via `upgrade`.
+        alias ins='yay -S'
         alias rem='yay -R'
     elif [[ $OSNAME == alpine ]]; then
-        alias update='apk update'
-        alias upgrade='apk upgrade'
+        # update: refresh the index, then list upgradable packages (read-only preview).
+        alias update='apk update && apk list -u'
+        # upgrade: -U refreshes the index first, so this is a self-contained full upgrade.
+        alias upgrade='apk upgrade -U'
         alias ins='apk add'
         alias rem='apk del'
     elif [[ $OSNAME == centos || $OSNAME == amzn ]]; then
-        alias update='sudo yum update'
+        # update: on yum/dnf `update` installs updates just like `upgrade`, so use
+        # check-update instead -- a read-only list of what's available (safe preview).
+        alias update='sudo yum check-update'
+        # upgrade: the actual upgrade (also processes obsoletes).
         alias upgrade='sudo yum upgrade'
         alias ins='sudo yum install'
         alias rem='sudo yum erase'
@@ -59,19 +77,14 @@ if [[ $OSTYPE == linux-* ]]; then
     # alias paste='xclip -sel clip -o'
 
 elif [[ $OSTYPE == darwin* ]]; then
-    alias update='brew update'
+    # update: refresh formulae, then preview outdated packages (read-only).
+    alias update='brew update && brew outdated'
     alias ins="osx_ins"
     alias ll='ls -lha'
-    function upgrade() {
-        # check for permissions
-        if [[ "$(stat -f '%u' $(brew --prefix))" != "$(id -u)" || "$(stat -f '%u' /usr/local/bin)" != "$(id -u)"  ]];then
-            echo "$(brew --prefix)/* is not owned by $(whoami)"
-            sudo chown -R $(whoami):admin $(brew --prefix)/*
-        fi
-        # run upgrades
-        brew upgrade
-        brew cleanup
-    }
+    # upgrade: refresh first, then upgrade + clean up. (Dropped the old `sudo chown` of the
+    # brew prefix -- Homebrew discourages it, and the hardcoded /usr/local path was wrong on
+    # Apple Silicon, so the check misfired and chowned the prefix on every run.)
+    alias upgrade='brew update && brew upgrade && brew cleanup'
     alias cpuhogs='ps -Aro pcpu,pmem,comm,comm,pid  | head -n 6'
     alias copy='pbcopy'
     # alias paste='pbpaste'
