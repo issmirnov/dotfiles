@@ -45,7 +45,10 @@ if [[ $OSTYPE == linux-* ]]; then
         # is on). --sudoloop keeps the sudo credential alive through long AUR builds so
         # the install step never re-prompts and times out on an unattended run.
         alias upgrade='yay -Syu --sudoloop'
-        alias ins='sudo pacman -Syy && yay -S'
+        # ins: install a package. No `pacman -Sy` first -- refresh-then-install-one is
+        # THE pacman partial-upgrade footgun (the Arch wiki warns against it). `yay -S`
+        # installs from the current synced DB; keep the system current via `upgrade`.
+        alias ins='yay -S'
         alias rem='yay -R'
     elif [[ $OSNAME == alpine ]]; then
         # update: refresh the index, then list upgradable packages (read-only preview).
