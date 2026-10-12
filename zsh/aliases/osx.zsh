@@ -2,7 +2,9 @@
 # vim: set tabstop=4:softtabstop=4:shiftwidth=4:expandtab
 if [[ $OSTYPE == darwin* ]]; then
 
-alias fixbrew='sudo chown -R $(whoami):admin $(brew --prefix)/*'
+# fixbrew: last resort if brew perms break (e.g. after an errant sudo or OS migration).
+# Homebrew discourages chowning the prefix routinely -- this is a manual escape hatch.
+alias fixbrew='sudo chown -R "$(whoami)" "$(brew --prefix)"'
 
 # OSX install wrapper. `brew install` auto-detects formula vs cask, so one path
 # covers both -- the old `brew cask` subcommand was removed from Homebrew.
@@ -33,8 +35,9 @@ ch() {
   fzf --ansi --multi | sed 's#.*\(https*://\)#\1#' | xargs open
 }
 
-# upgrade casks
-alias upgrade_casks='brew cask outdated | xargs brew cask reinstall'
+# upgrade_casks: `brew cask` was removed; `brew upgrade --cask` upgrades outdated casks
+# (add --greedy to also refresh casks that normally auto-update, like Chrome).
+alias upgrade_casks='brew upgrade --cask'
 
 # updatedb
 alias updatedb='sudo /usr/libexec/locate.updatedb'
