@@ -14,6 +14,7 @@ Singleton {
     property real netRx: 0   // bytes/sec
     property real netTx: 0
     property real load: 0    // 1-min load average
+    property int  cpuCores: 0 // logical CPUs; 0 until probed (drives the load chip's saturation ramp)
 
     // --- rolling history for the stat-chip sparklines (~2 min at the 2s poll) ---
     readonly property int histLen: 60
@@ -49,6 +50,19 @@ Singleton {
         repeat: true
         triggeredOnStart: true
         onTriggered: proc.running = true
+    }
+
+    // one-shot probe: logical CPU count, so the load chip can ramp on saturation (load/cores)
+    Process {
+        command: ["nproc"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                var n = parseInt(text);
+                if (n > 0)
+                    sys.cpuCores = n;
+            }
+        }
     }
 
     function _parse(line) {

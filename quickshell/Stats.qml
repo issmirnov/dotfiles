@@ -8,6 +8,13 @@ Row {
     height: Theme.chipHeight
     spacing: Theme.gap
 
+    // CPU → heat ramp: calm green at/below 20%, fully red by ~90%.
+    readonly property real cpuHeat: Math.max(0, Math.min(1, (Sys.cpuPct - 20) / 70))
+    // Temp → heat ramp: green at/below 55°C, red by ~90°C (pkg high-trip 80°C, crit 100°C).
+    readonly property real tempHeat: Math.max(0, Math.min(1, (Sys.tempC - 55) / 35))
+    // Load → heat ramp by saturation (load / cores): green under 50%, red at 100% (fully saturated).
+    readonly property real loadHeat: Sys.cpuCores > 0 ? Math.max(0, Math.min(1, (Sys.load / Sys.cpuCores - 0.5) / 0.5)) : 0
+
     // bytes/sec or cumulative bytes → compact string (adds a G tier for session totals)
     function fmt(b) {
         if (b < 1024) return Math.round(b) + "B";
@@ -59,6 +66,8 @@ Row {
         id: cpuChip
         section: "cpu"
         accent: Theme.cpuCol
+        heat: stats.cpuHeat                      // green→red by CPU load
+        pulse: Sys.cpuPct >= 85                   // breathe a glow when it's pegged
         label: "CPU " + Math.round(Sys.cpuPct) + "%"
         history: Sys.cpuHist
         sparkMin: 0
@@ -104,6 +113,8 @@ Row {
         id: tempChip
         section: "temp"
         accent: Theme.tempCol
+        heat: stats.tempHeat                     // green→red by package temp
+        pulse: Sys.tempC >= 85                     // breathe as it nears the 100°C crit trip
         label: Sys.tempC + "°C"
         history: Sys.tempHist
         contentComponent: Component {
@@ -125,6 +136,8 @@ Row {
         id: loadChip
         section: "load"
         accent: Theme.loadCol
+        heat: stats.loadHeat                     // green→red by load saturation
+        pulse: Sys.cpuCores > 0 && Sys.load >= Sys.cpuCores   // breathe when fully saturated
         label: "LOAD " + Sys.load.toFixed(2)
         history: Sys.loadHist
         contentComponent: Component {
