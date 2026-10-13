@@ -165,6 +165,18 @@ EOF
   assert_has  "beta refreshed live"                "[beta] b1" "$out"
   unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
 }
+t_open_remote_passes_host(){ newtmp; export HOME="$TMP"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+[ "$5" = beta ] && printf 'b1\n'
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="beta" SESH_REFRESH=1 SESH_DRYRUN=1
+  out="$(run_fn main b1)"
+  assert_has "remote open passes host then session" "hx-connect beta b1" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REFRESH SESH_DRYRUN
+}
 
 echo "# do_open window mode (dry-run)"
 t_open_here(){ newtmp; export HOME="$TMP"
@@ -186,7 +198,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback \
-         t_open_here t_open_newwin; do
+         t_open_here t_open_newwin t_open_remote_passes_host; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done

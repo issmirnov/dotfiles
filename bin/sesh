@@ -161,7 +161,7 @@ main(){
   f="$(printf '%s' "$sel" | cut -f3)"
   case "$typ" in
     local)  cwd="$(_cwd_of "$f")"; do_open "$CC_CONNECT" "${cwd:-$HOME}" "$(name_of "$f" "$key")" --resume "$key" ;;
-    remote) do_open "$HX_CONNECT" "$key" ;;
+    remote) do_open "$HX_CONNECT" "$f" "$key" ;;
     *) printf 'sesh: unknown selection\n' >&2; return 1 ;;
   esac
 }
