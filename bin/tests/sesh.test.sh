@@ -81,44 +81,83 @@ t_cache_miss_mtime(){ newtmp; export HOME="$TMP"
   assert_hasnt "stale cache entry discarded"    "SENTINEL_CACHED" "$out"
 }
 
-echo "# remote TTL cache + offline fallback"
+echo "# remote TTL cache + offline fallback (single host via SESH_HOSTS=hexane)"
 t_remote_fresh_skips_ssh(){ newtmp; export HOME="$TMP"
-  echo cachedsess > "$TMP/.local/state/sesh/remote.list"; touch "$TMP/.local/state/sesh/remote.list"
+  echo cachedsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch "$TMP/.local/state/sesh/remote.hexane.list"
   printf '#!/bin/bash\ntouch "%s/fake/ssh.called"\nexit 1\n' "$TMP" > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
-  export SESH_SSH="$TMP/fake/ssh" SESH_REMOTE_TTL=600
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=600
   out="$(run_fn candidates)"
   assert_has    "fresh cache served"        "[hexane] cachedsess" "$out"
   assert_nofile "fresh cache does not ssh"  "$TMP/fake/ssh.called"
-  unset SESH_SSH SESH_REMOTE_TTL
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
 }
 t_remote_stale_fail_fallback(){ newtmp; export HOME="$TMP"
-  echo ghostsess > "$TMP/.local/state/sesh/remote.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.list"
+  echo ghostsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
   printf '#!/bin/bash\nexit 255\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
-  export SESH_SSH="$TMP/fake/ssh" SESH_REMOTE_TTL=60
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60
   out="$(run_fn candidates)"
   assert_has  "stale cache served on ssh failure" "[hexane] ghostsess" "$out"
-  assert_file "failure records negative-cache marker" "$TMP/.local/state/sesh/remote.fail"
-  unset SESH_SSH SESH_REMOTE_TTL
+  assert_file "failure records negative-cache marker" "$TMP/.local/state/sesh/remote.hexane.fail"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
 }
 t_remote_success_refresh(){ newtmp; export HOME="$TMP"
-  echo oldsess > "$TMP/.local/state/sesh/remote.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.list"
-  : > "$TMP/.local/state/sesh/remote.fail"   # seeded marker that a successful refresh must clear
+  echo oldsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
+  : > "$TMP/.local/state/sesh/remote.hexane.fail"
   printf '#!/bin/bash\nprintf "newA\\nnewB\\n"; echo __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
-  export SESH_SSH="$TMP/fake/ssh" SESH_REMOTE_TTL=60 SESH_REFRESH=1   # -r forces the attempt past the negative-cache
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60 SESH_REFRESH=1
   out="$(run_fn candidates)"
-  assert_has    "refresh shows new sessions"   "[hexane] newA" "$out"
-  assert_has    "refresh shows all new"        "[hexane] newB" "$out"
-  assert_hasnt  "refresh drops stale session"  "oldsess"       "$out"
-  assert_nofile "success clears negative-cache" "$TMP/.local/state/sesh/remote.fail"
-  unset SESH_SSH SESH_REMOTE_TTL SESH_REFRESH
+  assert_has    "refresh shows new sessions"    "[hexane] newA" "$out"
+  assert_has    "refresh shows all new"         "[hexane] newB" "$out"
+  assert_hasnt  "refresh drops stale session"   "oldsess"       "$out"
+  assert_nofile "success clears negative-cache" "$TMP/.local/state/sesh/remote.hexane.fail"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL SESH_REFRESH
 }
 t_remote_success_empty(){ newtmp; export HOME="$TMP"
-  echo oldsess > "$TMP/.local/state/sesh/remote.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.list"
-  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"  # connected, zero sessions
-  export SESH_SSH="$TMP/fake/ssh" SESH_REMOTE_TTL=60
+  echo oldsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60
   out="$(run_fn candidates)"
   assert_hasnt "connected+empty clears stale sessions" "oldsess" "$out"
-  unset SESH_SSH SESH_REMOTE_TTL
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
+}
+
+echo "# remote multi-host"
+# fake ssh: sesh calls `ssh -o ConnectTimeout=5 -o BatchMode=yes <host> <cmd>`,
+# so the host is positional arg 5. Branch on it to serve per-host sessions.
+t_multihost_emit(){ newtmp; export HOME="$TMP"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in
+  alpha) printf 'a1\na2\n';;
+  beta)  printf 'b1\n';;
+esac
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="alpha beta" SESH_REFRESH=1
+  out="$(run_fn candidates)"
+  assert_has "alpha a1 listed"      "[alpha] a1" "$out"
+  assert_has "alpha a2 listed"      "[alpha] a2" "$out"
+  assert_has "beta b1 listed"       "[beta] b1"  "$out"
+  assert_has "row carries host f3"  "$(printf 'remote\ta1\talpha\t[alpha] a1')" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REFRESH
+}
+t_multihost_fallback(){ newtmp; export HOME="$TMP"
+  echo oldA > "$TMP/.local/state/sesh/remote.alpha.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.alpha.list"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in
+  alpha) exit 255;;
+  beta)  printf 'b1\n'; echo __SESH_OK__;;
+esac
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="alpha beta" SESH_REMOTE_TTL=60
+  out="$(run_fn candidates)"
+  assert_has  "alpha stale list served on failure" "[alpha] oldA" "$out"
+  assert_file "alpha failure records neg-cache"    "$TMP/.local/state/sesh/remote.alpha.fail"
+  assert_has  "beta refreshed live"                "[beta] b1" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
 }
 
 echo "# do_open window mode (dry-run)"
@@ -140,6 +179,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_cache_hit t_cache_miss_mtime \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
+         t_multihost_emit t_multihost_fallback \
          t_open_here t_open_newwin; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"

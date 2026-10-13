@@ -30,7 +30,6 @@ CC_CONNECT="$HOME/.dotfiles/bin/cc-connect"
 HX_CONNECT="$HOME/.dotfiles/bin/hx-connect"
 PROJECTS="$HOME/.claude/projects"
 STATE="$HOME/.local/state/sesh"
-HOST="${HX_HOST:-hexane}"
 N="${SESH_LIST:-25}"
 
 _mtime(){ stat -f %m "$1" 2>/dev/null; }
@@ -58,9 +57,33 @@ _hosts(){
   printf '%s\n' hexane dev-1 dev-2 dev-3
 }
 
+# _refresh_remote <host> : refresh ~/.local/state/sesh/remote.<host>.list per the
+# TTL / negative-cache rules. Writes only, emits nothing; safe to run in parallel
+# (each host owns its own files).
+_refresh_remote(){
+  local host="$1" TTL="${SESH_REMOTE_TTL:-60}" NEGTTL="${SESH_NEG_TTL:-30}" attempt raw
+  local RCACHE="$STATE/remote.$host.list" RFAIL="$STATE/remote.$host.fail"
+  mkdir -p "$STATE" 2>/dev/null
+  if   [ -n "${SESH_REFRESH:-}" ];                               then attempt=1
+  elif [ -f "$RCACHE" ] && [ "$(_age "$RCACHE")" -lt "$TTL" ];   then attempt=0
+  elif [ -f "$RFAIL"  ] && [ "$(_age "$RFAIL")"  -lt "$NEGTTL" ]; then attempt=0
+  else                                                               attempt=1
+  fi
+  [ "$attempt" = 1 ] || return 0
+  raw="$("${SESH_SSH:-ssh}" -o ConnectTimeout=5 -o BatchMode=yes "$host" \
+        'tmux ls -F "#{session_name}" 2>/dev/null; echo __SESH_OK__' 2>/dev/null)"
+  if printf '%s\n' "$raw" | grep -q '__SESH_OK__'; then
+    printf '%s\n' "$raw" | grep -v '__SESH_OK__' | sed '/^[[:space:]]*$/d' > "$RCACHE.tmp" 2>/dev/null \
+      && mv "$RCACHE.tmp" "$RCACHE" 2>/dev/null
+    rm -f "$RFAIL" 2>/dev/null
+  else
+    touch "$RFAIL" 2>/dev/null
+  fi
+}
+
 # rows: type \t key \t jsonl \t label  (caches are maintained as a side effect)
 candidates(){
-  local LABELS="$STATE/labels.tsv" RCACHE="$STATE/remote.list" RFAIL="$STATE/remote.fail"
+  local LABELS="$STATE/labels.tsv"
   mkdir -p "$STATE" 2>/dev/null
   # ---- local: (path,mtime)-keyed label cache ----
   local rows="" f id mt hit cwd name proj
@@ -84,30 +107,18 @@ candidates(){
   mv "$LABELS.tmp" "$LABELS" 2>/dev/null     # atomic; written before we emit (SIGPIPE-safe)
   printf '%s' "$rows"
 
-  # ---- remote: TTL cache + negative-cache + offline fallback ----
-  local TTL="${SESH_REMOTE_TTL:-60}" NEGTTL="${SESH_NEG_TTL:-30}" attempt=0 raw s
-  if   [ -n "${SESH_REFRESH:-}" ];                              then attempt=1
-  elif [ -f "$RCACHE" ] && [ "$(_age "$RCACHE")" -lt "$TTL" ]; then attempt=0   # fresh
-  elif [ -f "$RFAIL"  ] && [ "$(_age "$RFAIL")"  -lt "$NEGTTL" ]; then attempt=0   # recent failure
-  else                                                             attempt=1
-  fi
-  if [ "$attempt" = 1 ]; then
-    # Trailing sentinel distinguishes "connected, zero sessions" from "connect failed".
-    raw="$("${SESH_SSH:-ssh}" -o ConnectTimeout=5 -o BatchMode=yes "$HOST" \
-          'tmux ls -F "#{session_name}" 2>/dev/null; echo __SESH_OK__' 2>/dev/null)"
-    if printf '%s\n' "$raw" | grep -q '__SESH_OK__'; then
-      printf '%s\n' "$raw" | grep -v '__SESH_OK__' | sed '/^[[:space:]]*$/d' > "$RCACHE.tmp" 2>/dev/null \
-        && mv "$RCACHE.tmp" "$RCACHE" 2>/dev/null
-      rm -f "$RFAIL" 2>/dev/null
-    else
-      touch "$RFAIL" 2>/dev/null
-    fi
-  fi
-  if [ -f "$RCACHE" ]; then
+  # ---- remote: per-host TTL cache + negative-cache + offline fallback ----
+  local hosts h rc s
+  hosts="$(_hosts)"
+  for h in $hosts; do _refresh_remote "$h" & done
+  wait
+  for h in $hosts; do
+    rc="$STATE/remote.$h.list"
+    [ -f "$rc" ] || continue
     while IFS= read -r s; do
-      [ -n "$s" ] && printf 'remote\t%s\t\t[hexane] %s\n' "$s" "$s"
-    done < "$RCACHE"
-  fi
+      [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
+    done < "$rc"
+  done
 }
 
 # do_open <cmd> <args...> : same-window (exec) by default; new window with SESH_NEWWIN.
