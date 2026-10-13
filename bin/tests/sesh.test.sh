@@ -10,6 +10,7 @@
 SESH="$HOME/.dotfiles/bin/sesh"
 HXCONNECT="$HOME/.dotfiles/bin/hx-connect"
 SESHSAVE="$HOME/.dotfiles/bin/sesh-save"
+SESHRESTORE="$HOME/.dotfiles/bin/sesh-restore"
 P=0; F=0
 ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
 no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
@@ -203,6 +204,23 @@ t_save_host_namespaced(){ newtmp; export HOME="$TMP"
   assert_nofile "legacy flat marker pruned"  "$TMP/.local/state/sesh/remote/legacyflat"
 }
 
+echo "# sesh-restore host-aware"
+# Contract: the jq read defaults a missing host to hexane.
+t_restore_jq_contract(){
+  local EXPR='.remote[]? | [(.host // "hexane"), .session] | @tsv'
+  out="$(printf '%s' '{"remote":[{"host":"dev-1","session":"api"}]}' | jq -rc "$EXPR")"
+  assert_has "new format keeps host"         "$(printf 'dev-1\tapi')"    "$out"
+  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc "$EXPR")"
+  assert_has "old format defaults to hexane"  "$(printf 'hexane\tlegacy')" "$out"
+}
+# Integration: dry-run restore must call hx-connect with host THEN session.
+t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
+  printf '{"saved_at":"t","local":[],"remote":[{"host":"dev-1","session":"api"},{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
+  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has "restore opens new-format host:session" "hx-connect dev-1 api" "$out"
+  assert_has "restore defaults old-format to hexane"  "hx-connect hexane legacy" "$out"
+}
+
 echo "# do_open window mode (dry-run)"
 t_open_here(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1
@@ -224,7 +242,8 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback \
          t_open_here t_open_newwin t_open_remote_passes_host \
-         t_hxconnect_host_marker t_save_host_namespaced; do
+         t_hxconnect_host_marker t_save_host_namespaced \
+         t_restore_jq_contract t_restore_opens_per_host; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done
