@@ -1,17 +1,19 @@
 #!/bin/bash
-# hx-connect <tmux-session> — invoked as a Ghostty window's command by hx-restore.
-# Reconnect to a hexane tmux session over mosh (attach if it exists, else create).
-# Kept as a separate launcher so hx-restore can hand it to `open ... -e` as clean
-# argv: an inline `sh -c "..."` gets its quoting mangled through `open --args -e`
-# and the window falls back to a bare login shell.
+# hx-connect <host> <session> — reconnect to <host>'s tmux session <session> over
+# mosh (attach if it exists, else create). A separate launcher so sesh / sesh-restore
+# can hand it clean argv through `open ... -e` (an inline `sh -c "..."` gets mangled
+# and the window falls back to a bare login shell).
+#
+# One-arg form `hx-connect <session>` keeps host = $HX_HOST (default hexane) for
+# back-compat. Transport is injectable via HX_MOSH (a test seam).
 export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
-sess="${1:?usage: hx-connect <tmux-session>}"
-# Presence marker (this process's PID) so sesh-save knows this remote session is
-# open; cleared on exit. NOT exec'd below, so the trap fires when mosh returns or
-# the window is closed (sesh-save also prunes markers whose PID is dead).
-MARK="$HOME/.local/state/sesh/remote/$sess"
+host="${1:?usage: hx-connect <host> <session>}"; sess="${2:-}"
+if [ -z "$sess" ]; then sess="$host"; host="${HX_HOST:-hexane}"; fi
+# Presence marker (this process's PID), host-namespaced so same-named sessions on
+# different boxes can't collide. Cleared on exit; sesh-save also prunes dead PIDs.
+MARK="$HOME/.local/state/sesh/remote/$host/$sess"
 mkdir -p "$(dirname "$MARK")"
 echo $$ > "$MARK"
 trap 'rm -f "$MARK"' EXIT INT TERM HUP
-printf '\033]0;%s\007' "$sess"   # immediate title until tmux set-titles takes over
-mosh "${HX_HOST:-hexane}" -- tmux new-session -A -s "$sess"
+printf '\033]0;%s:%s\007' "$host" "$sess"   # immediate title until tmux set-titles takes over
+"${HX_MOSH:-mosh}" "$host" -- tmux new-session -A -s "$sess"

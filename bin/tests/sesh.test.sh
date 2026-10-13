@@ -8,6 +8,7 @@
 # Sesh must be sourceable without running main (BASH_SOURCE guard), and must
 # expose: name_of, _cwd_of, candidates, do_open.
 SESH="$HOME/.dotfiles/bin/sesh"
+HXCONNECT="$HOME/.dotfiles/bin/hx-connect"
 P=0; F=0
 ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
 no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
@@ -178,6 +179,17 @@ EOF
   unset SESH_SSH SESH_HOSTS SESH_REFRESH SESH_DRYRUN
 }
 
+echo "# hx-connect host-aware"
+t_hxconnect_host_marker(){ newtmp; export HOME="$TMP"
+  # fake mosh records its argv AND whether the host-namespaced marker exists at call time
+  printf '#!/bin/bash\n[ -e "%s/.local/state/sesh/remote/dev-2/web" ] && echo OK > "%s/fake/mark"\necho "$@" > "%s/fake/argv"\n' "$TMP" "$TMP" "$TMP" > "$TMP/fake/mosh"
+  chmod +x "$TMP/fake/mosh"
+  HX_MOSH="$TMP/fake/mosh" bash "$HXCONNECT" dev-2 web
+  argv="$(cat "$TMP/fake/argv" 2>/dev/null)"
+  assert_has  "mosh targets host + attach-or-create" "dev-2 -- tmux new-session -A -s web" "$argv"
+  assert_file "host-namespaced marker existed during run" "$TMP/fake/mark"
+}
+
 echo "# do_open window mode (dry-run)"
 t_open_here(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1
@@ -198,7 +210,8 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback \
-         t_open_here t_open_newwin t_open_remote_passes_host; do
+         t_open_here t_open_newwin t_open_remote_passes_host \
+         t_hxconnect_host_marker; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done
