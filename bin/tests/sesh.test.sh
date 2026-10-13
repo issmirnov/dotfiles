@@ -9,6 +9,7 @@
 # expose: name_of, _cwd_of, candidates, do_open.
 SESH="$HOME/.dotfiles/bin/sesh"
 HXCONNECT="$HOME/.dotfiles/bin/hx-connect"
+SESHSAVE="$HOME/.dotfiles/bin/sesh-save"
 P=0; F=0
 ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
 no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
@@ -190,6 +191,18 @@ t_hxconnect_host_marker(){ newtmp; export HOME="$TMP"
   assert_file "host-namespaced marker existed during run" "$TMP/fake/mark"
 }
 
+echo "# sesh-save host-namespaced"
+t_save_host_namespaced(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/.claude/sessions" "$TMP/.local/state/sesh/remote/dev-1"
+  echo $$ > "$TMP/.local/state/sesh/remote/dev-1/foo"     # $$ is this test runner's live PID
+  : > "$TMP/.local/state/sesh/remote/legacyflat"          # a stale legacy flat marker
+  SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  out="$(cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  assert_has    "save emits host"            '"host": "dev-1"' "$out"
+  assert_has    "save emits session"         '"session": "foo"' "$out"
+  assert_nofile "legacy flat marker pruned"  "$TMP/.local/state/sesh/remote/legacyflat"
+}
+
 echo "# do_open window mode (dry-run)"
 t_open_here(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1
@@ -211,7 +224,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback \
          t_open_here t_open_newwin t_open_remote_passes_host \
-         t_hxconnect_host_marker; do
+         t_hxconnect_host_marker t_save_host_namespaced; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done
