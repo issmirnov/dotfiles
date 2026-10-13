@@ -20,7 +20,7 @@ command -v jq >/dev/null || exit 0
 # Skip the early-boot window so we never overwrite the pre-shutdown snapshot
 # before sesh-restore has rebuilt it at login (otherwise an empty login snapshot
 # would erase what you had open). Snapshots resume a few minutes in.
-boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/.*sec = \([0-9]*\).*/\1/p')
+boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/^{ sec = \([0-9]*\),.*/\1/p')
 if [ -z "${SESH_SKIP_BOOTGUARD:-}" ] && [ -n "$boot" ] && [ "$(( $(date +%s) - boot ))" -lt 180 ]; then exit 0; fi
 
 # Local: live Claude sessions (registry carries sessionId + cwd + pid).
