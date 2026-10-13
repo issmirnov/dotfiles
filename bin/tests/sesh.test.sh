@@ -42,6 +42,27 @@ t_userfallback(){ newtmp; export HOME="$TMP"
   assert_has "falls back to user msg" "first user message" "$out"
 }
 
+echo "# _hosts (env > file > default)"
+t_hosts_env(){ newtmp; export HOME="$TMP"
+  export SESH_HOSTS="h1 h2 h3"
+  out="$(run_fn _hosts)"
+  assert_has "env host h1 listed" "h1" "$out"
+  assert_has "env host h3 listed" "h3" "$out"
+  unset SESH_HOSTS
+}
+t_hosts_file(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
+  mkdir -p "$TMP/.config/sesh"; printf 'boxA\n# a comment\n\nboxB\n' > "$TMP/.config/sesh/hosts"
+  out="$(run_fn _hosts)"
+  assert_has   "file host boxA listed" "boxA" "$out"
+  assert_has   "file host boxB listed" "boxB" "$out"
+  assert_hasnt "file comment ignored"  "comment" "$out"
+}
+t_hosts_default(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
+  out="$(run_fn _hosts)"
+  assert_has "default includes hexane" "hexane" "$out"
+  assert_has "default includes dev-1"  "dev-1" "$out"
+}
+
 echo "# local label cache (mtime-keyed)"
 t_cache_hit(){ newtmp; export HOME="$TMP"
   f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
@@ -115,7 +136,8 @@ t_open_newwin(){ newtmp; export HOME="$TMP"
   unset SESH_DRYRUN SESH_NEWWIN
 }
 
-for t in t_aititle t_userfallback t_cache_hit t_cache_miss_mtime \
+for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
+         t_cache_hit t_cache_miss_mtime \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
          t_open_here t_open_newwin; do

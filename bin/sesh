@@ -50,6 +50,14 @@ name_of(){
 
 _cwd_of(){ grep -a -m1 '"cwd"' "$1" 2>/dev/null | jq -rc 'select(.cwd!=null)|.cwd' 2>/dev/null | head -1; }
 
+# _hosts : boxes the picker queries. SESH_HOSTS env > ~/.config/sesh/hosts > default.
+_hosts(){
+  if [ -n "${SESH_HOSTS:-}" ]; then printf '%s\n' $SESH_HOSTS; return; fi
+  local f="$HOME/.config/sesh/hosts"
+  if [ -f "$f" ]; then sed -e 's/#.*//' "$f" | tr ' \t' '\n\n' | sed '/^$/d'; return; fi
+  printf '%s\n' hexane dev-1 dev-2 dev-3
+}
+
 # rows: type \t key \t jsonl \t label  (caches are maintained as a side effect)
 candidates(){
   local LABELS="$STATE/labels.tsv" RCACHE="$STATE/remote.list" RFAIL="$STATE/remote.fail"
