@@ -68,17 +68,23 @@ t_cache_hit(){ newtmp; export HOME="$TMP"
   f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
   mt="$(stat -f %m "$f")"
   printf '%s\t%s\t%s\t%s\n' "$f" "$mt" "/tmp/seedcwd" "SENTINEL_CACHED" > "$TMP/.local/state/sesh/labels.tsv"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"   # hermetic: no real network
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane
   out="$(run_fn candidates)"
   assert_has   "cache hit reuses cached label" "SENTINEL_CACHED" "$out"
   assert_hasnt "cache hit skips recompute"     "Real Title A"    "$out"
+  unset SESH_SSH SESH_HOSTS
 }
 t_cache_miss_mtime(){ newtmp; export HOME="$TMP"
   f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
   # seed with a STALE mtime so it no longer matches the file -> recompute
   printf '%s\t%s\t%s\t%s\n' "$f" "100000000" "/tmp/seedcwd" "SENTINEL_CACHED" > "$TMP/.local/state/sesh/labels.tsv"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"   # hermetic: no real network
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane
   out="$(run_fn candidates)"
   assert_has   "mtime change recomputes label" "Real Title A"    "$out"
   assert_hasnt "stale cache entry discarded"    "SENTINEL_CACHED" "$out"
+  unset SESH_SSH SESH_HOSTS
 }
 
 echo "# remote TTL cache + offline fallback (single host via SESH_HOSTS=hexane)"

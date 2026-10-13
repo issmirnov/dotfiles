@@ -1,6 +1,6 @@
 #!/bin/bash
 # sesh [-r] [-n] [query] — open a session on demand, in the CURRENT window.
-#   no query : fzf-pick from ALL sessions (local Claude + hexane tmux)
+#   no query : fzf-pick from ALL sessions (local Claude + remote tmux on every host)
 #   query    : open the first match (exact session/id, else substring on the label)
 #   local  → claude --resume in its dir        remote → mosh + tmux attach
 #
@@ -11,9 +11,10 @@
 # Candidate derivation is cached so each run avoids a full re-scan:
 #   • local labels  → ~/.local/state/sesh/labels.tsv, keyed by (path, mtime):
 #                     an unchanged transcript is never re-parsed by jq.
-#   • hexane list   → ~/.local/state/sesh/remote.list with a short TTL; when the
-#                     tunnel is slow/down the last-known list is served instantly
-#                     (never blocks), and a failed connect is remembered briefly.
+#   • remote lists  → ~/.local/state/sesh/remote.<host>.list, one per host from
+#                     _hosts, each with a short TTL; when a box is slow/down its
+#                     last-known list is served instantly (never blocks), and a
+#                     failed connect is remembered briefly.
 #
 # Flags / env:
 #   -r | SESH_REFRESH=1    force a live remote refresh (ignore the TTL)
@@ -22,6 +23,7 @@
 #        SESH_REMOTE_TTL   remote-cache TTL, seconds (default 60)
 #        SESH_NEG_TTL      negative-cache TTL after a failed connect (default 30)
 #        SESH_LIST         newest-N local transcripts to consider (default 25)
+#        SESH_HOSTS        remote boxes to query (default: ~/.config/sesh/hosts, else built-in)
 #        SESH_SSH          ssh binary to use (default ssh; a test/CI seam)
 set -u
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
@@ -81,7 +83,7 @@ _refresh_remote(){
   fi
 }
 
-# rows: type \t key \t jsonl \t label  (caches are maintained as a side effect)
+# rows: type \t key \t (jsonl path for local | host for remote) \t label  (caches maintained as a side effect)
 candidates(){
   local LABELS="$STATE/labels.tsv"
   mkdir -p "$STATE" 2>/dev/null
