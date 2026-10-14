@@ -165,6 +165,18 @@ do_open(){
   fi
 }
 
+# _open_self <session> : attach a LOCAL tmux session. $TMUX-guarded so a pick from
+# inside tmux switches the client instead of exec'ing (which would kill the pane).
+_open_self(){
+  local s="$1" tm="${SESH_TMUX:-tmux}"
+  if [ -z "${SESH_NEWWIN:-}" ] && [ -n "${TMUX:-}" ]; then
+    [ -n "${SESH_DRYRUN:-}" ] && { printf 'would switch-client: %s\n' "$s"; return 0; }
+    "$tm" new-session -dA -s "$s" \; switch-client -t "$s"
+  else
+    do_open "$tm" new-session -A -s "$s"
+  fi
+}
+
 main(){
   while [ $# -gt 0 ]; do
     case "$1" in
@@ -189,7 +201,7 @@ main(){
   f="$(printf '%s' "$sel" | cut -f3)"
   case "$typ" in
     local)  cwd="$(_cwd_of "$f")"; do_open "$CC_CONNECT" "${cwd:-$HOME}" "$(name_of "$f" "$key")" --resume "$key" ;;
-    remote) do_open "$HX_CONNECT" "$f" "$key" ;;
+    remote) if [ "$f" = "$(_self)" ]; then _open_self "$key"; else do_open "$HX_CONNECT" "$f" "$key"; fi ;;
     *) printf 'sesh: unknown selection\n' >&2; return 1 ;;
   esac
 }

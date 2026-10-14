@@ -255,6 +255,20 @@ t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
   assert_has "restore defaults old-format to hexane"  "hx-connect hexane legacy" "$out"
 }
 
+echo "# _open_self (local tmux attach)"
+t_open_self_plain(){ newtmp; export HOME="$TMP"; unset TMUX SESH_NEWWIN 2>/dev/null
+  out="$(SESH_DRYRUN=1 SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "plain shell attaches in place" "would open here: tmux new-session -A -s mysess" "$out"
+}
+t_open_self_in_tmux(){ newtmp; export HOME="$TMP"; unset SESH_NEWWIN 2>/dev/null
+  out="$(SESH_DRYRUN=1 TMUX=/tmp/fake,1,0 SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "inside tmux switches client" "would switch-client: mysess" "$out"
+}
+t_open_self_newwin(){ newtmp; export HOME="$TMP"
+  out="$(SESH_DRYRUN=1 SESH_NEWWIN=1 SESH_UNAME=Linux SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "new window spawns a terminal" "spawn[linux]: setsid -f alacritty -e tmux new-session -A -s mysess" "$out"
+}
+
 echo "# do_open window mode (dry-run)"
 t_open_here(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1
@@ -283,6 +297,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback t_self_vs_remote \
+         t_open_self_plain t_open_self_in_tmux t_open_self_newwin \
          t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
          t_hxconnect_host_marker t_save_host_namespaced \
          t_restore_jq_contract t_restore_opens_per_host; do
