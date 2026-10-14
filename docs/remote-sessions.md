@@ -136,7 +136,7 @@ Everything machine-specific is small and in known places. The checklist:
 On the Mac:
 
 1. Dependencies: `brew install jq fzf mosh` and a terminal that titles windows (this example uses Ghostty). Claude Code at `~/.local/bin/claude`.
-2. On the remote box: `tmux` and a `mosh` server, plus the `xterm-*` terminfo for your terminal if `tmux` complains.
+2. On the remote box: `tmux`, a `mosh` server, and a **UTF-8 locale** (see gotchas), plus the `xterm-*` terminfo for your terminal if `tmux` complains.
 3. Put `bin/` on your `PATH` (this repo does it in `zsh/config/paths.zsh`), so `sesh` and `sesh-save`/`sesh-restore` resolve as commands.
 4. Ghostty config: set `window-save-state = never` (see gotchas).
 5. Install the LaunchAgents by symlinking both plists into `~/Library/LaunchAgents/`, then load them:
@@ -159,6 +159,7 @@ Each of these was a real bug. They are the reason the scripts look the way they 
 - **Pass the launcher as clean argv.** Restore opens a window with `open -na Ghostty --args -e <launcher> <args>`. An inline `-e /bin/sh -c "..."` gets its quoting mangled by `open --args` and the window falls back to a bare login shell. A standalone launcher script (`cc-connect`, `hx-connect`) takes clean arguments. Ghostty's `-e prog a b c` does preserve spaced args (verified).
 - **`--title=` as a launch flag aborts the launch.** Set the title with an OSC escape inside the launcher instead: `printf '\033]0;%s\007' "$name"`.
 - **`mosh` strips OSC 52.** Window-title OSC still passes, so titles work. Copying text from a remote `tmux` to the Mac clipboard over `mosh` can fail. Use a native terminal selection, or switch the transport to Eternal Terminal (TCP, keeps OSC 52) if clipboard matters more than sleep-survival.
+- **`mosh` needs a UTF-8 locale on the server.** mosh-server refuses to start unless the remote box has a real UTF-8 locale, because your client forwards `LC_ALL`/`LANG` and the server must honor it. A minimal server image can lack it, or even lack the `locales` package. The failure looks like `mosh: Did not find mosh server startup message` after a wall of `setlocale` warnings. Diagnose with `ssh box 'LC_ALL=en_US.UTF-8 locale charmap'` (you want `UTF-8`, not `US-ASCII` / `ANSI_X3.4-1968`). Fix on the box: `sudo apt-get install -y locales && sudo locale-gen en_US.UTF-8`, matching the locale your client sends.
 - **LaunchAgents get a minimal `PATH`.** Each script sets its own `PATH` and calls Claude by absolute path (`~/.local/bin/claude`). A LaunchAgent will not find a tool on your interactive shell `PATH`.
 - **The Claude project slug is lossy.** `~/.claude/projects/<slug>/` collapses dotted paths, so the real working directory is read from inside the session's `.jsonl` (`.cwd`), not from the slug.
 - **Spawning a window from inside Claude.** `cc-connect` unsets `CLAUDE_CODE_CHILD_SESSION`, or the child session does not save its own transcript and cannot be restored later.
