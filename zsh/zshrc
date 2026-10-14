@@ -85,3 +85,10 @@ export JAVA_HOME="/opt/homebrew/opt/openjdk@21"
 # Bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# bun completions
+[ -s "/home/vania/.bun/_bun" ] && source "/home/vania/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
