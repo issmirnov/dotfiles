@@ -74,6 +74,14 @@ _hosts(){
   printf '%s\n' hexane dev-1 dev-2 dev-3
 }
 
+# _self : the host-list entry that is THIS box (SESH_SELF, else hostname -s if listed).
+# grep -Fqx = exact, fixed-string match, so dev-1 never matches a list with dev-10.
+_self(){
+  if [ -n "${SESH_SELF:-}" ]; then printf '%s' "$SESH_SELF"; return; fi
+  local h; h="${SESH_HOSTNAME:-$(hostname -s 2>/dev/null)}"
+  [ -n "$h" ] && _hosts | grep -Fqx "$h" && printf '%s' "$h"
+}
+
 # _refresh_remote <host> : refresh ~/.local/state/sesh/remote.<host>.list per the
 # TTL / negative-cache rules. Writes only, emits nothing; safe to run in parallel
 # (each host owns its own files).

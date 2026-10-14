@@ -66,6 +66,20 @@ t_hosts_default(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
   assert_has "default includes dev-1"  "dev-1" "$out"
 }
 
+echo "# _self detection"
+t_self_env(){ newtmp; export HOME="$TMP"
+  out="$(SESH_SELF=whatever run_fn _self)"
+  assert_has "SESH_SELF forces self" "whatever" "$out"
+}
+t_self_hostname_match(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  out="$(SESH_HOSTNAME=dev-1 SESH_HOSTS='dev-1 dev-2' run_fn _self)"
+  assert_has "hostname in list resolves to self" "dev-1" "$out"
+}
+t_self_near_miss(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  out="$(SESH_HOSTNAME=dev-10 SESH_HOSTS='dev-1 dev-2' run_fn _self)"
+  if [ -z "$out" ]; then ok "near-miss (dev-10 vs dev-1) yields empty self"; else no "near-miss should be empty (got '$out')"; fi
+}
+
 echo "# local label cache (mtime-keyed)"
 t_cache_hit(){ newtmp; export HOME="$TMP"
   f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
@@ -244,6 +258,7 @@ t_mtime_real(){ newtmp; export HOME="$TMP"
 }
 
 for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
+         t_self_env t_self_hostname_match t_self_near_miss \
          t_cache_hit t_cache_miss_mtime \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
