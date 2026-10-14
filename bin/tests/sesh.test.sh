@@ -76,8 +76,9 @@ t_self_hostname_match(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
   assert_has "hostname in list resolves to self" "dev-1" "$out"
 }
 t_self_near_miss(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
-  out="$(SESH_HOSTNAME=dev-10 SESH_HOSTS='dev-1 dev-2' run_fn _self)"
-  if [ -z "$out" ]; then ok "near-miss (dev-10 vs dev-1) yields empty self"; else no "near-miss should be empty (got '$out')"; fi
+  # hostname dev-1 vs a list containing dev-10: a missing -x would substring-match dev-10.
+  out="$(SESH_HOSTNAME=dev-1 SESH_HOSTS='dev-10 dev-2' run_fn _self)"
+  if [ -z "$out" ]; then ok "near-miss: dev-1 does not match dev-10 (exact -x)"; else no "near-miss should be empty (got '$out')"; fi
 }
 
 echo "# local label cache (mtime-keyed)"
