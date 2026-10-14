@@ -8,9 +8,12 @@
 # Sesh must be sourceable without running main (BASH_SOURCE guard), and must
 # expose: name_of, _cwd_of, candidates, do_open.
 SESH="${SESH_BIN:-$HOME/.dotfiles/bin/sesh}"
-HXCONNECT="$HOME/.dotfiles/bin/hx-connect"
-SESHSAVE="$HOME/.dotfiles/bin/sesh-save"
-SESHRESTORE="$HOME/.dotfiles/bin/sesh-restore"
+# resolve the sibling scripts from SESH's own dir, so a worktree run (SESH_BIN=...)
+# tests that tree's hx-connect/sesh-save/sesh-restore, not the live ~/.dotfiles ones.
+_BIN="$(cd "$(dirname "$SESH")" 2>/dev/null && pwd)"
+HXCONNECT="$_BIN/hx-connect"
+SESHSAVE="$_BIN/sesh-save"
+SESHRESTORE="$_BIN/sesh-restore"
 P=0; F=0
 ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
 no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
