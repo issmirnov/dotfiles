@@ -20,7 +20,10 @@ assert_hasnt(){ if has "$2" "$3"; then no "$1 (unexpected: $2)"; else ok "$1"; f
 assert_file(){ if [ -e "$2" ]; then ok "$1"; else no "$1 (no file: $2)"; fi; }
 assert_nofile(){ if [ -e "$2" ]; then no "$1 (file present: $2)"; else ok "$1"; fi; }
 
-newtmp(){ TMP="$(mktemp -d)"; mkdir -p "$TMP/.claude/projects" "$TMP/.local/state/sesh" "$TMP/fake"; }
+# pin a non-host SESH_HOSTNAME so the suite is independent of the machine it runs on
+# (else a box named like a test host — e.g. hexane — would be treated as self); self
+# tests set SESH_HOSTNAME explicitly after newtmp to override this.
+newtmp(){ TMP="$(mktemp -d)"; mkdir -p "$TMP/.claude/projects" "$TMP/.local/state/sesh" "$TMP/fake"; export SESH_HOSTNAME=__testhost__; }
 
 # mkproj <proj> <id> <ai:yes|no> <title> <usercontent>  -> prints jsonl path
 mkproj(){ local d="$TMP/.claude/projects/$1"; mkdir -p "$d"; local f="$d/$2.jsonl"; : >"$f"
