@@ -183,6 +183,22 @@ EOF
   assert_has  "beta refreshed live"                "[beta] b1" "$out"
   unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
 }
+t_self_vs_remote(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  printf '#!/bin/bash\n[ "$1" = ls ] && printf "selfA\\nselfB\\n"\n' > "$TMP/fake/tmux"; chmod +x "$TMP/fake/tmux"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in beta) printf 'b1\n';; esac
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  echo staleSelf > "$TMP/.local/state/sesh/remote.alpha.list"   # stale self cache must NOT surface
+  export SESH_HOSTNAME=alpha SESH_HOSTS="alpha beta" SESH_TMUX="$TMP/fake/tmux" SESH_SSH="$TMP/fake/ssh" SESH_REFRESH=1
+  out="$(run_fn candidates)"
+  assert_has   "self tmux listed locally"     "[alpha] selfA" "$out"
+  assert_has   "remote beta listed over ssh"  "[beta] b1"     "$out"
+  assert_hasnt "stale self cache not emitted" "staleSelf"     "$out"
+  unset SESH_HOSTNAME SESH_HOSTS SESH_TMUX SESH_SSH SESH_REFRESH
+}
 t_open_remote_passes_host(){ newtmp; export HOME="$TMP"
   cat > "$TMP/fake/ssh" <<'EOF'
 #!/bin/bash
@@ -263,7 +279,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_cache_hit t_cache_miss_mtime \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
-         t_multihost_emit t_multihost_fallback \
+         t_multihost_emit t_multihost_fallback t_self_vs_remote \
          t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
          t_hxconnect_host_marker t_save_host_namespaced \
          t_restore_jq_contract t_restore_opens_per_host; do

@@ -25,6 +25,7 @@
 #        SESH_LIST         newest-N local transcripts to consider (default 25)
 #        SESH_HOSTS        remote boxes to query (default: ~/.config/sesh/hosts, else built-in)
 #        SESH_SSH          ssh binary to use (default ssh; a test/CI seam)
+#        SESH_TMUX         local tmux binary (default tmux; a test seam)
 #        SESH_TERMINAL     Linux terminal binary for a new window (default alacritty)
 #        SESH_TERMINAL_APP macOS .app bundle for a new window (default Ghostty)
 set -u
@@ -132,17 +133,23 @@ candidates(){
   mv "$LABELS.tmp" "$LABELS" 2>/dev/null     # atomic; written before we emit (SIGPIPE-safe)
   printf '%s' "$rows"
 
-  # ---- remote: per-host TTL cache + negative-cache + offline fallback ----
-  local hosts h rc s
+  # ---- remote: self via local `tmux ls`; other hosts over ssh (per-host cache) ----
+  local hosts h rc s self
+  self="$(_self)"
   hosts="$(_hosts)"
-  for h in $hosts; do _refresh_remote "$h" & done
+  for h in $hosts; do [ "$h" = "$self" ] && continue; _refresh_remote "$h" & done
   wait
   for h in $hosts; do
-    rc="$STATE/remote.$h.list"
-    [ -f "$rc" ] || continue
-    while IFS= read -r s; do
-      [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
-    done < "$rc"
+    if [ "$h" = "$self" ]; then
+      "${SESH_TMUX:-tmux}" ls -F '#{session_name}' 2>/dev/null | while IFS= read -r s; do
+        [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
+      done
+    else
+      rc="$STATE/remote.$h.list"; [ -f "$rc" ] || continue
+      while IFS= read -r s; do
+        [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
+      done < "$rc"
+    fi
   done
 }
 
