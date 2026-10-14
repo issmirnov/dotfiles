@@ -133,9 +133,12 @@ function cpd(){
 
 alias -g Gv='| grep -v '
 
-# title ~ label the current terminal window/tab by hand (OSC 0): `title scratch`.
-# Inside tmux this is automatic — set-titles drives it from the session name.
-title() { print -n "\e]0;$1\a" }
+# NOTE: do NOT define `title` here. oh-my-zsh's termsupport already provides a proper
+# `title` (foot-aware, expands via `print -Pn`, sets window + tab) and drives it from
+# precmd/preexec. A plain `print -n` override shadowed it, so the unexpanded idle string
+# `%15<..<%~%<<` printed literally in the bar (fixed 2026-10-13). `title scratch` still
+# works via OMZ; Claude Code sets its own title while running (precmd doesn't fire), so
+# its naming is untouched. Inside tmux, set-titles drives it from the session name.
 
 # sesh ~ unified on-demand session opener (script in dotfiles bin): fzf-pick any
 # local Claude OR hexane tmux session and open it in a new Ghostty window.
