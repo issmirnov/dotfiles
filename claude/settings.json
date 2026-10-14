@@ -59,15 +59,6 @@
       },
       {
         "hooks": []
-      },
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 ~/.claude/skills/de-slopping/hooks/slop_guard.py"
-          }
-        ]
       }
     ],
     "SessionStart": [
