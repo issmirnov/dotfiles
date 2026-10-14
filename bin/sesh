@@ -171,7 +171,10 @@ _open_self(){
   local s="$1" tm="${SESH_TMUX:-tmux}"
   if [ -z "${SESH_NEWWIN:-}" ] && [ -n "${TMUX:-}" ]; then
     [ -n "${SESH_DRYRUN:-}" ] && { printf 'would switch-client: %s\n' "$s"; return 0; }
-    "$tm" new-session -dA -s "$s" \; switch-client -t "$s"
+    # ensure the session exists (detached), then switch — never `new-session -A`,
+    # which becomes attach and refuses to nest inside an existing tmux client.
+    "$tm" has-session -t "=$s" 2>/dev/null || "$tm" new-session -d -s "$s"
+    "$tm" switch-client -t "=$s"
   else
     do_open "$tm" new-session -A -s "$s"
   fi
