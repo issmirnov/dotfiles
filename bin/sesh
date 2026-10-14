@@ -4,7 +4,7 @@
 #   query    : open the first match (exact session/id, else substring on the label)
 #   local  → claude --resume in its dir        remote → mosh + tmux attach
 #
-# Opens in place (exec) by default; -n / SESH_NEWWIN=1 forces a new Ghostty window
+# Opens in place (exec) by default; -n / SESH_NEWWIN=1 forces a new terminal window
 # (the behaviour sesh-restore still uses). Titling is independent of this — the OSC
 # title is emitted by cc-connect/hx-connect into whatever terminal runs them.
 #
@@ -44,7 +44,7 @@ case "${SESH_UNAME:-$(uname)}" in
   Linux)
     _mtime(){ stat -c %Y "$1" 2>/dev/null; }
     _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[linux]: setsid -f %s -e %s\n' "${SESH_TERMINAL:-alacritty}" "$*"; return; fi
-                     setsid -f "${SESH_TERMINAL:-alacritty}" -e "$@" 2>>"$STATE/spawn.err"; } ;;
+                     mkdir -p "$STATE" 2>/dev/null; setsid -f "${SESH_TERMINAL:-alacritty}" -e "$@" 2>>"$STATE/spawn.err"; } ;;
   *)
     _mtime(){ stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null; }
     _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[other]: %s -e %s\n' "${SESH_TERMINAL:-xterm}" "$*"; return; fi
