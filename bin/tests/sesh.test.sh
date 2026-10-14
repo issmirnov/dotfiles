@@ -7,7 +7,7 @@
 #
 # Sesh must be sourceable without running main (BASH_SOURCE guard), and must
 # expose: name_of, _cwd_of, candidates, do_open.
-SESH="$HOME/.dotfiles/bin/sesh"
+SESH="${SESH_BIN:-$HOME/.dotfiles/bin/sesh}"
 HXCONNECT="$HOME/.dotfiles/bin/hx-connect"
 SESHSAVE="$HOME/.dotfiles/bin/sesh-save"
 SESHRESTORE="$HOME/.dotfiles/bin/sesh-restore"
@@ -69,7 +69,7 @@ t_hosts_default(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
 echo "# local label cache (mtime-keyed)"
 t_cache_hit(){ newtmp; export HOME="$TMP"
   f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
-  mt="$(stat -f %m "$f")"
+  mt="$(run_fn _mtime "$f")"
   printf '%s\t%s\t%s\t%s\n' "$f" "$mt" "/tmp/seedcwd" "SENTINEL_CACHED" > "$TMP/.local/state/sesh/labels.tsv"
   printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"   # hermetic: no real network
   export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane
@@ -229,11 +229,18 @@ t_open_here(){ newtmp; export HOME="$TMP"
   assert_hasnt "default is not a new window"            "newwin" "$out"
   unset SESH_DRYRUN
 }
-t_open_newwin(){ newtmp; export HOME="$TMP"
+t_spawn_branches(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1 SESH_NEWWIN=1
-  out="$(run_fn do_open ccx /some/dir thename --resume theid)"
-  assert_has "SESH_NEWWIN forces a new window" "newwin" "$out"
+  out="$(SESH_UNAME=Linux  run_fn do_open ccx /d name --resume id)"
+  assert_has "linux new-window spawns via setsid+terminal" "spawn[linux]: setsid -f alacritty -e" "$out"
+  out="$(SESH_UNAME=Darwin run_fn do_open ccx /d name --resume id)"
+  assert_has "darwin new-window spawns via open -na"       "spawn[darwin]: open -na"               "$out"
   unset SESH_DRYRUN SESH_NEWWIN
+}
+t_mtime_real(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projA idAAAAAAAAAA yes "T" "x")"
+  out="$(run_fn _mtime "$f")"
+  if [ "${out:-0}" -gt 0 ] 2>/dev/null; then ok "mtime returns an epoch on the real OS"; else no "mtime should be an epoch (got '$out')"; fi
 }
 
 for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
@@ -241,7 +248,7 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
          t_remote_success_refresh t_remote_success_empty \
          t_multihost_emit t_multihost_fallback \
-         t_open_here t_open_newwin t_open_remote_passes_host \
+         t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
          t_hxconnect_host_marker t_save_host_namespaced \
          t_restore_jq_contract t_restore_opens_per_host; do
   "$t"
