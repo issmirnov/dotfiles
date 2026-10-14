@@ -1,7 +1,8 @@
 {
   "env": {
     "ENABLE_TOOL_SEARCH": "true",
-    "CLAUDE_CODE_EFFORT_LEVEL": "max"
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5[1m]"
   },
   "permissions": {
     "allow": [
