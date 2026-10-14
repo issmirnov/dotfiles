@@ -52,52 +52,44 @@
         ]
       },
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "SessionStart": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "UserPromptSubmit": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "PreToolUse": [
       {
-        "hooks": [
-        ],
-        "matcher": "*"
+        "matcher": "*",
+        "hooks": []
       }
     ],
     "PostToolUse": [
       {
-        "hooks": [
-        ],
-        "matcher": "*"
+        "matcher": "*",
+        "hooks": []
       }
     ],
     "SubagentStop": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "PreCompact": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ],
     "SessionEnd": [
       {
-        "hooks": [
-        ]
+        "hooks": []
       }
     ]
   },
@@ -176,6 +168,5 @@
   "verbose": true,
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true,
-  "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
 }
