@@ -77,7 +77,7 @@ State lives in `~/.local/state/sesh/`:
 | `sesh/sesh-restore` | Rebuilds the snapshot at login as Ghostty windows; skips live ones; caps the count. |
 | `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 56 tests (cache, multi-host, self-detection); injects `ssh` so no network is touched. |
+| `sesh/tests/sesh.test.sh` | 66 tests (cache, multi-host, self-detection, single-host fallback); injects `ssh` so no network is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
