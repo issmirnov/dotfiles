@@ -1,8 +1,9 @@
 #!/bin/bash
 # sesh-restore — rebuild the last snapshot (~/.local/state/sesh/snapshot.json) as
 # Ghostty windows: local Claude sessions resumed in their dirs (`claude --resume`),
-# open remote sessions reattached over mosh on the host each one belongs to (old
-# bare-session snapshots mean hexane). Skips anything already live, caps the count,
+# open remote sessions reattached over mosh on the host each one belongs to (host-less
+# legacy entries use the configured SESH_HOST, default hexane). Skips anything already
+# live, caps the count,
 # and (for remote) skips hosts that are unreachable.
 #
 #   Runs at login via a LaunchAgent; by hand via `revive`. Preview: SESH_DRYRUN=1 revive
@@ -60,7 +61,9 @@ while IFS=$'\t' read -r id cwd; do
   n=$((n + 1))
 done < <(jq -rc '.local[]? | [.id, (.cwd // "")] | @tsv' "$SNAP" 2>/dev/null)
 
-# ---- remote (host-aware; old bare-session snapshots default host=hexane) ----
+# ---- remote (host-aware; host-less legacy entries default to the configured
+# single host SESH_HOST/HX_HOST, else hexane) ----
+HOSTDEF="${SESH_HOST:-${HX_HOST:-hexane}}"
 while IFS=$'\t' read -r host sess; do
   [ -n "$sess" ] || continue
   [ "$n" -ge "$CAP" ] && { log "cap $CAP reached; stopping"; break; }
@@ -69,5 +72,5 @@ while IFS=$'\t' read -r host sess; do
   log "open remote $host:$sess"
   openwin "$SESH_REMOTE" "$host" "$sess"
   n=$((n + 1))
-done < <(jq -rc '.remote[]? | [(.host // "hexane"), .session] | @tsv' "$SNAP" 2>/dev/null)
+done < <(jq -rc --arg hd "$HOSTDEF" '.remote[]? | [(.host // $hd), .session] | @tsv' "$SNAP" 2>/dev/null)
 log "done: opened $n window(s)"

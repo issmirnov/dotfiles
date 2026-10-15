@@ -111,7 +111,7 @@ Everything machine-specific is small and in known places. The checklist:
    ```
    Then `mkdir -p ~/.ssh/sockets && chmod 700 ~/.ssh/sockets`.
 
-2. **The box name in the scripts**: the scripts read `SESH_HOST` (default `hexane`). Either name your ssh alias `hexane`, or export `SESH_HOST=mybox` in your shell, or edit the default in `sesh/sesh`, `sesh/sesh-restore`, `sesh/sesh-remote`.
+2. **The box name(s) in the scripts**: for a single remote box the scripts read `SESH_HOST` (default `hexane`) — name your ssh alias `hexane`, or export `SESH_HOST=mybox` in your shell, or edit the default in `sesh/sesh`, `sesh/sesh-restore`, `sesh/sesh-remote`. For **several** boxes, set `SESH_HOSTS="box1 box2 box3"` (or list them one per line in `~/.config/sesh/hosts`) and the picker queries every one; `SESH_HOST` is the single-box fallback when neither is set.
 
 3. **The local launcher** (`sesh/sesh-local`): if you do not use a key-routing wrapper, delete the `ccf` branch and run Claude directly:
 
@@ -214,7 +214,8 @@ SESH_DRYRUN=1 sesh myproj   # prints the action instead of taking it
 | | `SESH_NEG_TTL` | Negative-cache TTL in seconds (default 30) |
 | | `SESH_LIST` | Newest-N local transcripts to consider (default 25) |
 | | `SESH_CAP` | Max windows `sesh-restore` opens (default 12) |
-| | `SESH_HOST` | Remote box ssh alias (default `hexane`) |
+| | `SESH_HOSTS` | Space-separated boxes the picker queries (else `~/.config/sesh/hosts`, else `SESH_HOST`) |
+| | `SESH_HOST` | Single remote box: picker fallback & `sesh-remote` default (default `hexane`) |
 | | `SESH_SSH` | ssh binary, a test seam |
 
 ## Known limitations

@@ -71,6 +71,17 @@ t_hosts_default(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
   assert_has "default includes hexane" "hexane" "$out"
   assert_has "default includes dev-1"  "dev-1" "$out"
 }
+t_hosts_single_fallback(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS SESH_HOST HX_HOST 2>/dev/null
+  # a one-box user who set SESH_HOST (per the README) must see THAT box in the picker,
+  # not the built-in example list.
+  out="$(SESH_HOST=mybox run_fn _hosts)"
+  assert_has   "SESH_HOST used as single-host picker fallback"  "mybox" "$out"
+  assert_hasnt "single-host fallback replaces example defaults" "dev-1" "$out"
+}
+t_hosts_single_legacy(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS SESH_HOST HX_HOST 2>/dev/null
+  out="$(HX_HOST=legacybox run_fn _hosts)"
+  assert_has "legacy HX_HOST honored as single-host fallback" "legacybox" "$out"
+}
 
 echo "# _self detection"
 t_self_env(){ newtmp; export HOME="$TMP"
@@ -240,15 +251,29 @@ t_save_host_namespaced(){ newtmp; export HOME="$TMP"
   assert_has    "save emits session"         '"session": "foo"' "$out"
   assert_nofile "legacy flat marker pruned"  "$TMP/.local/state/sesh/remote/legacyflat"
 }
+t_save_migrates_live_flat(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/.claude/sessions" "$TMP/.local/state/sesh/remote"
+  echo $$ > "$TMP/.local/state/sesh/remote/liveflat"      # LIVE legacy flat marker (old hx-connect, mid-upgrade)
+  : > "$TMP/.local/state/sesh/remote/deadflat"            # dead legacy flat marker
+  SESH_HOST=mybox SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  out="$(cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  assert_has    "live flat marker survives into snapshot" '"session": "liveflat"' "$out"
+  assert_has    "migrated under configured SESH_HOST"     '"host": "mybox"'        "$out"
+  assert_file   "live flat migrated to host dir"          "$TMP/.local/state/sesh/remote/mybox/liveflat"
+  assert_nofile "dead flat marker pruned"                 "$TMP/.local/state/sesh/remote/deadflat"
+  assert_nofile "original flat marker moved away"         "$TMP/.local/state/sesh/remote/liveflat"
+}
 
 echo "# sesh-restore host-aware"
 # Contract: the jq read defaults a missing host to hexane.
 t_restore_jq_contract(){
-  local EXPR='.remote[]? | [(.host // "hexane"), .session] | @tsv'
-  out="$(printf '%s' '{"remote":[{"host":"dev-1","session":"api"}]}' | jq -rc "$EXPR")"
-  assert_has "new format keeps host"         "$(printf 'dev-1\tapi')"    "$out"
-  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc "$EXPR")"
-  assert_has "old format defaults to hexane"  "$(printf 'hexane\tlegacy')" "$out"
+  local EXPR='.remote[]? | [(.host // $hd), .session] | @tsv'
+  out="$(printf '%s' '{"remote":[{"host":"dev-1","session":"api"}]}' | jq -rc --arg hd hexane "$EXPR")"
+  assert_has "new format keeps host"                  "$(printf 'dev-1\tapi')"     "$out"
+  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc --arg hd hexane "$EXPR")"
+  assert_has "old format defaults to configured host" "$(printf 'hexane\tlegacy')" "$out"
+  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc --arg hd mybox "$EXPR")"
+  assert_has "old format honors configured host"      "$(printf 'mybox\tlegacy')"  "$out"
 }
 # Integration: dry-run restore must call sesh-remote with host THEN session.
 t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
@@ -256,6 +281,12 @@ t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
   out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
   assert_has "restore opens new-format host:session" "sesh-remote dev-1 api" "$out"
   assert_has "restore defaults old-format to hexane"  "sesh-remote hexane legacy" "$out"
+}
+t_restore_legacy_uses_sesh_host(){ newtmp; export HOME="$TMP"
+  # host-less snapshot + configured single host must restore to THAT box, not literal hexane.
+  printf '{"saved_at":"t","local":[],"remote":[{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
+  out="$(SESH_HOST=mybox SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has "legacy restore targets configured SESH_HOST" "sesh-remote mybox legacy" "$out"
 }
 
 echo "# _open_self (local tmux attach)"
@@ -304,7 +335,7 @@ t_mtime_real(){ newtmp; export HOME="$TMP"
   if [ "${out:-0}" -gt 0 ] 2>/dev/null; then ok "mtime returns an epoch on the real OS"; else no "mtime should be an epoch (got '$out')"; fi
 }
 
-for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
+for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy \
          t_self_env t_self_hostname_match t_self_near_miss \
          t_cache_hit t_cache_miss_mtime \
          t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
@@ -312,8 +343,8 @@ for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default \
          t_multihost_emit t_multihost_fallback t_self_vs_remote \
          t_open_self_plain t_open_self_in_tmux t_open_self_in_tmux_real t_open_self_newwin \
          t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
-         t_hxconnect_host_marker t_save_host_namespaced \
-         t_restore_jq_contract t_restore_opens_per_host; do
+         t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat \
+         t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done

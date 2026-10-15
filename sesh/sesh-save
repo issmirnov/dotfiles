@@ -35,8 +35,21 @@ local_json=$(
 [ -n "$local_json" ] || local_json='[]'
 
 # Remote: markers are host-namespaced (remote/<host>/<session>). Prune dead PIDs,
-# drop any legacy flat markers (remote/<session>), then collect survivors.
-for flat in "$MARKS"/*; do [ -f "$flat" ] && rm -f "$flat"; done   # legacy flat markers
+# then collect survivors. Legacy flat markers (remote/<session>, from the old
+# single-host hx-connect) are migrated into the host tree under the configured legacy
+# host when their PID is still live — so a session opened before an in-place upgrade
+# still gets snapshotted — and dropped when dead or already claimed host-namespaced.
+HOSTDEF="${SESH_HOST:-${HX_HOST:-hexane}}"
+for flat in "$MARKS"/*; do
+  [ -f "$flat" ] || continue
+  fpid=$(cat "$flat" 2>/dev/null)
+  dest="$MARKS/$HOSTDEF/$(basename "$flat")"
+  if [ -n "$fpid" ] && kill -0 "$fpid" 2>/dev/null && [ ! -e "$dest" ]; then
+    mkdir -p "$MARKS/$HOSTDEF"; mv "$flat" "$dest"
+  else
+    rm -f "$flat"
+  fi
+done
 for hd in "$MARKS"/*/; do
   [ -d "$hd" ] || continue
   for m in "$hd"*; do
