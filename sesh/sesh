@@ -1,0 +1,216 @@
+#!/bin/bash
+# sesh [-r] [-n] [query] — open a session on demand, in the CURRENT window.
+#   no query : fzf-pick from ALL sessions (local Claude + remote tmux on every host)
+#   query    : open the first match (exact session/id, else substring on the label)
+#   local  → claude --resume in its dir        remote → mosh + tmux attach
+#
+# Opens in place (exec) by default; -n / SESH_NEWWIN=1 forces a new terminal window
+# (the behaviour sesh-restore still uses). Titling is independent of this — the OSC
+# title is emitted by sesh-local/sesh-remote into whatever terminal runs them.
+#
+# Candidate derivation is cached so each run avoids a full re-scan:
+#   • local labels  → ~/.local/state/sesh/labels.tsv, keyed by (path, mtime):
+#                     an unchanged transcript is never re-parsed by jq.
+#   • remote lists  → ~/.local/state/sesh/remote.<host>.list, one per host from
+#                     _hosts, each with a short TTL; when a box is slow/down its
+#                     last-known list is served instantly (never blocks), and a
+#                     failed connect is remembered briefly.
+#
+# Flags / env:
+#   -r | SESH_REFRESH=1    force a live remote refresh (ignore the TTL)
+#   -n | SESH_NEWWIN=1     open a new terminal window instead of the current one
+#        SESH_DRYRUN=1     print the action instead of taking it
+#        SESH_REMOTE_TTL   remote-cache TTL, seconds (default 60)
+#        SESH_NEG_TTL      negative-cache TTL after a failed connect (default 30)
+#        SESH_LIST         newest-N local transcripts to consider (default 25)
+#        SESH_HOSTS        remote boxes to query (default: ~/.config/sesh/hosts, else built-in)
+#        SESH_SSH          ssh binary to use (default ssh; a test/CI seam)
+#        SESH_TMUX         local tmux binary (default tmux; a test seam)
+#        SESH_TERMINAL     Linux terminal binary for a new window (default alacritty)
+#        SESH_TERMINAL_APP macOS .app bundle for a new window (default Ghostty)
+set -u
+export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+SESH_LOCAL="$HOME/.dotfiles/sesh/sesh-local"
+SESH_REMOTE="$HOME/.dotfiles/sesh/sesh-remote"
+PROJECTS="$HOME/.claude/projects"
+STATE="$HOME/.local/state/sesh"
+N="${SESH_LIST:-25}"
+
+# OS-family primitives. SESH_UNAME overrides $(uname) so the suite drives both branches.
+case "${SESH_UNAME:-$(uname)}" in
+  Darwin)
+    _mtime(){ stat -f %m "$1" 2>/dev/null; }
+    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[darwin]: open -na %s --args -e %s\n' "${SESH_TERMINAL_APP:-/Applications/Ghostty.app}" "$*"; return; fi
+                     open -na "${SESH_TERMINAL_APP:-/Applications/Ghostty.app}" --args -e "$@"; } ;;
+  Linux)
+    _mtime(){ stat -c %Y "$1" 2>/dev/null; }
+    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[linux]: setsid -f %s -e %s\n' "${SESH_TERMINAL:-alacritty}" "$*"; return; fi
+                     mkdir -p "$STATE" 2>/dev/null; setsid -f "${SESH_TERMINAL:-alacritty}" -e "$@" 2>>"$STATE/spawn.err"; } ;;
+  *)
+    _mtime(){ stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null; }
+    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[other]: %s -e %s\n' "${SESH_TERMINAL:-xterm}" "$*"; return; fi
+                     "${SESH_TERMINAL:-xterm}" -e "$@" & } ;;
+esac
+_age(){ local m; m="$(_mtime "$1")"; if [ -z "$m" ]; then echo 999999999; else echo $(( $(date +%s) - m )); fi; }
+
+# name_of <jsonl> [id] : latest ai-title -> first user msg (<=48 chars) -> short id.
+# grep-prefilters so a huge active transcript isn't fully parsed by jq.
+name_of(){
+  local t id="${2:-}"
+  t="$(grep -a 'ai-title' "$1" 2>/dev/null | tail -1 | jq -rc 'select(.type=="ai-title")|.aiTitle' 2>/dev/null)"
+  if [ -z "$t" ]; then
+    t="$(grep -a -m1 '"type":"user"' "$1" 2>/dev/null | jq -rc 'select(.type=="user")|.message.content|if type=="array" then (map(select(.type=="text").text)|join(" ")) else tostring end' 2>/dev/null | head -1 | cut -c1-48)"
+  fi
+  t="$(printf '%s' "$t" | tr '\n\t' '  ' | sed 's/^ *//;s/ *$//')"
+  printf '%s' "${t:-${id:0:8}}"
+}
+
+_cwd_of(){ grep -a -m1 '"cwd"' "$1" 2>/dev/null | jq -rc 'select(.cwd!=null)|.cwd' 2>/dev/null | head -1; }
+
+# _hosts : boxes the picker queries. SESH_HOSTS env > ~/.config/sesh/hosts > default.
+_hosts(){
+  if [ -n "${SESH_HOSTS:-}" ]; then printf '%s\n' $SESH_HOSTS; return; fi
+  local f="$HOME/.config/sesh/hosts"
+  if [ -f "$f" ]; then sed -e 's/#.*//' "$f" | tr ' \t' '\n\n' | sed '/^$/d'; return; fi
+  printf '%s\n' hexane dev-1 dev-2 dev-3
+}
+
+# _self : the host-list entry that is THIS box (SESH_SELF, else hostname -s if listed).
+# grep -Fqx = exact, fixed-string match, so dev-1 never matches a list with dev-10.
+_self(){
+  if [ -n "${SESH_SELF:-}" ]; then printf '%s' "$SESH_SELF"; return; fi
+  local h; h="${SESH_HOSTNAME:-$(hostname -s 2>/dev/null)}"
+  [ -n "$h" ] && _hosts | grep -Fqx "$h" && printf '%s' "$h"
+}
+
+# _refresh_remote <host> : refresh ~/.local/state/sesh/remote.<host>.list per the
+# TTL / negative-cache rules. Writes only, emits nothing; safe to run in parallel
+# (each host owns its own files).
+_refresh_remote(){
+  local host="$1" TTL="${SESH_REMOTE_TTL:-60}" NEGTTL="${SESH_NEG_TTL:-30}" attempt raw
+  local RCACHE="$STATE/remote.$host.list" RFAIL="$STATE/remote.$host.fail"
+  mkdir -p "$STATE" 2>/dev/null
+  if   [ -n "${SESH_REFRESH:-}" ];                               then attempt=1
+  elif [ -f "$RCACHE" ] && [ "$(_age "$RCACHE")" -lt "$TTL" ];   then attempt=0
+  elif [ -f "$RFAIL"  ] && [ "$(_age "$RFAIL")"  -lt "$NEGTTL" ]; then attempt=0
+  else                                                               attempt=1
+  fi
+  [ "$attempt" = 1 ] || return 0
+  raw="$("${SESH_SSH:-ssh}" -o ConnectTimeout=5 -o BatchMode=yes "$host" \
+        'tmux ls -F "#{session_name}" 2>/dev/null; echo __SESH_OK__' 2>/dev/null)"
+  if printf '%s\n' "$raw" | grep -q '__SESH_OK__'; then
+    printf '%s\n' "$raw" | grep -v '__SESH_OK__' | sed '/^[[:space:]]*$/d' > "$RCACHE.tmp" 2>/dev/null \
+      && mv "$RCACHE.tmp" "$RCACHE" 2>/dev/null
+    rm -f "$RFAIL" 2>/dev/null
+  else
+    touch "$RFAIL" 2>/dev/null
+  fi
+}
+
+# rows: type \t key \t (jsonl path for local | host for remote) \t label  (caches maintained as a side effect)
+candidates(){
+  local LABELS="$STATE/labels.tsv"
+  mkdir -p "$STATE" 2>/dev/null
+  # ---- local: (path,mtime)-keyed label cache ----
+  local rows="" f id mt hit cwd name proj
+  : > "$LABELS.tmp" 2>/dev/null
+  while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    id="$(basename "$f" .jsonl)"
+    mt="$(_mtime "$f")"
+    hit="$(awk -F'\t' -v p="$f" -v m="$mt" '$1==p && $2==m{print; exit}' "$LABELS" 2>/dev/null)"
+    if [ -n "$hit" ]; then
+      cwd="$(printf '%s' "$hit" | cut -f3)"
+      name="$(printf '%s' "$hit" | cut -f4)"
+    else
+      cwd="$(_cwd_of "$f")"
+      name="$(name_of "$f" "$id")"
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$f" "$mt" "$cwd" "$name" >> "$LABELS.tmp" 2>/dev/null
+    proj="${cwd##*/}"; [ -n "$cwd" ] || proj="?"
+    rows="$rows$(printf 'local\t%s\t%s\t[local] %s — %s' "$id" "$f" "$name" "${proj:-?}")"$'\n'
+  done < <(ls -t "$PROJECTS"/*/*.jsonl 2>/dev/null | head -"$N")
+  mv "$LABELS.tmp" "$LABELS" 2>/dev/null     # atomic; written before we emit (SIGPIPE-safe)
+  printf '%s' "$rows"
+
+  # ---- remote: self via local `tmux ls`; other hosts over ssh (per-host cache) ----
+  local hosts h rc s self
+  self="$(_self)"
+  hosts="$(_hosts)"
+  for h in $hosts; do [ "$h" = "$self" ] && continue; _refresh_remote "$h" & done
+  wait
+  for h in $hosts; do
+    if [ "$h" = "$self" ]; then
+      "${SESH_TMUX:-tmux}" ls -F '#{session_name}' 2>/dev/null | while IFS= read -r s; do
+        [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
+      done
+    else
+      rc="$STATE/remote.$h.list"; [ -f "$rc" ] || continue
+      while IFS= read -r s; do
+        [ -n "$s" ] && printf 'remote\t%s\t%s\t[%s] %s\n' "$s" "$h" "$h" "$s"
+      done < "$rc"
+    fi
+  done
+}
+
+# do_open <cmd> <args...> : same-window (exec) by default; new window with SESH_NEWWIN.
+# New-window delegates to _spawn_window, which owns its own dry-run preview.
+do_open(){
+  if [ -n "${SESH_NEWWIN:-}" ]; then
+    _spawn_window "$@"
+  elif [ -n "${SESH_DRYRUN:-}" ]; then
+    printf 'would open here: %s\n' "$*"
+  else
+    exec "$@"
+  fi
+}
+
+# _open_self <session> : attach a LOCAL tmux session. $TMUX-guarded so a pick from
+# inside tmux switches the client instead of exec'ing (which would kill the pane).
+_open_self(){
+  local s="$1" tm="${SESH_TMUX:-tmux}"
+  if [ -z "${SESH_NEWWIN:-}" ] && [ -n "${TMUX:-}" ]; then
+    [ -n "${SESH_DRYRUN:-}" ] && { printf 'would switch-client: %s\n' "$s"; return 0; }
+    # ensure the session exists (detached), then switch — never `new-session -A`,
+    # which becomes attach and refuses to nest inside an existing tmux client.
+    "$tm" has-session -t "=$s" 2>/dev/null || "$tm" new-session -d -s "$s"
+    "$tm" switch-client -t "=$s"
+  else
+    do_open "$tm" new-session -A -s "$s"
+  fi
+}
+
+main(){
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -r|--refresh)     SESH_REFRESH=1; shift ;;
+      -n|--new-window)  SESH_NEWWIN=1;  shift ;;
+      -h|--help)        printf 'usage: sesh [-r|--refresh] [-n|--new-window] [query]\n'; return 0 ;;
+      --)               shift; break ;;
+      -*)               printf 'sesh: unknown flag %s\n' "$1" >&2; return 2 ;;
+      *)                break ;;
+    esac
+  done
+  local query="${1:-}" sel typ key f cwd
+  if [ -n "$query" ]; then
+    sel="$(candidates | awk -F'\t' -v q="$query" '$2==q || index(tolower($4),tolower(q)){print; exit}')"
+    [ -n "$sel" ] || { printf "sesh: no session matching '%s'\n" "$query" >&2; return 1; }
+  else
+    sel="$(candidates | fzf --with-nth=4.. --delimiter='\t' --prompt='sesh> ' --height=70% --reverse)" || return 0
+    [ -n "$sel" ] || { echo "nothing selected"; return 0; }
+  fi
+  typ="$(printf '%s' "$sel" | cut -f1)"
+  key="$(printf '%s' "$sel" | cut -f2)"
+  f="$(printf '%s' "$sel" | cut -f3)"
+  case "$typ" in
+    local)  cwd="$(_cwd_of "$f")"; do_open "$SESH_LOCAL" "${cwd:-$HOME}" "$(name_of "$f" "$key")" --resume "$key" ;;
+    remote) if [ "$f" = "$(_self)" ]; then _open_self "$key"; else do_open "$SESH_REMOTE" "$f" "$key"; fi ;;
+    *) printf 'sesh: unknown selection\n' >&2; return 1 ;;
+  esac
+}
+
+if [ "${BASH_SOURCE[0]:-}" = "${0:-}" ]; then
+  command -v jq  >/dev/null 2>&1 || { echo "sesh: needs jq"  >&2; exit 1; }
+  command -v fzf >/dev/null 2>&1 || { echo "sesh: needs fzf" >&2; exit 1; }
+  main "$@"
+fi

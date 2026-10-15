@@ -22,3 +22,8 @@ benchmarks/comparison/
 
 # claude
 .claude/worktrees/*
+
+# dotbot-generated symlinks for the self-contained sesh/ (default.conf.yaml links these per-machine)
+bin/sesh
+bin/sesh-save
+bin/sesh-restore

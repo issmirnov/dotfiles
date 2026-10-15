@@ -7,7 +7,7 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/vania/.dotfiles/bin/sesh-restore</string>
+    <string>/Users/vania/.dotfiles/sesh/sesh-restore</string>
   </array>
 
   <!-- Rebuild the last snapshot at login (reboot / shutdown / crash recovery).
