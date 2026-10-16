@@ -1,0 +1,354 @@
+#!/bin/bash
+# Tests for `sesh` cache + same-window logic. Sources sesh as a library and
+# calls its functions against a throwaway $HOME, injecting the ssh call via
+# $SESH_SSH so no network is touched.
+#
+#   bash ~/.dotfiles/sesh/tests/sesh.test.sh
+#
+# Sesh must be sourceable without running main (BASH_SOURCE guard), and must
+# expose: name_of, _cwd_of, candidates, do_open.
+SESH="${SESH_BIN:-$HOME/.dotfiles/sesh/sesh}"
+# resolve the sibling scripts from SESH's own dir, so a worktree run (SESH_BIN=...)
+# tests that tree's sesh-remote/sesh-save/sesh-restore, not the live ~/.dotfiles ones.
+_BIN="$(cd "$(dirname "$SESH")" 2>/dev/null && pwd)"
+HXCONNECT="$_BIN/sesh-remote"
+SESHSAVE="$_BIN/sesh-save"
+SESHRESTORE="$_BIN/sesh-restore"
+P=0; F=0
+ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
+no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
+has(){ case "$2" in *"$1"*) return 0;; *) return 1;; esac; }   # has <needle> <haystack>
+assert_has(){ if has "$2" "$3"; then ok "$1"; else no "$1 (missing: $2)"; fi; }
+assert_hasnt(){ if has "$2" "$3"; then no "$1 (unexpected: $2)"; else ok "$1"; fi; }
+assert_file(){ if [ -e "$2" ]; then ok "$1"; else no "$1 (no file: $2)"; fi; }
+assert_nofile(){ if [ -e "$2" ]; then no "$1 (file present: $2)"; else ok "$1"; fi; }
+
+# pin a non-host SESH_HOSTNAME so the suite is independent of the machine it runs on
+# (else a box named like a test host — e.g. hexane — would be treated as self); self
+# tests set SESH_HOSTNAME explicitly after newtmp to override this.
+newtmp(){ TMP="$(mktemp -d)"; mkdir -p "$TMP/.claude/projects" "$TMP/.local/state/sesh" "$TMP/fake"; export SESH_HOSTNAME=__testhost__; }
+
+# mkproj <proj> <id> <ai:yes|no> <title> <usercontent>  -> prints jsonl path
+mkproj(){ local d="$TMP/.claude/projects/$1"; mkdir -p "$d"; local f="$d/$2.jsonl"; : >"$f"
+  printf '{"type":"user","cwd":"/Users/vania/Projects/%s","message":{"role":"user","content":"%s"}}\n' "$1" "$5" >>"$f"
+  [ "$3" = yes ] && printf '{"type":"ai-title","aiTitle":"%s"}\n' "$4" >>"$f"
+  printf '%s' "$f"; }
+
+# run_fn <fn> <args...> : source sesh in a clean subshell and call a function.
+# Relies on exported HOME + SESH_* env already set by the caller.
+run_fn(){ ( set +u; source "$SESH" >/dev/null 2>&1; "$@" ) </dev/null; }
+
+# ---------------------------------------------------------------------------
+echo "# name_of"
+t_aititle(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello there friend")"
+  out="$(run_fn name_of "$f" idAAAAAAAAAA)"
+  assert_has "ai-title wins" "Real Title A" "$out"
+}
+t_userfallback(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projB idBBBBBBBBBB no "" "first user message wins when no ai title exists here")"
+  out="$(run_fn name_of "$f" idBBBBBBBBBB)"
+  assert_has "falls back to user msg" "first user message" "$out"
+}
+
+echo "# _hosts (env > file > default)"
+t_hosts_env(){ newtmp; export HOME="$TMP"
+  export SESH_HOSTS="h1 h2 h3"
+  out="$(run_fn _hosts)"
+  assert_has "env host h1 listed" "h1" "$out"
+  assert_has "env host h3 listed" "h3" "$out"
+  unset SESH_HOSTS
+}
+t_hosts_file(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
+  mkdir -p "$TMP/.config/sesh"; printf 'boxA\n# a comment\n\nboxB\n' > "$TMP/.config/sesh/hosts"
+  out="$(run_fn _hosts)"
+  assert_has   "file host boxA listed" "boxA" "$out"
+  assert_has   "file host boxB listed" "boxB" "$out"
+  assert_hasnt "file comment ignored"  "comment" "$out"
+}
+t_hosts_default(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS 2>/dev/null
+  out="$(run_fn _hosts)"
+  assert_has "default includes hexane" "hexane" "$out"
+  assert_has "default includes dev-1"  "dev-1" "$out"
+}
+t_hosts_single_fallback(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS SESH_HOST HX_HOST 2>/dev/null
+  # a one-box user who set SESH_HOST (per the README) must see THAT box in the picker,
+  # not the built-in example list.
+  out="$(SESH_HOST=mybox run_fn _hosts)"
+  assert_has   "SESH_HOST used as single-host picker fallback"  "mybox" "$out"
+  assert_hasnt "single-host fallback replaces example defaults" "dev-1" "$out"
+}
+t_hosts_single_legacy(){ newtmp; export HOME="$TMP"; unset SESH_HOSTS SESH_HOST HX_HOST 2>/dev/null
+  out="$(HX_HOST=legacybox run_fn _hosts)"
+  assert_has "legacy HX_HOST honored as single-host fallback" "legacybox" "$out"
+}
+
+echo "# _self detection"
+t_self_env(){ newtmp; export HOME="$TMP"
+  out="$(SESH_SELF=whatever run_fn _self)"
+  assert_has "SESH_SELF forces self" "whatever" "$out"
+}
+t_self_hostname_match(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  out="$(SESH_HOSTNAME=dev-1 SESH_HOSTS='dev-1 dev-2' run_fn _self)"
+  assert_has "hostname in list resolves to self" "dev-1" "$out"
+}
+t_self_near_miss(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  # hostname dev-1 vs a list containing dev-10: a missing -x would substring-match dev-10.
+  out="$(SESH_HOSTNAME=dev-1 SESH_HOSTS='dev-10 dev-2' run_fn _self)"
+  if [ -z "$out" ]; then ok "near-miss: dev-1 does not match dev-10 (exact -x)"; else no "near-miss should be empty (got '$out')"; fi
+}
+
+echo "# local label cache (mtime-keyed)"
+t_cache_hit(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
+  mt="$(run_fn _mtime "$f")"
+  printf '%s\t%s\t%s\t%s\n' "$f" "$mt" "/tmp/seedcwd" "SENTINEL_CACHED" > "$TMP/.local/state/sesh/labels.tsv"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"   # hermetic: no real network
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane
+  out="$(run_fn candidates)"
+  assert_has   "cache hit reuses cached label" "SENTINEL_CACHED" "$out"
+  assert_hasnt "cache hit skips recompute"     "Real Title A"    "$out"
+  unset SESH_SSH SESH_HOSTS
+}
+t_cache_miss_mtime(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projA idAAAAAAAAAA yes "Real Title A" "hello")"
+  # seed with a STALE mtime so it no longer matches the file -> recompute
+  printf '%s\t%s\t%s\t%s\n' "$f" "100000000" "/tmp/seedcwd" "SENTINEL_CACHED" > "$TMP/.local/state/sesh/labels.tsv"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"   # hermetic: no real network
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane
+  out="$(run_fn candidates)"
+  assert_has   "mtime change recomputes label" "Real Title A"    "$out"
+  assert_hasnt "stale cache entry discarded"    "SENTINEL_CACHED" "$out"
+  unset SESH_SSH SESH_HOSTS
+}
+
+echo "# remote TTL cache + offline fallback (single host via SESH_HOSTS=hexane)"
+t_remote_fresh_skips_ssh(){ newtmp; export HOME="$TMP"
+  echo cachedsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch "$TMP/.local/state/sesh/remote.hexane.list"
+  printf '#!/bin/bash\ntouch "%s/fake/ssh.called"\nexit 1\n' "$TMP" > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=600
+  out="$(run_fn candidates)"
+  assert_has    "fresh cache served"        "[hexane] cachedsess" "$out"
+  assert_nofile "fresh cache does not ssh"  "$TMP/fake/ssh.called"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
+}
+t_remote_stale_fail_fallback(){ newtmp; export HOME="$TMP"
+  echo ghostsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
+  printf '#!/bin/bash\nexit 255\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60
+  out="$(run_fn candidates)"
+  assert_has  "stale cache served on ssh failure" "[hexane] ghostsess" "$out"
+  assert_file "failure records negative-cache marker" "$TMP/.local/state/sesh/remote.hexane.fail"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
+}
+t_remote_success_refresh(){ newtmp; export HOME="$TMP"
+  echo oldsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
+  : > "$TMP/.local/state/sesh/remote.hexane.fail"
+  printf '#!/bin/bash\nprintf "newA\\nnewB\\n"; echo __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60 SESH_REFRESH=1
+  out="$(run_fn candidates)"
+  assert_has    "refresh shows new sessions"    "[hexane] newA" "$out"
+  assert_has    "refresh shows all new"         "[hexane] newB" "$out"
+  assert_hasnt  "refresh drops stale session"   "oldsess"       "$out"
+  assert_nofile "success clears negative-cache" "$TMP/.local/state/sesh/remote.hexane.fail"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL SESH_REFRESH
+}
+t_remote_success_empty(){ newtmp; export HOME="$TMP"
+  echo oldsess > "$TMP/.local/state/sesh/remote.hexane.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.hexane.list"
+  printf '#!/bin/bash\necho __SESH_OK__\n' > "$TMP/fake/ssh"; chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS=hexane SESH_REMOTE_TTL=60
+  out="$(run_fn candidates)"
+  assert_hasnt "connected+empty clears stale sessions" "oldsess" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
+}
+
+echo "# remote multi-host"
+# fake ssh: sesh calls `ssh -o ConnectTimeout=5 -o BatchMode=yes <host> <cmd>`,
+# so the host is positional arg 5. Branch on it to serve per-host sessions.
+t_multihost_emit(){ newtmp; export HOME="$TMP"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in
+  alpha) printf 'a1\na2\n';;
+  beta)  printf 'b1\n';;
+esac
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="alpha beta" SESH_REFRESH=1
+  out="$(run_fn candidates)"
+  assert_has "alpha a1 listed"      "[alpha] a1" "$out"
+  assert_has "alpha a2 listed"      "[alpha] a2" "$out"
+  assert_has "beta b1 listed"       "[beta] b1"  "$out"
+  assert_has "row carries host f3"  "$(printf 'remote\ta1\talpha\t[alpha] a1')" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REFRESH
+}
+t_multihost_fallback(){ newtmp; export HOME="$TMP"
+  echo oldA > "$TMP/.local/state/sesh/remote.alpha.list"; touch -t 200001010000 "$TMP/.local/state/sesh/remote.alpha.list"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in
+  alpha) exit 255;;
+  beta)  printf 'b1\n'; echo __SESH_OK__;;
+esac
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="alpha beta" SESH_REMOTE_TTL=60
+  out="$(run_fn candidates)"
+  assert_has  "alpha stale list served on failure" "[alpha] oldA" "$out"
+  assert_file "alpha failure records neg-cache"    "$TMP/.local/state/sesh/remote.alpha.fail"
+  assert_has  "beta refreshed live"                "[beta] b1" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REMOTE_TTL
+}
+t_self_vs_remote(){ newtmp; export HOME="$TMP"; unset SESH_SELF 2>/dev/null
+  printf '#!/bin/bash\n[ "$1" = ls ] && printf "selfA\\nselfB\\n"\n' > "$TMP/fake/tmux"; chmod +x "$TMP/fake/tmux"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+case "$5" in beta) printf 'b1\n';; esac
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  echo staleSelf > "$TMP/.local/state/sesh/remote.alpha.list"   # stale self cache must NOT surface
+  export SESH_HOSTNAME=alpha SESH_HOSTS="alpha beta" SESH_TMUX="$TMP/fake/tmux" SESH_SSH="$TMP/fake/ssh" SESH_REFRESH=1
+  out="$(run_fn candidates)"
+  assert_has   "self tmux listed locally"     "[alpha] selfA" "$out"
+  assert_has   "remote beta listed over ssh"  "[beta] b1"     "$out"
+  assert_hasnt "stale self cache not emitted" "staleSelf"     "$out"
+  unset SESH_HOSTNAME SESH_HOSTS SESH_TMUX SESH_SSH SESH_REFRESH
+}
+t_open_remote_passes_host(){ newtmp; export HOME="$TMP"
+  cat > "$TMP/fake/ssh" <<'EOF'
+#!/bin/bash
+[ "$5" = beta ] && printf 'b1\n'
+echo __SESH_OK__
+EOF
+  chmod +x "$TMP/fake/ssh"
+  export SESH_SSH="$TMP/fake/ssh" SESH_HOSTS="beta" SESH_REFRESH=1 SESH_DRYRUN=1
+  out="$(run_fn main b1)"
+  assert_has "remote open passes host then session" "sesh-remote beta b1" "$out"
+  unset SESH_SSH SESH_HOSTS SESH_REFRESH SESH_DRYRUN
+}
+
+echo "# sesh-remote host-aware"
+t_hxconnect_host_marker(){ newtmp; export HOME="$TMP"
+  # fake mosh records its argv AND whether the host-namespaced marker exists at call time
+  printf '#!/bin/bash\n[ -e "%s/.local/state/sesh/remote/dev-2/web" ] && echo OK > "%s/fake/mark"\necho "$@" > "%s/fake/argv"\n' "$TMP" "$TMP" "$TMP" > "$TMP/fake/mosh"
+  chmod +x "$TMP/fake/mosh"
+  SESH_MOSH="$TMP/fake/mosh" bash "$HXCONNECT" dev-2 web
+  argv="$(cat "$TMP/fake/argv" 2>/dev/null)"
+  assert_has  "mosh targets host + attach-or-create" "dev-2 -- tmux new-session -A -s web" "$argv"
+  assert_file "host-namespaced marker existed during run" "$TMP/fake/mark"
+}
+
+echo "# sesh-save host-namespaced"
+t_save_host_namespaced(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/.claude/sessions" "$TMP/.local/state/sesh/remote/dev-1"
+  echo $$ > "$TMP/.local/state/sesh/remote/dev-1/foo"     # $$ is this test runner's live PID
+  : > "$TMP/.local/state/sesh/remote/legacyflat"          # a stale legacy flat marker
+  SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  out="$(cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  assert_has    "save emits host"            '"host": "dev-1"' "$out"
+  assert_has    "save emits session"         '"session": "foo"' "$out"
+  assert_nofile "legacy flat marker pruned"  "$TMP/.local/state/sesh/remote/legacyflat"
+}
+t_save_migrates_live_flat(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/.claude/sessions" "$TMP/.local/state/sesh/remote"
+  echo $$ > "$TMP/.local/state/sesh/remote/liveflat"      # LIVE legacy flat marker (old hx-connect, mid-upgrade)
+  : > "$TMP/.local/state/sesh/remote/deadflat"            # dead legacy flat marker
+  SESH_HOST=mybox SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  out="$(cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  assert_has    "live flat marker survives into snapshot" '"session": "liveflat"' "$out"
+  assert_has    "migrated under configured SESH_HOST"     '"host": "mybox"'        "$out"
+  assert_file   "live flat migrated to host dir"          "$TMP/.local/state/sesh/remote/mybox/liveflat"
+  assert_nofile "dead flat marker pruned"                 "$TMP/.local/state/sesh/remote/deadflat"
+  assert_nofile "original flat marker moved away"         "$TMP/.local/state/sesh/remote/liveflat"
+}
+
+echo "# sesh-restore host-aware"
+# Contract: the jq read defaults a missing host to hexane.
+t_restore_jq_contract(){
+  local EXPR='.remote[]? | [(.host // $hd), .session] | @tsv'
+  out="$(printf '%s' '{"remote":[{"host":"dev-1","session":"api"}]}' | jq -rc --arg hd hexane "$EXPR")"
+  assert_has "new format keeps host"                  "$(printf 'dev-1\tapi')"     "$out"
+  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc --arg hd hexane "$EXPR")"
+  assert_has "old format defaults to configured host" "$(printf 'hexane\tlegacy')" "$out"
+  out="$(printf '%s' '{"remote":[{"session":"legacy"}]}' | jq -rc --arg hd mybox "$EXPR")"
+  assert_has "old format honors configured host"      "$(printf 'mybox\tlegacy')"  "$out"
+}
+# Integration: dry-run restore must call sesh-remote with host THEN session.
+t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
+  printf '{"saved_at":"t","local":[],"remote":[{"host":"dev-1","session":"api"},{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
+  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has "restore opens new-format host:session" "sesh-remote dev-1 api" "$out"
+  assert_has "restore defaults old-format to hexane"  "sesh-remote hexane legacy" "$out"
+}
+t_restore_legacy_uses_sesh_host(){ newtmp; export HOME="$TMP"
+  # host-less snapshot + configured single host must restore to THAT box, not literal hexane.
+  printf '{"saved_at":"t","local":[],"remote":[{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
+  out="$(SESH_HOST=mybox SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has "legacy restore targets configured SESH_HOST" "sesh-remote mybox legacy" "$out"
+}
+
+echo "# _open_self (local tmux attach)"
+t_open_self_plain(){ newtmp; export HOME="$TMP"; unset TMUX SESH_NEWWIN 2>/dev/null
+  out="$(SESH_DRYRUN=1 SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "plain shell attaches in place" "would open here: tmux new-session -A -s mysess" "$out"
+}
+t_open_self_in_tmux(){ newtmp; export HOME="$TMP"; unset SESH_NEWWIN 2>/dev/null
+  out="$(SESH_DRYRUN=1 TMUX=/tmp/fake,1,0 SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "inside tmux switches client" "would switch-client: mysess" "$out"
+}
+t_open_self_newwin(){ newtmp; export HOME="$TMP"
+  out="$(SESH_DRYRUN=1 SESH_NEWWIN=1 SESH_UNAME=Linux SESH_TMUX=tmux run_fn _open_self mysess)"
+  assert_has "new window spawns a terminal" "spawn[linux]: setsid -f alacritty -e tmux new-session -A -s mysess" "$out"
+}
+t_open_self_in_tmux_real(){ newtmp; export HOME="$TMP"; unset SESH_NEWWIN 2>/dev/null
+  # Exercise the REAL (non-dry) in-tmux branch with a call-recording fake tmux that
+  # reports the session already exists (has-session exit 0, as a `tmux ls` pick always does).
+  printf '#!/bin/bash\necho "$@" >> "%s/fake/calls"\ncase "$1" in has-session) exit 0;; esac\n' "$TMP" > "$TMP/fake/tmux"; chmod +x "$TMP/fake/tmux"
+  TMUX=/tmp/fake,1,0 SESH_TMUX="$TMP/fake/tmux" run_fn _open_self mysess
+  calls="$(cat "$TMP/fake/calls" 2>/dev/null)"
+  assert_has   "existing session checked via has-session" "has-session -t =mysess"   "$calls"
+  assert_has   "switches by exact name"                   "switch-client -t =mysess" "$calls"
+  assert_hasnt "never uses nesting new-session -dA"       "new-session -dA"           "$calls"
+}
+
+echo "# do_open window mode (dry-run)"
+t_open_here(){ newtmp; export HOME="$TMP"
+  export SESH_DRYRUN=1
+  out="$(run_fn do_open ccx /some/dir thename --resume theid)"
+  assert_has   "default opens in current window (exec)" "here" "$out"
+  assert_hasnt "default is not a new window"            "newwin" "$out"
+  unset SESH_DRYRUN
+}
+t_spawn_branches(){ newtmp; export HOME="$TMP"
+  export SESH_DRYRUN=1 SESH_NEWWIN=1
+  out="$(SESH_UNAME=Linux  run_fn do_open ccx /d name --resume id)"
+  assert_has "linux new-window spawns via setsid+terminal" "spawn[linux]: setsid -f alacritty -e" "$out"
+  out="$(SESH_UNAME=Darwin run_fn do_open ccx /d name --resume id)"
+  assert_has "darwin new-window spawns via open -na"       "spawn[darwin]: open -na"               "$out"
+  unset SESH_DRYRUN SESH_NEWWIN
+}
+t_mtime_real(){ newtmp; export HOME="$TMP"
+  f="$(mkproj projA idAAAAAAAAAA yes "T" "x")"
+  out="$(run_fn _mtime "$f")"
+  if [ "${out:-0}" -gt 0 ] 2>/dev/null; then ok "mtime returns an epoch on the real OS"; else no "mtime should be an epoch (got '$out')"; fi
+}
+
+for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy \
+         t_self_env t_self_hostname_match t_self_near_miss \
+         t_cache_hit t_cache_miss_mtime \
+         t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
+         t_remote_success_refresh t_remote_success_empty \
+         t_multihost_emit t_multihost_fallback t_self_vs_remote \
+         t_open_self_plain t_open_self_in_tmux t_open_self_in_tmux_real t_open_self_newwin \
+         t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
+         t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat \
+         t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host; do
+  "$t"
+  [ -n "${TMP:-}" ] && rm -rf "$TMP"
+done
+
+echo "# ---"
+echo "# passed $P, failed $F"
+[ "$F" -eq 0 ]

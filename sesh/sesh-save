@@ -3,7 +3,7 @@
 #
 # Sources (both authoritative, PID-checked — no heuristics):
 #   local  = Claude Code sessions in ~/.claude/sessions/*.json with a live PID
-#   remote = hexane tmux sessions with a live presence marker (written by hx-connect)
+#   remote = hexane tmux sessions with a live presence marker (written by sesh-remote)
 #
 # Run on an interval by a LaunchAgent so the last snapshot before shutdown ~= what
 # you had open; sesh-restore rebuilds it at next login. Also runnable by hand.
@@ -20,8 +20,8 @@ command -v jq >/dev/null || exit 0
 # Skip the early-boot window so we never overwrite the pre-shutdown snapshot
 # before sesh-restore has rebuilt it at login (otherwise an empty login snapshot
 # would erase what you had open). Snapshots resume a few minutes in.
-boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/.*sec = \([0-9]*\).*/\1/p')
-if [ -n "$boot" ] && [ "$(( $(date +%s) - boot ))" -lt 180 ]; then exit 0; fi
+boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/^{ sec = \([0-9]*\),.*/\1/p')
+if [ -z "${SESH_SKIP_BOOTGUARD:-}" ] && [ -n "$boot" ] && [ "$(( $(date +%s) - boot ))" -lt 180 ]; then exit 0; fi
 
 # Local: live Claude sessions (registry carries sessionId + cwd + pid).
 local_json=$(
@@ -34,15 +34,39 @@ local_json=$(
 )
 [ -n "$local_json" ] || local_json='[]'
 
-# Remote: prune markers whose PID is dead, then collect the survivors.
-for m in "$MARKS"/*; do
-  [ -e "$m" ] || continue
-  mpid=$(cat "$m" 2>/dev/null)
-  { [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; } || rm -f "$m"
+# Remote: markers are host-namespaced (remote/<host>/<session>). Prune dead PIDs,
+# then collect survivors. Legacy flat markers (remote/<session>, from the old
+# single-host hx-connect) are migrated into the host tree under the configured legacy
+# host when their PID is still live — so a session opened before an in-place upgrade
+# still gets snapshotted — and dropped when dead or already claimed host-namespaced.
+HOSTDEF="${SESH_HOST:-${HX_HOST:-hexane}}"
+for flat in "$MARKS"/*; do
+  [ -f "$flat" ] || continue
+  fpid=$(cat "$flat" 2>/dev/null)
+  dest="$MARKS/$HOSTDEF/$(basename "$flat")"
+  if [ -n "$fpid" ] && kill -0 "$fpid" 2>/dev/null && [ ! -e "$dest" ]; then
+    mkdir -p "$MARKS/$HOSTDEF"; mv "$flat" "$dest"
+  else
+    rm -f "$flat"
+  fi
+done
+for hd in "$MARKS"/*/; do
+  [ -d "$hd" ] || continue
+  for m in "$hd"*; do
+    [ -e "$m" ] || continue
+    mpid=$(cat "$m" 2>/dev/null)
+    { [ -n "$mpid" ] && kill -0 "$mpid" 2>/dev/null; } || rm -f "$m"
+  done
 done
 remote_json=$(
-  for m in "$MARKS"/*; do [ -e "$m" ] || continue; basename "$m"; done \
-    | jq -R '{session: .}' | jq -s 'unique_by(.session)'
+  for hd in "$MARKS"/*/; do
+    [ -d "$hd" ] || continue
+    host=$(basename "$hd")
+    for m in "$hd"*; do
+      [ -e "$m" ] || continue
+      jq -n --arg h "$host" --arg s "$(basename "$m")" '{host:$h, session:$s}'
+    done
+  done | jq -s 'unique_by(.host + "\u0000" + .session)'
 )
 [ -n "$remote_json" ] || remote_json='[]'
 

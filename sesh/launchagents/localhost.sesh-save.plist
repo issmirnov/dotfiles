@@ -7,7 +7,7 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/vania/.dotfiles/bin/sesh-save</string>
+    <string>/Users/vania/.dotfiles/sesh/sesh-save</string>
   </array>
 
   <!-- Snapshot the live session set every 2 min. Deliberately NO RunAtLoad: the

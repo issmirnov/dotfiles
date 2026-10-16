@@ -57,6 +57,11 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
 - The [vim](vim/) directory is relatively standalone, and contains my attempt
   at building a sane vim config that isn't complex enough to launch nukes when
   your cat sneezes on the keyboard.
+- The [sesh](sesh/) folder is a self-contained session manager: one command to
+  list, open, and restore terminal sessions after a reboot or laptop sleep,
+  across this box and remote boxes over mosh+tmux, plus local Claude Code
+  sessions. See [sesh/README.md](sesh/README.md); the design history is in
+  [sesh/docs/](sesh/docs/). dotbot links its entry points onto your PATH.
 
 ## Macos Window manager stack
 
