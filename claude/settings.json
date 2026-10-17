@@ -29,6 +29,7 @@
     "ask": [],
     "defaultMode": "dontAsk"
   },
+  "model": "claude-opus-4-8[1m]",
   "hooks": {
     "Notification": [
       {
