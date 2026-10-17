@@ -39,3 +39,9 @@ elif [[ $OSTYPE == darwin* ]]; then
     # check_run yabai "brew services restart yabai"
     check_run skhd "~/.dotfiles/skhd/generator.sh"
 fi
+
+# check_run returns grep's status, so without this the hook exits 1 whenever its
+# last check matches nothing. git passes a post-checkout hook's status through,
+# which makes a plain `git switch` look like it failed. (post-merge and
+# post-commit are symlinks to this file.)
+exit 0
