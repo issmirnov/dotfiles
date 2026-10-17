@@ -53,7 +53,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ~/.claude/hooks/nonstop.sh"
+            "command": "f=\"$HOME/.claude/skills/nonstop/nonstop.sh\"; [ ! -f \"$f\" ] || bash \"$f\""
           }
         ]
       },
@@ -154,13 +154,8 @@
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,
-    "presentation-tools@smirnovlabs-claude-skills": true,
-    "nonstop@nonstop": true,
     "visual-explainer@visual-explainer-marketplace": true,
     "superpowers@superpowers-marketplace": true,
-    "plan-utilities@smirnovlabs-claude-skills": true,
-    "git-recon@smirnovlabs-claude-skills": true,
-    "pr-utilities@smirnovlabs-claude-skills": true,
     "episodic-memory@superpowers-marketplace": true,
     "skill-codex@skill-codex": true,
     "swift-lsp@claude-plugins-official": true,
@@ -176,23 +171,10 @@
         "repo": "anthropics/claude-code"
       }
     },
-    "smirnovlabs-claude-skills": {
-      "source": {
-        "source": "github",
-        "repo": "smirnov-labs/claude-skills"
-      },
-      "autoUpdate": true
-    },
     "skill-codex": {
       "source": {
         "source": "github",
         "repo": "skills-directory/skill-codex"
-      }
-    },
-    "nonstop": {
-      "source": {
-        "source": "github",
-        "repo": "andylizf/nonstop"
       }
     },
     "superpowers-marketplace": {
