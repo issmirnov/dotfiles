@@ -11,6 +11,9 @@ PYTHON="$HOME/.local/bin:$HOME/Library/Python/3.9/bin" # pip install target for 
 if [[ $OSTYPE == 'linux-gnu' ]]; then
   TEX="/usr/texbin"
   JAVA_BIN="/usr/lib/jvm/java-21-openjdk/bin:/usr/lib/jvm/java-17-openjdk/bin"
+  # sudo with no terminal (Claude Code `!` commands, launchers) asks through a fuzzel prompt
+  # instead of failing. Set here because ~/.zshenv is the one file every zsh reads.
+  export SUDO_ASKPASS="$DOT_BIN/sudo-askpass"
 elif [[ $OSTYPE == darwin* ]]; then
   TEX="/usr/local/texlive/2014/bin/universal-darwin"
   JAVA_BIN="/opt/homebrew/opt/openjdk@21/bin:/opt/homebrew/opt/openjdk@17/bin"
