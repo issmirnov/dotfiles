@@ -40,6 +40,16 @@ mkproj(){ local d="$TMP/.claude/projects/$1"; mkdir -p "$d"; local f="$d/$2.json
 # Relies on exported HOME + SESH_* env already set by the caller.
 run_fn(){ ( set +u; source "$SESH" >/dev/null 2>&1; "$@" ) </dev/null; }
 
+# mkstat <pid> <comm> <ppid> <starttime> : a fake $TMP/proc/<pid>/stat line, laid out
+# as the kernel writes it (starttime is field 22 of the raw line).
+mkstat(){ mkdir -p "$TMP/proc/$1"
+  printf '%s (%s) S %s 0 0 0 0 0 0 0 0 0 0 0 0 0 20 0 1 0 %s 0 0\n' "$1" "$2" "$3" "$4" > "$TMP/proc/$1/stat"; }
+
+# clean_env : unset everything the Linux tests export, so the next test starts clean.
+clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOTIFY SESH_STAGGER SESH_VERIFY_WAIT \
+                   SESH_MON_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
+             export SESH_HYPRCTL=false; }
+
 # ---------------------------------------------------------------------------
 echo "# name_of"
 t_aititle(){ newtmp; export HOME="$TMP"
@@ -346,6 +356,23 @@ t_lib_via_symlink(){ newtmp; export HOME="$TMP"
   want="$(cd "$_BIN" && pwd -P)"
   if [ "$out" = "$want" ]; then ok "sesh through a symlink resolves its real dir and loads lib/os.sh"; else no "SESH_DIR via symlink should be $want (got '$out')"; fi
 }
+echo "# process helpers (fake /proc)"
+t_proc_stat_parse(){ newtmp; export HOME="$TMP"
+  mkstat 4242 "tmux: server" 77 9001
+  out="$(SESH_UNAME=Linux SESH_PROC="$TMP/proc" run_fn _proc_stat 4242)"
+  assert_has "proc_stat reads ppid, start time and a comm with spaces" "77 9001 tmux: server" "$out"
+}
+t_alive_procstart(){ newtmp; export HOME="$TMP"
+  mkstat 500 claude 1 4321
+  if SESH_UNAME=Linux SESH_PROC="$TMP/proc" run_fn _alive 500 4321; then ok "alive when the start time matches"; else no "alive when the start time matches"; fi
+  if SESH_UNAME=Linux SESH_PROC="$TMP/proc" run_fn _alive 500 9999; then no "a reused pid (other start time) must count as dead"; else ok "a reused pid (other start time) counts as dead"; fi
+  if SESH_UNAME=Linux SESH_PROC="$TMP/proc" run_fn _alive 501 4321; then no "a missing pid must count as dead"; else ok "a missing pid counts as dead"; fi
+}
+t_want_session(){ newtmp; export HOME="$TMP"
+  if SESH_UNAME=Linux run_fn _want_session interactive; then ok "linux keeps interactive sessions"; else no "linux keeps interactive sessions"; fi
+  if SESH_UNAME=Linux run_fn _want_session sdk; then no "linux must drop non-interactive sessions"; else ok "linux drops non-interactive sessions"; fi
+  if SESH_UNAME=Darwin run_fn _want_session sdk; then ok "darwin keeps every kind, as before"; else no "darwin keeps every kind, as before"; fi
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -357,6 +384,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
      t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat
      t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host"
 RUN="$RUN t_lib_via_symlink"
+RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
