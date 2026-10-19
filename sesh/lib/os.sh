@@ -71,3 +71,45 @@ _want_session(){
     *) return 0 ;;
   esac
 }
+
+# ---- window capture ------------------------------------------------------------------
+# _capture_windows <pid>... : print a JSON object keyed by each claude PID:
+#   {"ws":"argo","monitor":"DP-1","at":[x,y],"address":"0x…"}  a placed window
+#   {}                                       a window PID several windows share (foot server mode)
+#   {"skip":"tmux"|"headless"|"scratchpad"}  not a restorable window
+# Each claude PID walks up its parents to the first PID that hyprctl lists as a window.
+# A tmux ancestor ends the walk (tmux-resurrect owns those panes). macOS and other OSes
+# print {}. On Linux a failed Hyprland query returns non-zero, so callers fail closed.
+_capture_windows(){
+  local clients="" monitors="" table="" out='{}' pid="" p="" hops=0 row="" st="" val=""
+  [ "$SESH_OS" = linux ] || { printf '{}'; return 0; }
+  [ $# -gt 0 ] || { printf '{}'; return 0; }
+  clients="$("$HYPRCTL" clients -j 2>/dev/null)" || return 1
+  monitors="$("$HYPRCTL" monitors -j 2>/dev/null)" || return 1
+  table="$(jq -rn --argjson c "$clients" --argjson m "$monitors" '
+      if ($c | type) != "array" or ($m | type) != "array" then error("bad hyprctl json") else . end
+      | ($m | map({key: (.id | tostring), value: .name}) | from_entries) as $mn
+      | $c | group_by(.pid)[] | (length | tostring) as $n | .[0]
+      | [(.pid | tostring), $n, .address, .workspace.name, ($mn[(.monitor | tostring)] // ""),
+         (.at[0] | tostring), (.at[1] | tostring), .class] | @tsv' 2>/dev/null)" || return 1
+  for pid in "$@"; do
+    p="$pid"; hops=0; val='{"skip":"headless"}'
+    while [ "$hops" -lt 64 ]; do
+      row="$(printf '%s\n' "$table" | awk -F'\t' -v p="$p" '$1 == p {print; exit}')"
+      if [ -n "$row" ]; then
+        val="$(printf '%s' "$row" | jq -R -c 'split("\t")
+          | if .[1] != "1" then {}
+            elif .[7] == "scratchpad" then {skip: "scratchpad"}
+            else {ws: .[3], monitor: .[4], at: [(.[5] | tonumber), (.[6] | tonumber)], address: .[2]} end')"
+        break
+      fi
+      st="$(_proc_stat "$p")" || break
+      case "${st#* * }" in tmux*) val='{"skip":"tmux"}'; break ;; esac
+      p="${st%% *}"
+      [ "$p" -gt 1 ] 2>/dev/null || break
+      hops=$((hops + 1))
+    done
+    out="$(printf '%s' "$out" | jq -c --arg k "$pid" --argjson v "$val" '. + {($k): $v}')"
+  done
+  printf '%s' "$out"
+}

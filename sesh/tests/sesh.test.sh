@@ -50,6 +50,68 @@ clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOT
                    SESH_MON_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
              export SESH_HYPRCTL=false; }
 
+# mkhypr : a fake hyprctl at $TMP/fake/hyprctl. It serves $TMP/hypr/<query>.json for
+# `instances|clients|monitors|workspaces -j` and logs every `eval` to $TMP/hypr/eval.log.
+# It exports SESH_HYPRCTL, SESH_PROC and SESH_UNAME=Linux.
+# With HYPR_SIMULATE=1, an exec_cmd eval that carries "--sid <uuid>" starts a fake
+# session: a registry entry (procStart 77), a claude -> foot chain in $TMP/proc, and a
+# foot window. The window lands on $HYPR_LAND_WS, or else on the rule's workspace.
+# A workspace it creates sits on $HYPR_LAND_MON (default DP-2).
+mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
+  printf '[{"instance":"SIG1","time":1,"pid":100,"wl_socket":"wayland-1"}]\n' > "$TMP/hypr/instances.json"
+  printf '[{"id":0,"name":"DP-1","x":0},{"id":2,"name":"DP-2","x":3840}]\n' > "$TMP/hypr/monitors.json"
+  printf '[]\n' > "$TMP/hypr/clients.json"
+  printf '[]\n' > "$TMP/hypr/workspaces.json"
+  cat > "$TMP/fake/hyprctl" <<'EOF'
+#!/bin/bash
+H="$(cd "$(dirname "$0")/.." && pwd)"
+case "$1" in
+  instances|clients|monitors|workspaces) cat "$H/hypr/$1.json" ;;
+  eval)
+    printf '%s\n' "$2" >> "$H/hypr/eval.log"
+    sid="$(printf '%s' "$2" | sed -n 's/.*--sid \([0-9a-f-]*\).*/\1/p')"
+    if [ -n "${HYPR_SIMULATE:-}" ] && [ -n "$sid" ]; then
+      ws="${HYPR_LAND_WS:-$(printf '%s' "$2" | sed -n 's/.*\[workspace \(name:\)\{0,1\}\([^] ]*\) silent\].*/\2/p')}"
+      ws="${ws:-1}"
+      n=$(wc -l < "$H/hypr/eval.log"); foot=$((7000 + n)); cl=$((8000 + n))
+      mkdir -p "$H/proc/$foot" "$H/proc/$cl" "$H/.claude/sessions"
+      printf '%s (foot) S 1 0 0 0 0 0 0 0 0 0 0 0 0 0 20 0 1 0 1 0 0\n' "$foot" > "$H/proc/$foot/stat"
+      printf '%s (claude) S %s 0 0 0 0 0 0 0 0 0 0 0 0 0 20 0 1 0 77 0 0\n' "$cl" "$foot" > "$H/proc/$cl/stat"
+      printf '{"pid":%s,"sessionId":"%s","cwd":"/tmp","procStart":"77","kind":"interactive","updatedAt":1}\n' "$cl" "$sid" > "$H/.claude/sessions/$cl.json"
+      jq --argjson p "$foot" --arg w "$ws" '. + [{address: ("0xf" + ($p|tostring)), pid: $p, class: "foot", workspace: {id: 1, name: $w}, monitor: 2, at: [0, 0]}]' "$H/hypr/clients.json" > "$H/hypr/c.tmp" && mv "$H/hypr/c.tmp" "$H/hypr/clients.json"
+      jq --arg w "$ws" --arg m "${HYPR_LAND_MON:-DP-2}" 'if any(.[]; .name == $w) then . else . + [{id: -1, name: $w, monitor: $m}] end' "$H/hypr/workspaces.json" > "$H/hypr/w.tmp" && mv "$H/hypr/w.tmp" "$H/hypr/workspaces.json"
+    fi ;;
+esac
+EOF
+  chmod +x "$TMP/fake/hyprctl"
+  export SESH_HYPRCTL="$TMP/fake/hyprctl" SESH_PROC="$TMP/proc" SESH_UNAME=Linux; }
+
+# mkcapture : mkhypr plus six windows and the processes under them.
+#   300 foot  argo/DP-1     <- 301 zsh <- 302 sesh-local <- 303 claude
+#   310 foot  3/DP-2        <- 311 zsh <- 312 claude
+#   320 scratchpad          <- 321 zsh <- 322 claude
+#   330 foot  erp/DP-1, x2  <- 331 claude              (two windows share pid 330)
+#   340 foot  special:stash <- 341 claude
+#   350 tmux: server        <- 351 zsh <- 352 claude   (no window)
+#   360 systemd             <- 361 claude              (no window)
+mkcapture(){ mkhypr
+  cat > "$TMP/hypr/clients.json" <<'EOF'
+[{"address":"0xa1","pid":300,"class":"foot","workspace":{"id":-5,"name":"argo"},"monitor":0,"at":[10,40]},
+ {"address":"0xa2","pid":310,"class":"foot","workspace":{"id":3,"name":"3"},"monitor":2,"at":[3850,40]},
+ {"address":"0xa3","pid":320,"class":"scratchpad","workspace":{"id":-98,"name":"special:scratch"},"monitor":2,"at":[0,0]},
+ {"address":"0xa4","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[0,0]},
+ {"address":"0xa5","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[1900,0]},
+ {"address":"0xa6","pid":340,"class":"foot","workspace":{"id":-99,"name":"special:stash"},"monitor":2,"at":[0,0]}]
+EOF
+  mkstat 300 foot 1 1;      mkstat 301 zsh 300 2; mkstat 302 sesh-local 301 3; mkstat 303 claude 302 4
+  mkstat 310 foot 1 1;      mkstat 311 zsh 310 2; mkstat 312 claude 311 5
+  mkstat 320 alacritty 1 1; mkstat 321 zsh 320 2; mkstat 322 claude 321 6
+  mkstat 330 foot 1 1;      mkstat 331 claude 330 7
+  mkstat 340 foot 1 1;      mkstat 341 claude 340 8
+  mkstat 350 "tmux: server" 1 1; mkstat 351 zsh 350 2; mkstat 352 claude 351 9
+  mkstat 360 systemd 1 1;   mkstat 361 claude 360 10
+}
+
 # ---------------------------------------------------------------------------
 echo "# name_of"
 t_aititle(){ newtmp; export HOME="$TMP"
@@ -373,6 +435,27 @@ t_want_session(){ newtmp; export HOME="$TMP"
   if SESH_UNAME=Linux run_fn _want_session sdk; then no "linux must drop non-interactive sessions"; else ok "linux drops non-interactive sessions"; fi
   if SESH_UNAME=Darwin run_fn _want_session sdk; then ok "darwin keeps every kind, as before"; else no "darwin keeps every kind, as before"; fi
 }
+echo "# window capture (fake hyprctl + fake /proc)"
+t_capture_cases(){ newtmp; export HOME="$TMP"; mkcapture
+  out="$(run_fn _capture_windows 303 312 322 331 341 352 361)"
+  assert_has "claude under sesh-local maps to its foot window" '"303":{"ws":"argo","monitor":"DP-1","at":[10,40],"address":"0xa1"}' "$out"
+  assert_has "claude under zsh maps to a numbered workspace"   '"312":{"ws":"3","monitor":"DP-2"' "$out"
+  assert_has "the scratchpad window is skipped"                 '"322":{"skip":"scratchpad"}' "$out"
+  assert_has "a pid shared by two windows gets no placement"    '"331":{}' "$out"
+  assert_has "a stash window is kept"                           '"341":{"ws":"special:stash"' "$out"
+  assert_has "claude inside tmux is skipped"                    '"352":{"skip":"tmux"}' "$out"
+  assert_has "claude with no window is skipped"                 '"361":{"skip":"headless"}' "$out"
+  clean_env
+}
+t_capture_fail_closed(){ newtmp; export HOME="$TMP"; mkcapture
+  printf 'not json\n' > "$TMP/hypr/clients.json"
+  if run_fn _capture_windows 303 >/dev/null; then no "bad hyprctl json must fail"; else ok "bad hyprctl json fails (non-zero)"; fi
+  clean_env
+}
+t_capture_darwin(){ newtmp; export HOME="$TMP"
+  out="$(SESH_UNAME=Darwin run_fn _capture_windows 303)"
+  if [ "$out" = "{}" ]; then ok "darwin capture is empty (no placement)"; else no "darwin capture should be {} (got '$out')"; fi
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -385,6 +468,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
      t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host"
 RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
+RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
