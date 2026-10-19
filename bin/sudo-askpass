@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# sudo-askpass — graphical sudo password prompt (fuzzel) for when sudo has no terminal,
+# e.g. Claude Code `!` commands or anything launched from Hyprland.
+#
+# Wired up by SUDO_ASKPASS in zsh/config/paths.zsh (= ~/.zshenv, so every shell sees it).
+# sudo passes its prompt ("[sudo] password for vania: ") as $1 and reads the password from
+# our stdout; printing nothing (Esc) makes sudo treat it as a cancel, like ^C.
+#
+# The prompt shows the exact command being authorized, read from the parent sudo process,
+# so a request you didn't expect (say, one an agent started) is obvious before you type.
+# No --cache: fuzzel only caches dmenu input when told to, and this input is a password.
+set -u
+
+cmd=$(tr '\0' ' ' < "/proc/$PPID/cmdline" 2>/dev/null)
+cmd=${cmd% }
+
+exec fuzzel --dmenu --namespace=sudo-askpass --password \
+    --mesg="${cmd:-sudo}" --prompt-only="${1:-Password: }"
