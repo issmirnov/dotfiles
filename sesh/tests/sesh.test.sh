@@ -86,7 +86,7 @@ EOF
   chmod +x "$TMP/fake/hyprctl"
   export SESH_HYPRCTL="$TMP/fake/hyprctl" SESH_PROC="$TMP/proc" SESH_UNAME=Linux; }
 
-# mkcapture : mkhypr plus six windows and the processes under them.
+# mkcapture : mkhypr plus seven windows and the processes under them.
 #   300 foot  argo/DP-1     <- 301 zsh <- 302 sesh-local <- 303 claude
 #   310 foot  3/DP-2        <- 311 zsh <- 312 claude
 #   320 scratchpad          <- 321 zsh <- 322 claude
@@ -94,6 +94,7 @@ EOF
 #   340 foot  special:stash <- 341 claude
 #   350 tmux: server        <- 351 zsh <- 352 claude   (no window)
 #   360 systemd             <- 361 claude              (no window)
+#   370 foot  a\b/DP-1       <- 371 claude              (a backslash in the workspace name)
 mkcapture(){ mkhypr
   cat > "$TMP/hypr/clients.json" <<'EOF'
 [{"address":"0xa1","pid":300,"class":"foot","workspace":{"id":-5,"name":"argo"},"monitor":0,"at":[10,40]},
@@ -101,7 +102,8 @@ mkcapture(){ mkhypr
  {"address":"0xa3","pid":320,"class":"scratchpad","workspace":{"id":-98,"name":"special:scratch"},"monitor":2,"at":[0,0]},
  {"address":"0xa4","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[0,0]},
  {"address":"0xa5","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[1900,0]},
- {"address":"0xa6","pid":340,"class":"foot","workspace":{"id":-99,"name":"special:stash"},"monitor":2,"at":[0,0]}]
+ {"address":"0xa6","pid":340,"class":"foot","workspace":{"id":-99,"name":"special:stash"},"monitor":2,"at":[0,0]},
+ {"address":"0xa7","pid":370,"class":"foot","workspace":{"id":-7,"name":"a\\b"},"monitor":0,"at":[0,0]}]
 EOF
   mkstat 300 foot 1 1;      mkstat 301 zsh 300 2; mkstat 302 sesh-local 301 3; mkstat 303 claude 302 4
   mkstat 310 foot 1 1;      mkstat 311 zsh 310 2; mkstat 312 claude 311 5
@@ -110,6 +112,7 @@ EOF
   mkstat 340 foot 1 1;      mkstat 341 claude 340 8
   mkstat 350 "tmux: server" 1 1; mkstat 351 zsh 350 2; mkstat 352 claude 351 9
   mkstat 360 systemd 1 1;   mkstat 361 claude 360 10
+  mkstat 370 foot 1 1;      mkstat 371 claude 370 11
 }
 
 # ---------------------------------------------------------------------------
@@ -437,7 +440,7 @@ t_want_session(){ newtmp; export HOME="$TMP"
 }
 echo "# window capture (fake hyprctl + fake /proc)"
 t_capture_cases(){ newtmp; export HOME="$TMP"; mkcapture
-  out="$(run_fn _capture_windows 303 312 322 331 341 352 361)"
+  out="$(run_fn _capture_windows 303 312 322 331 341 352 361 371)"
   assert_has "claude under sesh-local maps to its foot window" '"303":{"ws":"argo","monitor":"DP-1","at":[10,40],"address":"0xa1"}' "$out"
   assert_has "claude under zsh maps to a numbered workspace"   '"312":{"ws":"3","monitor":"DP-2"' "$out"
   assert_has "the scratchpad window is skipped"                 '"322":{"skip":"scratchpad"}' "$out"
@@ -445,11 +448,16 @@ t_capture_cases(){ newtmp; export HOME="$TMP"; mkcapture
   assert_has "a stash window is kept"                           '"341":{"ws":"special:stash"' "$out"
   assert_has "claude inside tmux is skipped"                    '"352":{"skip":"tmux"}' "$out"
   assert_has "claude with no window is skipped"                 '"361":{"skip":"headless"}' "$out"
+  assert_has "a backslash in a workspace name survives"        '"371":{"ws":"a\\b"' "$out"
   clean_env
 }
 t_capture_fail_closed(){ newtmp; export HOME="$TMP"; mkcapture
   printf 'not json\n' > "$TMP/hypr/clients.json"
-  if run_fn _capture_windows 303 >/dev/null; then no "bad hyprctl json must fail"; else ok "bad hyprctl json fails (non-zero)"; fi
+  run_fn _capture_windows 303 >/dev/null; rc=$?
+  if [ "$rc" = 1 ]; then ok "bad hyprctl json fails with status 1"; else no "bad hyprctl json should fail with status 1 (got $rc)"; fi
+  printf '{}\n' > "$TMP/hypr/clients.json"
+  run_fn _capture_windows 303 >/dev/null; rc=$?
+  if [ "$rc" = 1 ]; then ok "non-array hyprctl json fails with status 1"; else no "non-array hyprctl json should fail with status 1 (got $rc)"; fi
   clean_env
 }
 t_capture_darwin(){ newtmp; export HOME="$TMP"
