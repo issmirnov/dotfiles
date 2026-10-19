@@ -45,7 +45,7 @@
 | `hypr/hyprland.lua` | Run `sesh-restore` in `hyprland.start` | 8 |
 | `sesh/README.md` | Linux section, tables, limitations, test count | 9 |
 
-The suite grows from 66 to 150 tests: 67 after Task 1, 74 after Task 2, 83 after Task 3, 108 after Task 4, 113 after Task 5, 123 after Task 6 and 150 after Task 7.
+The suite grows from 66 to 153 tests: 67 after Task 1, 74 after Task 2, 86 after Task 3 (three assertions came from its review; see Revisions), 111 after Task 4, 116 after Task 5, 126 after Task 6 and 153 after Task 7.
 
 ---
 
@@ -815,7 +815,7 @@ fi
 - [ ] **Step 6: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 108, failed 0`
+Expected: `# passed 111, failed 0`
 
 - [ ] **Step 7: Commit**
 
@@ -920,7 +920,7 @@ if [ -n "$keep_shell" ]; then exec "${SHELL:-/bin/zsh}" -i; fi
 - [ ] **Step 4: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 113, failed 0`
+Expected: `# passed 116, failed 0`
 
 - [ ] **Step 5: Commit**
 
@@ -1056,7 +1056,7 @@ _move_workspace(){ _hypr_eval "hl.dispatch(hl.dsp.workspace.move({ workspace = $
 - [ ] **Step 4: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 123, failed 0`
+Expected: `# passed 126, failed 0`
 
 - [ ] **Step 5: Commit**
 
@@ -1445,7 +1445,7 @@ Before you save, check the macOS section against the original. `git -C "$WT" dif
 - [ ] **Step 6: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 150, failed 0`
+Expected: `# passed 153, failed 0`
 
 - [ ] **Step 7: Commit**
 
@@ -1635,7 +1635,7 @@ In the table under `## The pieces (file map)`:
    ```
 4. Replace the `sesh/tests/sesh.test.sh` row with:
    ```markdown
-   | `sesh/tests/sesh.test.sh` | 150 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+   | `sesh/tests/sesh.test.sh` | 153 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
    ```
 5. Directly after the `sesh/sesh` row, add:
    ```markdown
@@ -1664,7 +1664,7 @@ In the table under `## The pieces (file map)`:
    ```markdown
    - **macOS restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand. On Linux, restore runs at every Hyprland start, so a compositor crash is covered. A single foot window that dies still needs `revive`.
    ```
-4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 150, failed 0`.
+4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 153, failed 0`.
 
 - [ ] **Step 5: Run the full checks on hexane**
 
@@ -1674,7 +1674,7 @@ SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -1
 for f in sesh sesh-save sesh-restore sesh-local sesh-remote lib/os.sh; do bash -n "$WT/sesh/$f" && echo "syntax ok: $f"; done
 python3 ~/.claude/skills/de-slopping/ste_lint.py "$WT/sesh/docs/2026-10-19-sesh-linux-b2-design.md" | tail -1
 ```
-Expected: `# passed 150, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
+Expected: `# passed 153, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
 
 - [ ] **Step 6: Run the suite under the Mac's bash 3.2**
 
@@ -1685,7 +1685,7 @@ Run:
 tar -C "$WT" -cf - sesh | ssh -o BatchMode=yes -o ConnectTimeout=5 laptop 'rm -rf /tmp/sesh-b2 && mkdir -p /tmp/sesh-b2 && tar -C /tmp/sesh-b2 -xf -'
 ssh -o BatchMode=yes laptop 'cd /tmp && PATH=/opt/homebrew/bin:$PATH SESH_BIN=/tmp/sesh-b2/sesh/sesh /bin/bash /tmp/sesh-b2/sesh/tests/sesh.test.sh | tail -1; rm -rf /tmp/sesh-b2'
 ```
-Expected: `# passed 150, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
+Expected: `# passed 153, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
 
 - [ ] **Step 7: Commit**
 
@@ -1715,7 +1715,7 @@ gh pr create --repo issmirnov/dotfiles --base master --head feat/sesh-linux-b2 \
   --title "sesh: Linux auto-save and login restore for foot windows (B2)" --body-file <body file>
 ```
 
-Write the body in plain English with no em-dashes. Cover what it does, how it is tested (150 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+Write the body in plain English with no em-dashes. Cover what it does, how it is tested (153 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 - [ ] **Step 3: Wait for the review bots**
 
@@ -1762,6 +1762,10 @@ Follow the watching-pr-bot-reviews skill: run `prbots wait <PR> --trigger` in th
 **Signatures used across tasks.**
 - `_capture_windows <pid>…`, `_alive <pid> [procStart]`, `_spawn_placed <id> [ws]`, `_move_window <address> <ws>`, `_move_workspace <ws> <monitor>`, `_save_gate` and `_proc_stat <pid>` keep the same names and arguments in every task that uses them.
 - Test helpers build on each other: `mkcapture` calls `mkhypr`, `mksave` calls `mkcapture`, and `mkrestore` calls `mkhypr`.
+
+## Revisions during execution
+
+- **Task 3 capture (review fix, commits 7164472 and 209f22c).** jq `@tsv` escaped backslashes and nothing decoded them, so a workspace named `a\b` came back as `a\\b`. `_capture_windows` now builds one JSON object keyed by window PID. It reads the clients JSON on stdin, checks every jq status, and uses `jq -e`, so an empty hyprctl reply fails closed instead of reporting every session as headless. The fixture gains window 370 on workspace `a\b`, and `t_capture_fail_closed` asserts status 1 for bad, non-array and empty replies. Three assertions were added, so later counts are three higher than first planned. The Task 3 code block above shows the original version.
 
 **Known deviations from the spec text, already folded into the spec.**
 - The gate also passes when the snapshot's `instance` is the live instance.
