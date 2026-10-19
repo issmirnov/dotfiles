@@ -36,7 +36,7 @@ if [[ $OSTYPE == 'linux-gnu' ]]; then
     # watcher can fire in between and leave a "cannot open hyprland.lua" error
     # bar. Reload once the new file is in place to clear it. Match only that
     # file: a reload also resets runtime config changes.
-    check_run hypr/hyprland.lua "hyprctl version >/dev/null 2>&1 && hyprctl reload >/dev/null"
+    check_run '^hypr/hyprland\.lua$' "hyprctl version >/dev/null 2>&1 && hyprctl reload >/dev/null"
 elif [[ $OSTYPE == darwin* ]]; then
     # restart OSX window managers
 
