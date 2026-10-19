@@ -32,6 +32,10 @@ check_run "bat/syntaxes" "bat cache --build"
 if [[ $OSTYPE == 'linux-gnu' ]]; then
     # Generate i3 config if changes detected
     check_run i3 "~/.dotfiles/i3/genconf"
+    # git rewrites hyprland.lua by deleting and recreating it. Hyprland's file
+    # watcher can fire in between and leave a "cannot open hyprland.lua" error
+    # bar. Reload once the new file is in place to clear it.
+    check_run hypr/ "hyprctl version >/dev/null 2>&1 && hyprctl reload >/dev/null"
 elif [[ $OSTYPE == darwin* ]]; then
     # restart OSX window managers
 
