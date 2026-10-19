@@ -458,6 +458,9 @@ t_capture_fail_closed(){ newtmp; export HOME="$TMP"; mkcapture
   printf '{}\n' > "$TMP/hypr/clients.json"
   run_fn _capture_windows 303 >/dev/null; rc=$?
   if [ "$rc" = 1 ]; then ok "non-array hyprctl json fails with status 1"; else no "non-array hyprctl json should fail with status 1 (got $rc)"; fi
+  : > "$TMP/hypr/clients.json"
+  run_fn _capture_windows 303 >/dev/null; rc=$?
+  if [ "$rc" = 1 ]; then ok "an empty hyprctl reply fails with status 1"; else no "an empty hyprctl reply should fail with status 1 (got $rc)"; fi
   clean_env
 }
 t_capture_darwin(){ newtmp; export HOME="$TMP"

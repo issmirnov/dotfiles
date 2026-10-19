@@ -88,7 +88,7 @@ _capture_windows(){
   monitors="$("$HYPRCTL" monitors -j 2>/dev/null)" || return 1
   # One JSON object keyed by window PID, with each value already in its final shape.
   # It stays JSON end to end (no TSV round trip), so a workspace name keeps its backslashes.
-  wins="$(printf '%s' "$clients" | jq -c --argjson m "$monitors" '
+  wins="$(printf '%s' "$clients" | jq -ce --argjson m "$monitors" '
       if type != "array" or ($m | type) != "array" then error("bad hyprctl json") else . end
       | ($m | map({key: (.id | tostring), value: .name}) | from_entries) as $mn
       | group_by(.pid)
