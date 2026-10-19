@@ -25,6 +25,7 @@ comes up as expected.
 | Package | Why |
 |---|---|
 | `hyprland` | Compositor. Session file `/usr/share/wayland-sessions/hyprland.desktop`. |
+| `hyprpm` | Plugin manager for hyprbars (see below). A separate package since Arch's `hyprland 0.56.2-4`, so upgrading `hyprland` does not install it. |
 | `hyprlock` | Lock screen — `hyprlock.conf` (SUPER+L, hypridle). |
 | `hypridle` | Idle → lock / DPMS — `hypridle.conf`. |
 | `hyprsunset` | Blue-light filter — `hyprsunset.conf`. **Replaced wlsunset** (Aug 2026). |
@@ -85,16 +86,33 @@ comes up as expected.
 ### hyprpm plugin — `hyprbars` (window title bars)
 
 Compiles against Hyprland headers, so it needs sudo and a rebuild on every upgrade
-(also documented at `hyprland.lua:368`):
+(also documented in the PLUGINS block of `hyprland.lua`):
 
 ```sh
+sudo pacman -S hyprpm   # its own package since hyprland 0.56.2-4
 hyprpm update
 hyprpm add https://github.com/hyprwm/hyprland-plugins
 hyprpm enable hyprbars
 hyprpm reload -n
-# after EVERY hyprland upgrade (ABI break → plugin silently vanishes):
-hyprpm update && hyprpm reload -n
+# after EVERY upgrade of hyprland, aquamarine or hyprutils:
+hyprpm update -f && hyprpm reload -n
 ```
+
+Always pass `-f`. Arch sometimes rebuilds the same Hyprland version against a newer
+aquamarine. `hyprland 0.56.2-4` did this in October 2026. Plain `hyprpm update`
+compares only the Hyprland commit. It prints `Headers up to date` and builds the
+plugin against stale headers, and Hyprland then refuses to load it.
+
+hyprpm prints `✔ Loaded hyprbars` even when Hyprland refuses the plugin. Check with
+`hyprctl plugin list` instead. To see the real error, load the plugin by hand:
+
+```sh
+hyprctl plugin load /var/cache/hyprpm/$USER/hyprland-plugins/hyprbars.so
+# stale build: ... could not be loaded: plugin crashed/threw in main: [hb] Version mismatch
+```
+
+The login autostart runs this check. If hyprbars did not load, it shows a red
+Hyprland notification with the rebuild command.
 
 ### Custom `systemd --user` units (`~/.dotfiles/systemd/` → symlink + `enable --now`)
 
