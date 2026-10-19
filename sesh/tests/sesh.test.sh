@@ -15,6 +15,8 @@ HXCONNECT="$_BIN/sesh-remote"
 SESHSAVE="$_BIN/sesh-save"
 SESHRESTORE="$_BIN/sesh-restore"
 P=0; F=0
+# Never reach the live compositor. Tests that need Hyprland install a fake (mkhypr).
+export SESH_HYPRCTL=false
 ok(){ P=$((P+1)); echo "ok $((P+F)) - $1"; }
 no(){ F=$((F+1)); echo "NOT OK $((P+F)) - $1"; }
 has(){ case "$2" in *"$1"*) return 0;; *) return 1;; esac; }   # has <needle> <haystack>
@@ -300,7 +302,7 @@ t_open_self_in_tmux(){ newtmp; export HOME="$TMP"; unset SESH_NEWWIN 2>/dev/null
 }
 t_open_self_newwin(){ newtmp; export HOME="$TMP"
   out="$(SESH_DRYRUN=1 SESH_NEWWIN=1 SESH_UNAME=Linux SESH_TMUX=tmux run_fn _open_self mysess)"
-  assert_has "new window spawns a terminal" "spawn[linux]: setsid -f alacritty -e tmux new-session -A -s mysess" "$out"
+  assert_has "new window spawns a terminal" "spawn[linux]: setsid -f foot -e tmux new-session -A -s mysess" "$out"
 }
 t_open_self_in_tmux_real(){ newtmp; export HOME="$TMP"; unset SESH_NEWWIN 2>/dev/null
   # Exercise the REAL (non-dry) in-tmux branch with a call-recording fake tmux that
@@ -324,7 +326,7 @@ t_open_here(){ newtmp; export HOME="$TMP"
 t_spawn_branches(){ newtmp; export HOME="$TMP"
   export SESH_DRYRUN=1 SESH_NEWWIN=1
   out="$(SESH_UNAME=Linux  run_fn do_open ccx /d name --resume id)"
-  assert_has "linux new-window spawns via setsid+terminal" "spawn[linux]: setsid -f alacritty -e" "$out"
+  assert_has "linux new-window spawns via setsid+terminal" "spawn[linux]: setsid -f foot -e" "$out"
   out="$(SESH_UNAME=Darwin run_fn do_open ccx /d name --resume id)"
   assert_has "darwin new-window spawns via open -na"       "spawn[darwin]: open -na"               "$out"
   unset SESH_DRYRUN SESH_NEWWIN
@@ -335,16 +337,29 @@ t_mtime_real(){ newtmp; export HOME="$TMP"
   if [ "${out:-0}" -gt 0 ] 2>/dev/null; then ok "mtime returns an epoch on the real OS"; else no "mtime should be an epoch (got '$out')"; fi
 }
 
-for t in t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy \
-         t_self_env t_self_hostname_match t_self_near_miss \
-         t_cache_hit t_cache_miss_mtime \
-         t_remote_fresh_skips_ssh t_remote_stale_fail_fallback \
-         t_remote_success_refresh t_remote_success_empty \
-         t_multihost_emit t_multihost_fallback t_self_vs_remote \
-         t_open_self_plain t_open_self_in_tmux t_open_self_in_tmux_real t_open_self_newwin \
-         t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host \
-         t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat \
-         t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host; do
+echo "# lib/os.sh loading"
+t_lib_via_symlink(){ newtmp; export HOME="$TMP"
+  # The picker is reached through symlinks (~/bin/dotbin/sesh -> …/bin/sesh -> sesh/sesh),
+  # and it must still find lib/os.sh beside its real file.
+  mkdir -p "$TMP/bin"; ln -s "$SESH" "$TMP/bin/sesh"
+  out="$( ( set +u; source "$TMP/bin/sesh" >/dev/null 2>&1; type _spawn_window >/dev/null 2>&1 && printf '%s' "$SESH_DIR" ) </dev/null )"
+  want="$(cd "$_BIN" && pwd -P)"
+  if [ "$out" = "$want" ]; then ok "sesh through a symlink resolves its real dir and loads lib/os.sh"; else no "SESH_DIR via symlink should be $want (got '$out')"; fi
+}
+RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
+     t_self_env t_self_hostname_match t_self_near_miss
+     t_cache_hit t_cache_miss_mtime
+     t_remote_fresh_skips_ssh t_remote_stale_fail_fallback
+     t_remote_success_refresh t_remote_success_empty
+     t_multihost_emit t_multihost_fallback t_self_vs_remote
+     t_open_self_plain t_open_self_in_tmux t_open_self_in_tmux_real t_open_self_newwin
+     t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host
+     t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat
+     t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host"
+RUN="$RUN t_lib_via_symlink"
+# SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
+[ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
+for t in $RUN; do
   "$t"
   [ -n "${TMP:-}" ] && rm -rf "$TMP"
 done
