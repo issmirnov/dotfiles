@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # On-demand detail for the Quickshell stat-chip popups — one JSON object on stdout.
-# Usage: sysdetail.sh <cpu|mem|temp|load|net>
+# Usage: sysdetail.sh <cpu|mem|vram|temp|load|net>
 # Only /usr/bin tools (ps/free/sensors/nvidia-smi/awk + /proc + hwmon): safe under
 # qs's minimal PATH=/usr/local/bin:/usr/bin. No ~/.local/bin dependency.
 set -u
@@ -25,6 +25,23 @@ sec_mem() {
           printf "%s{\"name\":\"%s\",\"mb\":%d}", (c++?",":""), n, mb }')
       printf '{"used_mb":%d,"cached_mb":%d,"avail_mb":%d,"swap_mb":%d,"procs":[%s]}\n' \
         "$used" "$cached" "$avail" "$swap" "$procs"; }
+}
+
+sec_vram() {
+  # GPU 0 memory split + its top 5 VRAM processes. `-q -d PIDS` lists graphics clients too
+  # (Hyprland, browsers); --query-compute-apps would only show the CUDA ones.
+  read -r used free reserved total < <(nvidia-smi -i 0 \
+    --query-gpu=memory.used,memory.free,memory.reserved,memory.total \
+    --format=csv,noheader,nounits 2>/dev/null | tr -d ',' | grep -E '^[0-9 ]+$')   # drop error text
+  procs=$(nvidia-smi -i 0 -q -d PIDS 2>/dev/null | awk -F' : ' '
+      /Process ID/      { pid = $2 + 0 }
+      /^ *Name /        { n = $2; sub(/ .*/, "", n); sub(/.*\//, "", n); if (n == "" || n ~ /^\[/) n = "pid " pid }
+      /Used GPU Memory/ { print ($2 + 0) "\t" n }' \
+    | sort -rn | head -5 | awk -F'\t' '
+      { n = $2; gsub(/\\/, "\\\\", n); gsub(/"/, "\\\"", n)
+        printf "%s{\"name\":\"%s\",\"mb\":%d}", (c++ ? "," : ""), n, $1 }')
+  printf '{"used_mb":%d,"reserved_mb":%d,"free_mb":%d,"total_mb":%d,"procs":[%s]}\n' \
+    "${used:-0}" "${reserved:-0}" "${free:-0}" "${total:-0}" "$procs"
 }
 
 sec_temp() {
@@ -100,8 +117,9 @@ sec_net() {
 case "${1:-}" in
   cpu)  sec_cpu ;;
   mem)  sec_mem ;;
+  vram) sec_vram ;;
   temp) sec_temp ;;
   load) sec_load ;;
   net)  sec_net ;;
-  *) echo '{"error":"usage: sysdetail.sh <cpu|mem|temp|load|net>"}'; exit 2 ;;
+  *) echo '{"error":"usage: sysdetail.sh <cpu|mem|vram|temp|load|net>"}'; exit 2 ;;
 esac

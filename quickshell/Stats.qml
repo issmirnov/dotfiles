@@ -1,6 +1,6 @@
 import QtQuick
 
-// Reactive view over Sys — five clickable stat chips, each dropping down a detail
+// Reactive view over Sys — six clickable stat chips, each dropping down a detail
 // popup with a live sparkline. The popup bodies are per-section delegates that read
 // their own chip's parsed `model` (lexical scope resolves <chipId> here).
 Row {
@@ -14,6 +14,8 @@ Row {
     readonly property real tempHeat: Math.max(0, Math.min(1, (Sys.tempC - 55) / 35))
     // Load → heat ramp by saturation (load / cores): green under 50%, red at 100% (fully saturated).
     readonly property real loadHeat: Sys.cpuCores > 0 ? Math.max(0, Math.min(1, (Sys.load / Sys.cpuCores - 0.5) / 0.5)) : 0
+    // VRAM → heat ramp by occupancy: green at/below 60%, red by 95% (~600M left on a 12G card).
+    readonly property real vramHeat: Math.max(0, Math.min(1, (Sys.vramPct - 60) / 35))
 
     // bytes/sec or cumulative bytes → compact string (adds a G tier for session totals)
     function fmt(b) {
@@ -102,6 +104,33 @@ Row {
                 Item { width: 1; height: 6 }
                 Repeater {
                     model: memChip.model.procs || []
+                    KV { k: modelData.name; v: stats.mb(modelData.mb) }
+                }
+            }
+        }
+    }
+
+    // ---- vram ----
+    StatChip {
+        id: vramChip
+        visible: Sys.vramTotal > 0                // no NVIDIA GPU → no chip
+        section: "vram"
+        heat: stats.vramHeat                     // green→red as VRAM fills
+        pulse: Sys.vramPct >= Sys.vramAlertPct    // breathe when it's about to run out (alert fires too)
+        label: "VRAM " + Sys.vramPct + "%"
+        history: Sys.vramHist
+        sparkMin: 0
+        sparkMax: 100
+        contentComponent: Component {
+            Column {
+                spacing: 4
+                KV { k: "used";     v: stats.mb(vramChip.model.used_mb     || 0) }
+                KV { k: "reserved"; v: stats.mb(vramChip.model.reserved_mb || 0) }
+                KV { k: "free";     v: stats.mb(vramChip.model.free_mb     || 0) }
+                KV { k: "total";    v: stats.mb(vramChip.model.total_mb    || 0) }
+                Item { width: 1; height: 6 }
+                Repeater {
+                    model: vramChip.model.procs || []
                     KV { k: modelData.name; v: stats.mb(modelData.mb) }
                 }
             }
