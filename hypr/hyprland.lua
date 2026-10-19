@@ -95,8 +95,10 @@ hl.on("hyprland.start", function()
     -- "can only share a tab, not a whole screen" (diagnosed 2026-08-07).
     hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user import-environment WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user restart xdg-desktop-portal-hyprland.service; sleep 1; systemctl --user restart xdg-desktop-portal.service")
     -- load hyprpm plugins (hyprbars), then re-parse so the guarded plugin block
-    -- below applies its styling/buttons (config is parsed before the plugin loads)
-    hl.exec_cmd("hyprpm reload -n && hyprctl reload")
+    -- below applies its styling/buttons (config is parsed before the plugin loads).
+    -- Then ask Hyprland whether the load worked. hyprpm reports success even when
+    -- Hyprland rejects the plugin. If hyprpm is not installed, nothing reports it.
+    hl.exec_cmd("hyprpm reload -n; if hyprctl plugin list | grep -q hyprbars; then hyprctl reload; else hyprctl notify 3 30000 0 'hyprbars not loaded: hyprpm update -f && hyprpm reload -n'; fi")
     -- per-monitor wallpapers (swaybg): DP-1 = 8K Polygon, DP-2 = flipped 8K Polygon.
     -- HDMI-A-2 (Xeneon Edge, 2560x720) = Study_02_Mac mountains, PRE-CROPPED to the panel's
     -- 3.556:1 strip (study-02-mac-edge.png) so the peaks show — a plain swaybg fill would
@@ -401,11 +403,16 @@ hl.window_rule({ name = "jetbrains-center", match = { class = "jetbrains-idea" }
 -- from the app itself (alacritty has dynamic_title = true).
 --
 -- Install once (needs sudo — hyprpm compiles against Hyprland headers):
+--     sudo pacman -S hyprpm    (its own package since hyprland 0.56.2-4)
 --     hyprpm update
 --     hyprpm add https://github.com/hyprwm/hyprland-plugins
 --     hyprpm enable hyprbars
 --     hyprpm reload -n
--- After every Hyprland upgrade, rebuild:  hyprpm update && hyprpm reload -n
+-- After every hyprland, aquamarine or hyprutils upgrade, rebuild with -f:
+--     hyprpm update -f && hyprpm reload -n
+-- Without -f, hyprpm misses a same-version rebuild against a newer aquamarine
+-- (hyprland 0.56.2-4). It says "Headers up to date", and Hyprland then rejects
+-- the plugin with "[hb] Version mismatch". See hypr/README.md.
 --
 -- The guard keeps this block inert until the plugin is actually loaded, so a
 -- config reload never errors when hyprbars is missing (e.g. right after a
