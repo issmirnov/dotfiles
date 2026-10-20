@@ -30,6 +30,7 @@ bindkey "^?" backward-delete-char
 bindkey '^h' backward-delete-char
 
 # Make Vi mode transitions faster (KEYTIMEOUT is in hundredths of a second)
+# zsh's paste reader times out on this too, so zsh-paste.zsh reads pastes itself.
 export KEYTIMEOUT=1
 
 # fzf

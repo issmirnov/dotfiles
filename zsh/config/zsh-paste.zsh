@@ -12,7 +12,12 @@ if [[ ${ZSH_VERSION} != 5.1.1 ]]; then
         # Better URL paste magic. Quotes URL's that are pasted in, rather than escaping.
         # https://github.com/zsh-users/zsh/blob/master/Functions/Zle/bracketed-paste-url-magic
         autoload -Uz bracketed-paste-url-magic
-        zle -N bracketed-paste bracketed-paste-url-magic
+        # Same quoting, but with our own reader; see bracketed-paste-patient below.
+        if zmodload zsh/system zsh/zselect 2>/dev/null; then
+            zle -N bracketed-paste bracketed-paste-patient
+        else
+            zle -N bracketed-paste bracketed-paste-url-magic
+        fi
     else
         if is-at-least 5.1; then
             autoload -Uz bracketed-paste-magic
@@ -27,3 +32,42 @@ if [[ ${ZSH_VERSION} != 5.1.1 ]]; then
     autoload -Uz url-quote-magic
     zle -N self-insert url-quote-magic
 fi
+
+# Read a bracketed paste up to its end marker ourselves. zsh's own reader
+# (.bracketed-paste) ends the paste after $KEYTIMEOUT of silence, and
+# bindkeys.zsh sets that to 10ms so ESC is instant. Terminals often pause
+# longer mid-paste (foot sends \e[200~ before the source app has sent the
+# text), and the rest then arrives as keystrokes: newlines run lines, and the
+# closing \e[201~ becomes ESC (vicmd) + `~` (swaps the case of the last char).
+# ZLE only reads KEYTIMEOUT when a prompt starts, so it can't be raised for
+# just the paste. Quotes URLs the same way bracketed-paste-url-magic does.
+function bracketed-paste-patient() {
+    local end=$'\e[201~' buf= chunk before tty
+    exec {tty}</dev/tty || { bracketed-paste-url-magic; return }
+    {
+        # 1s of silence only happens if the end marker never arrives
+        while zselect -t 100 -r $tty; do
+            sysread -i $tty -s 8192 chunk || break  # EOF: tty went away
+            buf+=$chunk
+            # Only the newest bytes (plus some overlap) can complete the marker;
+            # matching the whole buffer every time is quadratic on big pastes.
+            [[ ${buf[-$(( $#chunk + 8 )),-1]} == *"$end"* ]] && break
+        done
+    } always {
+        exec {tty}<&-  # also on ^C mid-paste
+    }
+    before=${buf%%"$end"*}
+    # keys typed right behind the paste can land in the same read: replay them
+    (( $#buf > $#before + $#end )) && zle -U -- "${buf:$(( $#before + $#end ))}"
+    local content=${before//$'\r'/$'\n'}
+    local -a schema
+    zstyle -a :bracketed-paste-url-magic schema schema ||
+        schema=(http:// https:// ftp:// ftps:// file:// ssh:// sftp:// magnet:)
+    local wantquote=${NUMERIC:-0}
+    (( wantquote == 0 )) && [[ $content = (${(~j:|:)schema})* ]] && wantquote=1
+    (( wantquote == 1 )) && content=${(q-)content}
+    local start=$#LBUFFER
+    LBUFFER+=$content
+    YANK_START=$start YANK_END=$#LBUFFER
+    zle -f yank
+}
