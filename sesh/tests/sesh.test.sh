@@ -47,7 +47,7 @@ mkstat(){ mkdir -p "$TMP/proc/$1"
 
 # clean_env : unset everything the Linux tests export, so the next test starts clean.
 clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOTIFY SESH_STAGGER SESH_VERIFY_WAIT \
-                   SESH_MON_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
+                   SESH_MON_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPR_REQUIRE_SIG HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
              export SESH_HYPRCTL=false; }
 
 # mkhypr : a fake hyprctl at $TMP/fake/hyprctl. It serves $TMP/hypr/<query>.json for
@@ -57,6 +57,7 @@ clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOT
 # session: a registry entry (procStart 77), a claude -> foot chain in $TMP/proc, and a
 # foot window. The window lands on $HYPR_LAND_WS, or else on the rule's workspace.
 # A workspace it creates sits on $HYPR_LAND_MON (default DP-2).
+# HYPR_REQUIRE_SIG=1 makes clients/monitors/workspaces fail unless HYPRLAND_INSTANCE_SIGNATURE=SIG1.
 mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
   printf '[{"instance":"SIG1","time":1,"pid":100,"wl_socket":"wayland-1"}]\n' > "$TMP/hypr/instances.json"
   printf '[{"id":0,"name":"DP-1","x":0},{"id":2,"name":"DP-2","x":3840}]\n' > "$TMP/hypr/monitors.json"
@@ -66,7 +67,12 @@ mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
 #!/bin/bash
 H="$(cd "$(dirname "$0")/.." && pwd)"
 case "$1" in
-  instances|clients|monitors|workspaces) cat "$H/hypr/$1.json" ;;
+  instances) cat "$H/hypr/instances.json" ;;
+  clients|monitors|workspaces)
+    # HYPR_REQUIRE_SIG=1: answer only a caller aimed at the live instance (SIG1), as
+    # real hyprctl fails (exit 4) when the signature names a dead instance.
+    if [ -n "${HYPR_REQUIRE_SIG:-}" ] && [ "${HYPRLAND_INSTANCE_SIGNATURE:-}" != "SIG1" ]; then exit 4; fi
+    cat "$H/hypr/$1.json" ;;
   eval)
     printf '%s\n' "$2" >> "$H/hypr/eval.log"
     sid="$(printf '%s' "$2" | sed -n 's/.*--sid \([0-9a-f-]*\).*/\1/p')"
@@ -479,6 +485,8 @@ t_capture_darwin(){ newtmp; export HOME="$TMP"
 }
 echo "# sesh-save on Linux (gate, placement, history)"
 t_save_linux_placement(){ newtmp; export HOME="$TMP"; mksave
+  # DP-1's session gets the larger id, so only the monitor sort can put it first.
+  mkreg 303 "zzzzzzzz-0000-0000-0000-000000000303" "/w/argo" 4 interactive 2000000
   bash "$SESHSAVE"
   out="$(snap)"
   assert_has   "linux save records the instance"    '"instance": "SIG1"' "$out"
@@ -533,7 +541,7 @@ t_save_fail_closed(){ newtmp; export HOME="$TMP"; mksave
   printf 'garbage\n' > "$TMP/hypr/clients.json"
   err="$(bash "$SESHSAVE" 2>&1 >/dev/null)"
   assert_has "a failed hyprctl query leaves the snapshot intact" "intact" "$(snap)"
-  assert_has "a fail-closed save says why on stderr" "snapshot left as is" "$err"
+  assert_has "a fail-closed save says why on stderr" "Hyprland query failed" "$err"
   clean_env
 }
 t_save_history(){ newtmp; export HOME="$TMP"; mksave
@@ -571,6 +579,13 @@ t_save_odd_updatedat(){ newtmp; export HOME="$TMP"; mksave
   HOME="$H2" SESH_UNAME=Darwin SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
   assert_has "darwin saves a session whose updatedAt is not a number, as before" '"id": "mac-2"' "$(cat "$H2/.local/state/sesh/snapshot.json" 2>/dev/null)"
 }
+t_save_stale_signature(){ newtmp; export HOME="$TMP"; mksave
+  # After a compositor crash the systemd manager still holds the old signature. The gate
+  # must aim hyprctl at the live instance, or every save would fail closed.
+  HYPR_REQUIRE_SIG=1 HYPRLAND_INSTANCE_SIGNATURE=STALE bash "$SESHSAVE"
+  assert_has "save reaches the live instance despite a stale signature in the env" "aaaaaaaa" "$(snap)"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -584,7 +599,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
 RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
-RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat"
+RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
