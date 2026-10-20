@@ -57,3 +57,15 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y zsh
       - name: Run paste tests
         run: python3 -m unittest -v tests.test_zsh_paste
+
+  # tmux-resurrect boot restore: the post-save hook that records each Claude pane's
+  # session ID, the restore entries in tmux.conf (run through resurrect's own
+  # matching code) and the unit's enable script. Fakes tmux, ps, /proc and systemctl.
+  test-tmux-resurrect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out tmux-resurrect
+        run: git submodule update --init tmux/plugins/tmux-resurrect
+      - name: Run tests
+        run: bash tmux/tests/resurrect-claude-ids.test.sh

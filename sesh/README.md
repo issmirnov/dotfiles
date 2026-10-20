@@ -87,7 +87,7 @@ State lives in `~/.local/state/sesh/`:
 | `sesh/sesh-restore` | Rebuilds the snapshot as windows: Ghostty at login on macOS, placed foot windows at Hyprland start on Linux. Skips live ones; caps the count. |
 | `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. `--sid <uuid>` is the Linux restore form. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 199 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+| `sesh/tests/sesh.test.sh` | 200 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
@@ -171,7 +171,7 @@ How it works:
 2. At Hyprland start, `hyprland.lua` runs `sesh-restore`. It sets aside the sessions that are running, then opens the newest `SESH_CAP` of the rest (default 20), 1.5 s apart, through `[workspace <ws> silent]` exec rules. Then it moves any workspace it created to the saved monitor and sends one notification. A workspace name with a space, [, ] or ; cannot sit in an exec rule, so that window opens on the hidden special:sesh-stage and restore moves it into place by address. If a window is still on the stage after that, because its session started late or not at all, restore finds the session from the `--sid` in the window's command line and moves the window to its saved workspace. A window it cannot match moves to the active workspace.
 3. A gate protects the snapshot. `sesh-save` writes only when exactly one Hyprland instance is live and one of these holds: there is no snapshot yet, that instance wrote the snapshot, or that instance finished its restore. So a save right after login or a crash cannot replace your sessions with an empty set.
 
-Not restored: the SUPER+C scratchpad, claude inside tmux (tmux-resurrect's job), headless sessions and remote (mosh) windows.
+Not restored here: the SUPER+C scratchpad, claude inside tmux, headless sessions and remote (mosh) windows. tmux panes come back at boot through `tmux-resurrect.service`, and each Claude pane resumes its own session by ID (see `tmux/tmux.conf`).
 
 Install on a Hyprland box:
 
@@ -231,7 +231,7 @@ Run the test suite (temp `HOME`, fixture transcripts, injected `ssh`, no network
 
 ```bash
 bash ~/.dotfiles/sesh/tests/sesh.test.sh
-# -> # passed 199, failed 0
+# -> # passed 200, failed 0
 ```
 
 Preview a restore without opening anything:
