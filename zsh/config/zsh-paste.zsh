@@ -45,8 +45,15 @@ function bracketed-paste-patient() {
     local end=$'\e[201~' buf= chunk before tty
     exec {tty}</dev/tty || { bracketed-paste-url-magic; return }
     {
-        # 1s of silence only happens if the end marker never arrives
-        while zselect -t 100 -r $tty; do
+        # Wait for the end marker however long it takes: giving up early would
+        # run the rest of the paste as keystrokes. zselect retries on signals.
+        while :; do
+            if ! zselect -t 100 -r $tty; then
+                # 1s without input: say why the line is stuck, then block.
+                # With no timeout, status 1 can only be an error.
+                zle -R "Waiting for the rest of the paste (^C cancels)"
+                zselect -r $tty || break
+            fi
             sysread -i $tty -s 8192 chunk || break  # EOF: tty went away
             buf+=$chunk
             # Only the newest bytes (plus some overlap) can complete the marker;
