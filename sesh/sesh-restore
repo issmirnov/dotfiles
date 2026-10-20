@@ -1,16 +1,24 @@
 #!/bin/bash
 # sesh-restore — rebuild the last snapshot (~/.local/state/sesh/snapshot.json) as
-# Ghostty windows: local Claude sessions resumed in their dirs (`claude --resume`),
+# terminal windows: local Claude sessions resumed in their dirs (`claude --resume`),
 # open remote sessions reattached over mosh on the host each one belongs to (host-less
 # legacy entries use the configured SESH_HOST, default hexane). Skips anything already
 # live, caps the count,
 # and (for remote) skips hosts that are unreachable.
 #
-#   Runs at login via a LaunchAgent; by hand via `revive`. Preview: SESH_DRYRUN=1 revive
-#   Tunables: SESH_CAP (default 12). Log: ~/.local/state/sesh/restore.log
+#   macOS: runs at login via a LaunchAgent and opens Ghostty windows.
+#   Linux: Hyprland runs it at start (hyprland.lua). Each session reopens in foot,
+#          silently, on its saved workspace and monitor; remote entries are skipped.
+#          When it finishes it marks this Hyprland instance as restored, which lets
+#          sesh-save write again.
+#   By hand via `revive`. Preview: SESH_DRYRUN=1 revive
+#   Tunables: SESH_CAP (default 12 on macOS, 20 on Linux). Linux only: SESH_STAGGER
+#   (seconds between windows, default 1.5) and SESH_VERIFY_WAIT (whole seconds to wait
+#   for the windows to start, default 15). Log: ~/.local/state/sesh/restore.log
 set -u
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+SESH_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 STATE="$HOME/.local/state/sesh"
 SNAP="${SESH_SNAPSHOT:-$STATE/snapshot.json}"
 LOG="$STATE/restore.log"
@@ -24,6 +32,8 @@ CAP="${SESH_CAP:-12}"
 DRY="${SESH_DRYRUN:-}"
 mkdir -p "$STATE"
 log(){ printf '%s  %s\n' "$(date '+%F %T')" "$*" >>"$LOG"; }
+. "$SESH_DIR/lib/os.sh"
+[ "$SESH_OS" = linux ] && CAP="${SESH_CAP:-20}"
 
 command -v jq >/dev/null || { log "FATAL: jq not found"; exit 1; }
 [ -r "$SNAP" ]  || { log "no snapshot at $SNAP; nothing to restore"; exit 0; }
@@ -46,6 +56,136 @@ reachable(){ local host="$1" ip port
 openwin(){ # <connect-script> <args...>
   if [ -n "$DRY" ]; then printf 'DRYRUN would open: %s\n' "$*"; return; fi
   open -na "$GHOSTTY" --args -e "$@"; sleep 1; }
+
+# ---- Linux (Hyprland) ---------------------------------------------------------------
+LOCK="$STATE/restore.lock"
+
+# _linux_running <id> : print the registry PID of running session <id>; non-zero if none.
+_linux_running(){
+  local j="" rec="" pid="" sid="" pstart=""
+  for j in "$REG"/*.json; do
+    [ -e "$j" ] || continue
+    rec="$(jq -r '[(.pid // "" | tostring), (.sessionId // ""), (.procStart // "" | tostring)] | join("\u001f")' "$j" 2>/dev/null)" || continue
+    IFS=$'\x1f' read -r pid sid pstart <<< "$rec"
+    if [ "$sid" = "$1" ] && [ -n "$pid" ] && _alive "$pid" "$pstart"; then printf '%s' "$pid"; return 0; fi
+  done
+  return 1
+}
+
+# _take_lock : one restore at a time. The lock records its owner's PID and start time,
+# so a lock left by a killed restore is taken over.
+_take_lock(){
+  local lp="" lstart="" me=""
+  if ! mkdir "$LOCK" 2>/dev/null; then
+    read -r lp lstart 2>/dev/null < "$LOCK/pid"
+    if [ -n "$lp" ] && _alive "$lp" "$lstart"; then return 1; fi
+    rm -rf -- "${LOCK:?}"
+    mkdir "$LOCK" 2>/dev/null || return 1
+  fi
+  me="$(_proc_stat $$)"; me="${me#* }"; me="${me%% *}"
+  printf '%s %s\n' "$$" "$me" > "$LOCK/pid"
+}
+
+# _restore_done (EXIT trap) : mark this Hyprland instance as restored (not in a dry run),
+# so sesh-save may write again, and release the lock.
+_restore_done(){
+  [ -n "$DRY" ] || printf '%s\n' "$HYPRLAND_INSTANCE_SIGNATURE" > "$STATE/restored"
+  rm -rf -- "${LOCK:?}"
+}
+
+# restore_linux : reopen the snapshot's local sessions as foot windows, each placed
+# silently on its saved workspace, then fix placement and notify once.
+restore_linux(){
+  local id="" cwd="" ws="" mon="" f="" pid="" sel="" want="" have="" existing="" spawned="" fixed=""
+  local cap_json="" actual="" addr="" wsmon="" msg="" extra="" all=0 waited=0 i=0
+  local n=0 total=0 started=0 s_running=0 s_transcript=0 s_cwd=0 s_bad=0 s_remote=0
+  if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
+    log "linux: HYPRLAND_INSTANCE_SIGNATURE is unset; run this inside a Hyprland session"; return 0
+  fi
+  _take_lock || { log "another restore holds $LOCK; exiting"; return 0; }
+  trap _restore_done EXIT
+
+  # Wait up to 10 s for the monitors the snapshot names, then use what is there.
+  want="$(jq -r '[.local[]?.monitor // empty] | unique | .[]' "$SNAP" 2>/dev/null)"
+  for i in $(seq 1 "${SESH_MON_WAIT:-50}"); do
+    have="$("$HYPRCTL" monitors -j 2>/dev/null | jq -r '.[].name' 2>/dev/null)"
+    printf '%s\n' "$want" | grep -v '^$' | grep -Fxvq -f <(printf '%s\n' "$have") || break
+    sleep 0.2
+  done
+  existing="$("$HYPRCTL" workspaces -j 2>/dev/null | jq -r '.[].name' 2>/dev/null)"
+
+  # The newest SESH_CAP entries by `updated`, spawned in snapshot order.
+  sel="$(jq -r --argjson cap "$CAP" '
+      [.local // [] | to_entries[] | .value + {ord: .key}]
+      | sort_by(-(.updated // 0)) | .[:$cap] | sort_by(.ord)[]
+      | [.id, (.cwd // ""), (.ws // ""), (.monitor // "")] | map(tostring) | join("\u001f")' "$SNAP" 2>/dev/null)"
+  while IFS=$'\x1f' read -r id cwd ws mon; do
+    [ -n "$id" ] || continue
+    total=$((total + 1))
+    case "$id" in *[!0-9a-f-]*) log "skip local '$id' (not a session id)"; s_bad=$((s_bad + 1)); continue ;; esac
+    if _linux_running "$id" >/dev/null; then log "skip local $id (already running)"; s_running=$((s_running + 1)); continue; fi
+    f="$(jsonl_for "$id")"
+    if [ -z "$f" ]; then log "skip local $id (no transcript)"; s_transcript=$((s_transcript + 1)); continue; fi
+    if [ -z "$cwd" ] || [ ! -d "$cwd" ]; then log "skip local $id (cwd gone: ${cwd:-none})"; s_cwd=$((s_cwd + 1)); continue; fi
+    log "open local $id on ${ws:-the current workspace}${mon:+ ($mon)}"
+    _spawn_placed "$id" "$ws"
+    spawned="$spawned$id"$'\x1f'"$ws"$'\x1f'"$mon"$'\n'
+    n=$((n + 1))
+    [ -n "$DRY" ] || sleep "${SESH_STAGGER:-1.5}"
+  done <<< "$sel"
+  s_remote="$(jq -r '.remote // [] | length' "$SNAP" 2>/dev/null)"
+  [ "${s_remote:-0}" -gt 0 ] && log "skip $s_remote remote session(s) (not restored on linux)"
+  if [ -n "$DRY" ]; then log "dry run: would open $n window(s)"; return 0; fi
+
+  # Verify: give the new windows up to SESH_VERIFY_WAIT seconds to start.
+  while :; do
+    all=1
+    while IFS=$'\x1f' read -r id ws mon; do
+      [ -n "$id" ] || continue
+      _linux_running "$id" >/dev/null || { all=0; break; }
+    done <<< "$spawned"
+    [ "$all" = 1 ] && break
+    [ "$waited" -ge $(( ${SESH_VERIFY_WAIT:-15} * 5 )) ] && break
+    sleep 0.2; waited=$((waited + 1))
+  done
+
+  # Fix placement: a window off its workspace moves there, and a workspace this restore
+  # created moves to its saved monitor when that monitor is present.
+  while IFS=$'\x1f' read -r id ws mon; do
+    [ -n "$id" ] || continue
+    pid="$(_linux_running "$id")" || { log "did not start: $id"; continue; }
+    started=$((started + 1))
+    [ -n "$ws" ] || continue
+    cap_json="$(_capture_windows "$pid")" || continue
+    actual="$(printf '%s' "$cap_json" | jq -r --arg p "$pid" '.[$p].ws // empty')"
+    addr="$(printf '%s' "$cap_json" | jq -r --arg p "$pid" '.[$p].address // empty')"
+    if [ -n "$addr" ] && [ "$actual" != "$ws" ]; then
+      log "fix: move $id from ${actual:-?} to $ws"; _move_window "$addr" "$ws"
+    fi
+    case "$ws" in special:*) continue ;; esac
+    [ -n "$mon" ] || continue
+    printf '%s\n' "$existing" | grep -Fxq -- "$ws" && continue
+    printf '%s\n' "$fixed" | grep -Fxq -- "$ws" && continue
+    fixed="$fixed$ws"$'\n'
+    wsmon="$("$HYPRCTL" workspaces -j 2>/dev/null | jq -r --arg w "$ws" '.[] | select(.name == $w) | .monitor' 2>/dev/null)"
+    if [ -n "$wsmon" ] && [ "$wsmon" != "$mon" ] && printf '%s\n' "$have" | grep -Fxq -- "$mon"; then
+      log "fix: move workspace $ws from $wsmon to $mon"; _move_workspace "$ws" "$mon"
+    fi
+  done <<< "$spawned"
+
+  msg="restored $started of $total"
+  [ "$s_running" -gt 0 ]     && extra="$extra, running $s_running"
+  [ "$s_cwd" -gt 0 ]         && extra="$extra, cwd gone $s_cwd"
+  [ "$s_transcript" -gt 0 ]  && extra="$extra, no transcript $s_transcript"
+  [ $((n - started)) -gt 0 ] && extra="$extra, didn't start $((n - started))"
+  [ "$s_bad" -gt 0 ]         && extra="$extra, bad id $s_bad"
+  [ -n "$extra" ] && msg="$msg (${extra#, })"
+  log "done: $msg"
+  if [ "$total" -gt 0 ]; then "${SESH_NOTIFY:-notify-send}" "sesh" "$msg" >/dev/null 2>&1 || true; fi
+  return 0
+}
+
+if [ "$SESH_OS" = linux ]; then restore_linux; exit 0; fi
 
 n=0
 # ---- local ----

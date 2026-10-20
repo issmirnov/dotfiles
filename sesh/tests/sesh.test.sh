@@ -131,6 +131,23 @@ mksave(){ mkcapture
   mkreg 312 "bbbbbbbb-0000-0000-0000-000000000312" "/w/three" 5 interactive 1000000; }
 snap(){ cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null; }
 
+# mkrestore : mkhypr, a fake notify-send, transcripts and cwds for three sessions, and a
+# snapshot that an OLD Hyprland instance wrote (ids 1 and 3 on argo/DP-1, id 2 on 3/DP-2).
+mkrestore(){ mkhypr
+  export HYPRLAND_INSTANCE_SIGNATURE=SIG1 SESH_STAGGER=0 SESH_VERIFY_WAIT=0 SESH_NOTIFY="$TMP/fake/notify"
+  printf '#!/bin/bash\necho "$@" >> "%s/fake/notify.log"\n' "$TMP" > "$TMP/fake/notify"; chmod +x "$TMP/fake/notify"
+  mkdir -p "$TMP/w/argo" "$TMP/w/three" "$TMP/w/argo3"
+  for i in 1 2 3; do mkproj "p$i" "aaaaaaaa-0000-0000-0000-00000000000$i" no "" "hi" >/dev/null; done
+  cat > "$TMP/.local/state/sesh/snapshot.json" <<EOF
+{"saved_at":"t","instance":"OLD","local":[
+ {"id":"aaaaaaaa-0000-0000-0000-000000000001","cwd":"$TMP/w/argo","ws":"argo","monitor":"DP-1","at":[0,0],"updated":300},
+ {"id":"aaaaaaaa-0000-0000-0000-000000000002","cwd":"$TMP/w/three","ws":"3","monitor":"DP-2","at":[0,0],"updated":200},
+ {"id":"aaaaaaaa-0000-0000-0000-000000000003","cwd":"$TMP/w/argo3","ws":"argo","monitor":"DP-1","at":[1900,0],"updated":100}],
+ "remote":[{"host":"dev-1","session":"api"}]}
+EOF
+}
+evals(){ cat "$TMP/hypr/eval.log" 2>/dev/null; }
+
 # ---------------------------------------------------------------------------
 echo "# name_of"
 t_aititle(){ newtmp; export HOME="$TMP"
@@ -371,14 +388,14 @@ t_restore_jq_contract(){
 # Integration: dry-run restore must call sesh-remote with host THEN session.
 t_restore_opens_per_host(){ newtmp; export HOME="$TMP"
   printf '{"saved_at":"t","local":[],"remote":[{"host":"dev-1","session":"api"},{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
-  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  out="$(SESH_UNAME=Darwin SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"   # remote restore is macOS-only
   assert_has "restore opens new-format host:session" "sesh-remote dev-1 api" "$out"
   assert_has "restore defaults old-format to hexane"  "sesh-remote hexane legacy" "$out"
 }
 t_restore_legacy_uses_sesh_host(){ newtmp; export HOME="$TMP"
   # host-less snapshot + configured single host must restore to THAT box, not literal hexane.
   printf '{"saved_at":"t","local":[],"remote":[{"session":"legacy"}]}' > "$TMP/.local/state/sesh/snapshot.json"
-  out="$(SESH_HOST=mybox SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  out="$(SESH_UNAME=Darwin SESH_HOST=mybox SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"   # remote restore is macOS-only
   assert_has "legacy restore targets configured SESH_HOST" "sesh-remote mybox legacy" "$out"
 }
 
@@ -658,6 +675,82 @@ t_move_lua(){ newtmp; export HOME="$TMP"
   assert_has "the monitor name is escaped for Lua" 'monitor = "DP\"1"' "$out"
   clean_env
 }
+echo "# sesh-restore on Linux"
+t_restore_linux_dry(){ newtmp; export HOME="$TMP"; mkrestore
+  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has    "a dry run plans a placed spawn"         '[workspace name:argo silent] foot ' "$out"
+  assert_has    "a numbered workspace is planned"        '[workspace 3 silent] foot ' "$out"
+  assert_nofile "a dry run spawns nothing"               "$TMP/hypr/eval.log"
+  assert_nofile "a dry run writes no marker"             "$TMP/.local/state/sesh/restored"
+  assert_hasnt  "remote entries are not restored on linux" "sesh-remote" "$out"
+  clean_env
+}
+t_restore_linux_cap_order(){ newtmp; export HOME="$TMP"; mkrestore
+  out="$(SESH_CAP=2 SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has   "the cap keeps the newest (id 1)" "--sid aaaaaaaa-0000-0000-0000-000000000001" "$out"
+  assert_has   "the cap keeps the newest (id 2)" "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
+  assert_hasnt "the cap drops the oldest (id 3)" "--sid aaaaaaaa-0000-0000-0000-000000000003" "$out"
+  first="$(printf '%s\n' "$out" | grep -o -- '--sid [0-9a-f-]*' | head -1)"
+  if [ "$first" = "--sid aaaaaaaa-0000-0000-0000-000000000001" ]; then ok "spawns follow snapshot order"; else no "the first spawn should be id 1 (got '$first')"; fi
+  clean_env
+}
+t_restore_linux_skips(){ newtmp; export HOME="$TMP"; mkrestore
+  mkstat 900 claude 1 55; mkreg 900 "aaaaaaaa-0000-0000-0000-000000000001" "$TMP/w/argo" 55   # id 1 is running
+  rm -f "$TMP"/.claude/projects/p2/*.jsonl                                                   # id 2 has no transcript
+  rmdir "$TMP/w/argo3"                                                                       # id 3 lost its cwd
+  SESH_DRYRUN=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  log="$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  assert_has "a running session is skipped"    "aaaaaaaa-0000-0000-0000-000000000001 (already running)" "$log"
+  assert_has "a missing transcript is skipped" "aaaaaaaa-0000-0000-0000-000000000002 (no transcript)"   "$log"
+  assert_has "a missing cwd is skipped"        "aaaaaaaa-0000-0000-0000-000000000003 (cwd gone"         "$log"
+  assert_has "remote entries are skipped"      "remote session(s) (not restored on linux)"              "$log"
+  clean_env
+}
+t_restore_linux_full(){ newtmp; export HOME="$TMP"; mkrestore
+  export HYPR_SIMULATE=1 HYPR_LAND_WS=1       # every window lands on workspace 1, so the fix must move it
+  bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has    "spawned through a silent exec rule" 'exec_cmd("[workspace name:argo silent] foot ' "$ev"
+  assert_has    "a misplaced window is moved back"   'window.move({ workspace = "name:argo", follow = false, window = "address:0xf' "$ev"
+  assert_file   "the marker is written"              "$TMP/.local/state/sesh/restored"
+  assert_has    "the marker holds this instance"     "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
+  assert_nofile "the lock is released"               "$TMP/.local/state/sesh/restore.lock"
+  assert_has    "one notification with the count"    "restored 3 of 3" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  clean_env
+}
+t_restore_linux_monitor_fix(){ newtmp; export HOME="$TMP"; mkrestore
+  export HYPR_SIMULATE=1 HYPR_LAND_MON=DP-2   # new workspaces appear on DP-2
+  bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has   "a new workspace moves to its saved monitor" 'workspace.move({ workspace = "name:argo", monitor = "DP-1" })' "$ev"
+  assert_hasnt "a workspace already on its monitor stays"   'workspace.move({ workspace = 3' "$ev"
+  clean_env
+}
+t_restore_linux_marker_paths(){ newtmp; export HOME="$TMP"; mkrestore
+  printf '{"saved_at":"t","instance":"OLD","local":[],"remote":[]}\n' > "$TMP/.local/state/sesh/snapshot.json"
+  bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_has "the marker is written even when nothing opens" "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
+  rm -f "$TMP/.local/state/sesh/restored"
+  ( unset HYPRLAND_INSTANCE_SIGNATURE; bash "$SESHRESTORE" >/dev/null 2>&1 )
+  assert_nofile "no marker outside a Hyprland session" "$TMP/.local/state/sesh/restored"
+  clean_env
+}
+t_restore_linux_lock(){ newtmp; export HOME="$TMP"; mkrestore
+  mkdir -p "$TMP/.local/state/sesh/restore.lock"; mkstat 4444 bash 1 12
+  printf '4444 12\n' > "$TMP/.local/state/sesh/restore.lock/pid"   # a live restore holds the lock
+  bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_nofile "a held lock stops a second restore" "$TMP/hypr/eval.log"
+  rm -f "$TMP/proc/4444/stat"                                       # the holder died: the lock is stale
+  HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_file "a stale lock is taken over" "$TMP/hypr/eval.log"
+  clean_env
+}
+t_restore_linux_not_started(){ newtmp; export HOME="$TMP"; mkrestore
+  bash "$SESHRESTORE" >/dev/null 2>&1   # no HYPR_SIMULATE: nothing comes up
+  assert_has "the notification counts sessions that did not start" "didn't start 3" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  assert_has "the marker is written after failed spawns" "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -674,6 +767,7 @@ RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
 RUN="$RUN t_local_sid t_local_real_run"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
