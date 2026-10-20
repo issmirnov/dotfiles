@@ -71,7 +71,7 @@ B1 kept these functions inline for two reasons. A `dirname`-based sibling source
 
 1. **Gate.** On macOS, run today's uptime check. On Linux, find the live instance with `hyprctl instances -j`. Exit without writing unless there is exactly one instance. Then pass if `snapshot.json` is absent, if its `instance` field is this instance, or if the `restored` file holds this instance's signature. The `instance` rule keeps saves going after a first deploy, before any restore has run. `SESH_SKIP_BOOTGUARD=1` skips the gate on both systems.
 2. **Sessions.** Take the registry entries in `~/.claude/sessions/*.json` that have `kind == "interactive"` and pass `_alive`.
-3. **Placement.** Merge in the `_capture_windows` output. Add `updated`, which is the registry `updatedAt` in seconds. If `updatedAt` is missing, use the transcript's mtime. Sort `local` by monitor name, then workspace name, then `at` (x first, then y).
+3. **Placement.** Merge in the `_capture_windows` output. Add `updated`, which is the registry `updatedAt` in seconds. If `updatedAt` is missing or not a number, use 0, so the entry sorts as the oldest. Sort `local` by monitor name, then workspace name, then `at` (x first, then y).
 4. **Remote markers.** This code is unchanged.
 5. **Fail closed.** If any `hyprctl` or `jq` call fails, exit without writing.
 6. **Write.** Write atomically: a temp file, then `mv`. If anything except `saved_at` and `updated` changed, also write `history/<UTC timestamp>.json`. Keep the newest 20 history files.
@@ -92,8 +92,8 @@ State in `~/.local/state/sesh/`: `snapshot.json`, `history/`, `restored`, `resto
 Trigger: `hl.on("hyprland.start")` in hyprland.lua runs `~/.dotfiles/sesh/sesh-restore` after the environment import. `revive` runs it by hand.
 
 1. **Preconditions.** On Linux, exit if `HYPRLAND_INSTANCE_SIGNATURE` is unset. Take the lock: `mkdir restore.lock`, and exit if a live restore holds it. The lock records its owner's PID and start time, so a lock left by a killed restore is taken over. Wait up to 10 s until `hyprctl -j monitors` lists every monitor in the snapshot. Then continue with the monitors that are present.
-2. **Cap.** Choose the newest `SESH_CAP` local entries by `updated`. The default is 20 on Linux and stays 12 on the Mac.
-3. **Skips.** Skip and log any entry that is already running (`_alive` on a registry match), has no transcript or has a missing cwd. Linux also skips remote entries.
+2. **Cap.** Set aside the entries that are already running (`_alive` on a registry match), then choose the newest `SESH_CAP` of the rest by `updated`. Running sessions never use up the cap, and the Mac likewise caps only the windows it opens. The default is 20 on Linux and stays 12 on the Mac. On Linux, a value that is not a whole number falls back to 20.
+3. **Skips.** Log each running entry that step 2 set aside. Skip and log any chosen entry that has no transcript or whose cwd is missing. The cwd is the transcript's first `cwd`, where `sesh-local --sid` resumes the session; the snapshot's `cwd` counts only when the transcript records none. Linux also skips remote entries.
 4. **Order.** Spawn the chosen entries in snapshot order. That order groups them by monitor and workspace and sorts each workspace by `at`, so dwindle roughly rebuilds the old split order.
 5. **Spawn.** Spawn each entry with one call:
    `hyprctl eval 'hl.dispatch(hl.dsp.exec_cmd("[workspace <target> silent] foot -e <sesh-dir>/sesh-local --sid <uuid>"))'`
@@ -104,7 +104,7 @@ Trigger: `hl.on("hyprland.start")` in hyprland.lua runs `~/.dotfiles/sesh/sesh-r
    - A rule value cannot hold whitespace, `[`, `]` or `;`, because Hyprland splits the value on whitespace (probed). Such a window spawns on the hidden `special:sesh-stage`, and the verify step (step 7) moves it to the saved workspace by address. A Lua string in `window.move` takes any name.
    - Spawns are `SESH_STAGGER` seconds apart. The default is 1.5.
 6. **Monitor fix.** If a workspace that restore created sits on the wrong monitor, and the saved monitor is present, move the workspace there with `hl.dsp.workspace.move`.
-7. **Verify.** Poll the registry for up to 15 s until each spawned ID is running. If a running session's window is on the wrong workspace, move it by address with `hl.dsp.window.move`, as `hypr-rename` does. This step also covers drift in the exec-rule syntax.
+7. **Verify.** Poll the registry for up to 15 s until each spawned ID is running. If a running session's window is on the wrong workspace, move it by address with `hl.dsp.window.move`, as `hypr-rename` does. This step also covers drift in the exec-rule syntax. Then sweep `special:sesh-stage`: a window still there, whose session started late or not at all, moves to the saved workspace of the session that `--sid <uuid>` names in `/proc/<window pid>/cmdline`. A window with no match moves to the active workspace.
 8. **Marker.** An `EXIT` trap writes `$HYPRLAND_INSTANCE_SIGNATURE` to `restored` and removes the lock. The trap runs even if nothing opened or a step failed. A dry run writes no marker. Saving resumes from this point.
 9. **Notify.** Send one notification through `SESH_NOTIFY`, whose default is `notify-send`. An example: "sesh: restored 12 of 14 (cwd gone 1, didn't start 1)". Ignore notification failures. Write the details to `restore.log`.
 
@@ -154,7 +154,7 @@ Existing seams: `SESH_UNAME`, `SESH_DRYRUN` and `SESH_SNAPSHOT`.
 3. **Gate.** No instance, two instances or a `restored` mismatch means no write. A missing snapshot or a matching marker means a write.
 4. **Fail closed.** If the fake `hyprctl` exits 1 or prints junk, the old snapshot stays intact.
 5. **History.** If only `saved_at` or `updated` changed, no history file is added. A changed set adds one. History is pruned to 20.
-6. **Order and cap.** Save sorts `local` by monitor, workspace and `at`. Restore picks the newest `SESH_CAP` entries by `updated` and spawns them in snapshot order.
+6. **Order and cap.** Save sorts `local` by monitor, workspace and `at`. Restore sets aside running sessions, picks the newest `SESH_CAP` of the rest by `updated` and spawns them in snapshot order.
 7. **Exec strings** (dry-run): `name:argo silent`, `3 silent`, `special:stash silent`, and a name whose `"` and `\` are escaped. Only the UUID appears in the argv.
 8. **Skips.** Already running, no transcript, missing cwd and remote on Linux. Each one is logged.
 9. **Marker and lock.** The marker is written when nothing opened and after a failed spawn. It is not written without `HYPRLAND_INSTANCE_SIGNATURE`. A second run exits while the lock exists, and the trap removes the lock.
@@ -172,6 +172,9 @@ Existing seams: `SESH_UNAME`, `SESH_DRYRUN` and `SESH_SNAPSHOT`.
 - **Saved monitor unplugged.** The workspace stays where Hyprland created it.
 - **earlyoom kills some sessions.** `SESH_SNAPSHOT=~/.local/state/sesh/history/<ts>.json revive` reopens only the missing ones, because restore skips sessions that are running.
 - **Window rules.** Restored windows keep the app ID `foot`, so existing foot rules still apply.
+- **A session starts late or not at all.** Its window can still sit on `special:sesh-stage` after the verify step. The stage sweep moves it by its `--sid`.
+- **A deleted worktree.** The registry `cwd` can name a worktree that is gone while the transcript starts in the main checkout. Restore checks the transcript's cwd, so the session still opens.
+- **A junk tunable.** A `SESH_CAP` that is not a whole number falls back to 20, and a leading zero reads as decimal. An internal error in `restore_linux` ends the run instead of falling into the macOS loop.
 
 ## Verification
 
