@@ -141,3 +141,55 @@ _save_gate(){
     *) return 0 ;;
   esac
 }
+
+# ---- placement (Linux / Hyprland) ----------------------------------------------------
+# Probed on Hyprland 0.56.2: an exec with "[workspace <ws> silent]" places the window
+# without moving focus. Adding a `monitor` rule moves focus and warps the cursor, so we
+# never use one. workspace.move shifts an inactive workspace with no focus change.
+# Hyprland ignores unknown keys in these tables, so a typo fails silently.
+
+# _lua_esc : escape stdin for a Lua double-quoted string (\ and ").
+_lua_esc(){ sed 's/\\/\\\\/g; s/"/\\"/g'; }
+
+# _ws_lua <ws> : the workspace as a Lua literal: 3, "special:stash" or "name:argo".
+_ws_lua(){
+  local esc=""
+  case "$1" in
+    ''|*[!0-9]*) ;;
+    *) printf '%s' "$1"; return 0 ;;
+  esac
+  esc="$(printf '%s' "$1" | _lua_esc)"
+  case "$1" in
+    special:*) printf '"%s"' "$esc" ;;
+    *) printf '"name:%s"' "$esc" ;;
+  esac
+}
+
+# _hypr_eval <lua> : run one Lua chunk in Hyprland, or print it under SESH_DRYRUN.
+_hypr_eval(){
+  if [ -n "${SESH_DRYRUN:-}" ]; then printf 'hyprctl eval: %s\n' "$1"; return 0; fi
+  "$HYPRCTL" eval "$1" </dev/null >/dev/null 2>&1
+}
+
+# _spawn_placed <id> [ws] : open a foot window that resumes session <id>, silently on
+# workspace <ws>. Hyprland runs the command, so the rule applies from the first frame.
+# Only <id> (a UUID) and fixed paths enter the command. A name holding [ ] or ;
+# cannot sit inside a rule, so that window opens unplaced.
+_spawn_placed(){
+  local id="$1" ws="${2:-}" rule="" cmd="" esc=""
+  case "$ws" in
+    ''|*'['*|*']'*|*';'*) ;;
+    special:*) rule="[workspace $ws silent] " ;;
+    *[!0-9]*)  rule="[workspace name:$ws silent] " ;;
+    *)         rule="[workspace $ws silent] " ;;
+  esac
+  cmd="${rule}${SESH_TERMINAL:-foot} $SESH_DIR/sesh-local --sid $id"
+  esc="$(printf '%s' "$cmd" | _lua_esc)"
+  _hypr_eval "hl.dispatch(hl.dsp.exec_cmd(\"$esc\"))"
+}
+
+# _move_window <address> <ws> : move one window to <ws> without following it.
+_move_window(){ _hypr_eval "hl.dispatch(hl.dsp.window.move({ workspace = $(_ws_lua "$2"), follow = false, window = \"address:$1\" }))"; }
+
+# _move_workspace <ws> <monitor> : move a workspace to a monitor.
+_move_workspace(){ _hypr_eval "hl.dispatch(hl.dsp.workspace.move({ workspace = $(_ws_lua "$1"), monitor = \"$2\" }))"; }

@@ -614,6 +614,35 @@ t_local_real_run(){ newtmp; export HOME="$TMP"
   assert_has  "--sid resumes in the transcript's cwd" "$TMP/work|--dangerously-skip-permissions --resume 12345678-aaaa-bbbb-cccc-000000000002" "$(cat "$TMP/fake/claude.ran" 2>/dev/null)"
   assert_file "--sid drops to the user's shell after claude exits" "$TMP/fake/shell.ran"
 }
+echo "# Hyprland placement (dry-run Lua)"
+t_spawn_placed_rules(){ newtmp; export HOME="$TMP"
+  export SESH_UNAME=Linux SESH_DRYRUN=1
+  id=aaaaaaaa-0000-0000-0000-000000000001
+  out="$(run_fn _spawn_placed "$id" argo)"
+  assert_has "a named workspace gets a silent rule"      '[workspace name:argo silent] foot ' "$out"
+  assert_has "only the uuid follows sesh-local --sid"     "/sesh-local --sid $id\"))" "$out"
+  out="$(run_fn _spawn_placed "$id" 3)"
+  assert_has "a numbered workspace rule"                  '[workspace 3 silent] foot ' "$out"
+  out="$(run_fn _spawn_placed "$id" special:stash)"
+  assert_has "the stash rule"                             '[workspace special:stash silent] foot ' "$out"
+  out="$(run_fn _spawn_placed "$id" 'my "q" \ws')"
+  assert_has "quotes and backslashes are escaped for Lua" '[workspace name:my \"q\" \\ws silent]' "$out"
+  out="$(run_fn _spawn_placed "$id" 'a]b')"
+  assert_hasnt "a name holding ] opens unplaced"          '[workspace' "$out"
+  out="$(run_fn _spawn_placed "$id" '')"
+  assert_has "no workspace opens unplaced"                'exec_cmd("foot ' "$out"
+  clean_env
+}
+t_move_lua(){ newtmp; export HOME="$TMP"
+  export SESH_UNAME=Linux SESH_DRYRUN=1
+  out="$(run_fn _move_window 0xa1 argo)"
+  assert_has "window move by address, no follow" 'hl.dsp.window.move({ workspace = "name:argo", follow = false, window = "address:0xa1" })' "$out"
+  out="$(run_fn _move_window 0xa1 3)"
+  assert_has "a numbered target is a bare number" 'workspace = 3,' "$out"
+  out="$(run_fn _move_workspace argo DP-1)"
+  assert_has "workspace move to a monitor" 'hl.dsp.workspace.move({ workspace = "name:argo", monitor = "DP-1" })' "$out"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -629,6 +658,7 @@ RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
 RUN="$RUN t_local_sid t_local_real_run"
+RUN="$RUN t_spawn_placed_rules t_move_lua"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
