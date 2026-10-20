@@ -101,6 +101,7 @@ EOF
 #   350 tmux: server        <- 351 zsh <- 352 claude   (no window)
 #   360 systemd             <- 361 claude              (no window)
 #   370 foot  a\b/DP-1       <- 371 claude              (a backslash in the workspace name)
+#   380 foot  special:sesh-stage <- 381 claude          (a window a failed move left on the stage)
 mkcapture(){ mkhypr
   cat > "$TMP/hypr/clients.json" <<'EOF'
 [{"address":"0xa1","pid":300,"class":"foot","workspace":{"id":-5,"name":"argo"},"monitor":0,"at":[10,40]},
@@ -109,7 +110,8 @@ mkcapture(){ mkhypr
  {"address":"0xa4","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[0,0]},
  {"address":"0xa5","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[1900,0]},
  {"address":"0xa6","pid":340,"class":"foot","workspace":{"id":-99,"name":"special:stash"},"monitor":2,"at":[0,0]},
- {"address":"0xa7","pid":370,"class":"foot","workspace":{"id":-7,"name":"a\\b"},"monitor":0,"at":[0,0]}]
+ {"address":"0xa7","pid":370,"class":"foot","workspace":{"id":-7,"name":"a\\b"},"monitor":0,"at":[0,0]},
+ {"address":"0xa8","pid":380,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]}]
 EOF
   mkstat 300 foot 1 1;      mkstat 301 zsh 300 2; mkstat 302 sesh-local 301 3; mkstat 303 claude 302 4
   mkstat 310 foot 1 1;      mkstat 311 zsh 310 2; mkstat 312 claude 311 5
@@ -119,6 +121,7 @@ EOF
   mkstat 350 "tmux: server" 1 1; mkstat 351 zsh 350 2; mkstat 352 claude 351 9
   mkstat 360 systemd 1 1;   mkstat 361 claude 360 10
   mkstat 370 foot 1 1;      mkstat 371 claude 370 11
+  mkstat 380 foot 1 1;      mkstat 381 claude 380 12
 }
 
 # mkreg <pid> <id> <cwd> <procStart> [kind] [updatedAt-ms] : a fake registry entry.
@@ -751,6 +754,24 @@ t_restore_linux_not_started(){ newtmp; export HOME="$TMP"; mkrestore
   assert_has "the marker is written after failed spawns" "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
   clean_env
 }
+t_save_drops_stage(){ newtmp; export HOME="$TMP"; mksave
+  mkreg 381 "ffffffff-0000-0000-0000-000000000381" "/w/staged" 12 interactive
+  bash "$SESHSAVE"
+  ws="$(jq -r '.local[] | select(.id | startswith("ffffffff")) | .ws // "none"' "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  if [ "$ws" = none ]; then ok "a window left on the stage is saved without placement"; else no "a staged window should have no saved ws (got '$ws')"; fi
+  clean_env
+}
+t_restore_linux_staged(){ newtmp; export HOME="$TMP"; mkrestore
+  # "pinley cicd" cannot sit in an exec rule (Hyprland splits on whitespace), so it is staged
+  # and then moved by address. The fake does not apply moves, so the window stays staged.
+  jq '.local = [.local[0] | .ws = "pinley cicd"]' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
+  HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has "a spaced name spawns on the stage"          'exec_cmd("[workspace special:sesh-stage silent] foot ' "$ev"
+  assert_has "verify moves it to its workspace by address" 'window.move({ workspace = "name:pinley cicd", follow = false, window = "address:0xf' "$ev"
+  assert_has "a window left on the stage is reported"     "still staged 1" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -764,10 +785,10 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
 RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
-RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
+RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
 RUN="$RUN t_local_sid t_local_real_run"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
-RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do

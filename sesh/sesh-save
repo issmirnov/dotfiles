@@ -49,7 +49,7 @@ local_json="$(printf '%s' "$rows" | jq -R -s -c --argjson cap "$cap" --arg os "$
         | select(($c.skip // "") == "")
         | {id: $r[1], cwd: $r[2]}
           + (if $os == "linux"
-             then {updated: ($r[3] | tonumber? // 0)} + ($c | {ws, monitor, at} | with_entries(select(.value != null)))
+             then {updated: ($r[3] | tonumber? // 0)} + (if ($c.ws // "") == "special:sesh-stage" then {} else ($c | {ws, monitor, at} | with_entries(select(.value != null))) end)
              else {} end))
   | unique_by(.id)
   | if $os == "linux" then sort_by(.monitor // "", .ws // "", (.at // [0, 0])[0], (.at // [0, 0])[1]) else . end')" || { echo "sesh-save: jq failed; snapshot left as is" >&2; exit 0; }
