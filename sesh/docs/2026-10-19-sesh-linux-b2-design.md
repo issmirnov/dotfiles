@@ -96,11 +96,12 @@ Trigger: `hl.on("hyprland.start")` in hyprland.lua runs `~/.dotfiles/sesh/sesh-r
 3. **Skips.** Skip and log any entry that is already running (`_alive` on a registry match), has no transcript or has a missing cwd. Linux also skips remote entries.
 4. **Order.** Spawn the chosen entries in snapshot order. That order groups them by monitor and workspace and sorts each workspace by `at`, so dwindle roughly rebuilds the old split order.
 5. **Spawn.** Spawn each entry with one call:
-   `hyprctl eval 'hl.dispatch(hl.dsp.exec_cmd("[workspace <target> silent] foot <sesh-dir>/sesh-local --sid <uuid>"))'`
+   `hyprctl eval 'hl.dispatch(hl.dsp.exec_cmd("[workspace <target> silent] foot -e <sesh-dir>/sesh-local --sid <uuid>"))'`
    - The rules never include `monitor`. On Hyprland 0.56.2 that rule moves focus to the monitor and warps the cursor.
    - `<target>` is `name:<ws>` for a named workspace, the bare number for a numbered one, and `special:stash` for the stash.
    - The workspace name gets the Lua escaping that `hypr-rename` uses: `\` becomes `\\`, and `"` becomes `\"`.
-   - Only the UUID and fixed paths enter the command string. AI-written titles never pass through Lua or the shell.
+   - Only the UUID and fixed paths enter the command string. AI-written titles never pass through Lua or the shell. `_spawn_placed` refuses an id that is not a UUID.
+   - A rule value cannot hold whitespace, `[`, `]` or `;`, because Hyprland splits the value on whitespace (probed). Such a window spawns on the hidden `special:sesh-stage`, and the verify step (step 7) moves it to the saved workspace by address. A Lua string in `window.move` takes any name.
    - Spawns are `SESH_STAGGER` seconds apart. The default is 1.5.
 6. **Monitor fix.** If a workspace that restore created sits on the wrong monitor, and the saved monitor is present, move the workspace there with `hl.dsp.workspace.move`.
 7. **Verify.** Poll the registry for up to 15 s until each spawned ID is running. If a running session's window is on the wrong workspace, move it by address with `hl.dsp.window.move`, as `hypr-rename` does. This step also covers drift in the exec-rule syntax.
@@ -135,6 +136,7 @@ The unit name matters. tmux-continuum runs `systemctl --user disable tmux.servic
 - Adding `monitor DP-1` to those rules creates `x` on DP-1, but it also moves focus to DP-1 and warps the cursor. So restore never uses it.
 - `hl.dispatch(hl.dsp.workspace.move({ workspace = "name:x", monitor = "DP-1" }))` moves an inactive workspace without changing focus or the cursor.
 - Hyprland ignores unknown keys in dispatcher tables (`bogus_key = 1` returns `ok`), so a misspelled key fails silently. Restore's verify step catches misplaced windows.
+- An exec rule's workspace value is split on whitespace. `[workspace name:sesh probe sp silent]` put the window on the existing workspace `sesh`. Hence the staging rule in D.5.
 
 ## Testing
 

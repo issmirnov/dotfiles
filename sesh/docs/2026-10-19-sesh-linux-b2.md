@@ -45,7 +45,7 @@
 | `hypr/hyprland.lua` | Run `sesh-restore` in `hyprland.start` | 8 |
 | `sesh/README.md` | Linux section, tables, limitations, test count | 9 |
 
-The suite grows from 66 to 161 tests: 67 after Task 1, 74 after Task 2, 86 after Task 3, 115 after Task 4, 124 after Task 5 (Tasks 3 to 5 gained assertions in review; see Revisions), 134 after Task 6 and 161 after Task 7.
+The suite grows from 66 to 168 tests: 67 after Task 1, 74 after Task 2, 86 after Task 3, 115 after Task 4, 124 after Task 5, 141 after Task 6 (Tasks 3 to 6 gained assertions in review; see Revisions) and 168 after Task 7.
 
 ---
 
@@ -1445,7 +1445,7 @@ Before you save, check the macOS section against the original. `git -C "$WT" dif
 - [ ] **Step 6: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 161, failed 0`
+Expected: `# passed 168, failed 0`
 
 - [ ] **Step 7: Commit**
 
@@ -1635,7 +1635,7 @@ In the table under `## The pieces (file map)`:
    ```
 4. Replace the `sesh/tests/sesh.test.sh` row with:
    ```markdown
-   | `sesh/tests/sesh.test.sh` | 161 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+   | `sesh/tests/sesh.test.sh` | 168 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
    ```
 5. Directly after the `sesh/sesh` row, add:
    ```markdown
@@ -1664,7 +1664,7 @@ In the table under `## The pieces (file map)`:
    ```markdown
    - **macOS restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand. On Linux, restore runs at every Hyprland start, so a compositor crash is covered. A single foot window that dies still needs `revive`.
    ```
-4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 161, failed 0`.
+4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 168, failed 0`.
 
 - [ ] **Step 5: Run the full checks on hexane**
 
@@ -1674,7 +1674,7 @@ SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -1
 for f in sesh sesh-save sesh-restore sesh-local sesh-remote lib/os.sh; do bash -n "$WT/sesh/$f" && echo "syntax ok: $f"; done
 python3 ~/.claude/skills/de-slopping/ste_lint.py "$WT/sesh/docs/2026-10-19-sesh-linux-b2-design.md" | tail -1
 ```
-Expected: `# passed 161, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
+Expected: `# passed 168, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
 
 - [ ] **Step 6: Run the suite under the Mac's bash 3.2**
 
@@ -1685,7 +1685,7 @@ Run:
 tar -C "$WT" -cf - sesh | ssh -o BatchMode=yes -o ConnectTimeout=5 laptop 'rm -rf /tmp/sesh-b2 && mkdir -p /tmp/sesh-b2 && tar -C /tmp/sesh-b2 -xf -'
 ssh -o BatchMode=yes laptop 'cd /tmp && PATH=/opt/homebrew/bin:$PATH SESH_BIN=/tmp/sesh-b2/sesh/sesh /bin/bash /tmp/sesh-b2/sesh/tests/sesh.test.sh | tail -1; rm -rf /tmp/sesh-b2'
 ```
-Expected: `# passed 161, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
+Expected: `# passed 168, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
 
 - [ ] **Step 7: Commit**
 
@@ -1715,7 +1715,7 @@ gh pr create --repo issmirnov/dotfiles --base master --head feat/sesh-linux-b2 \
   --title "sesh: Linux auto-save and login restore for foot windows (B2)" --body-file <body file>
 ```
 
-Write the body in plain English with no em-dashes. Cover what it does, how it is tested (161 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+Write the body in plain English with no em-dashes. Cover what it does, how it is tested (168 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 - [ ] **Step 3: Wait for the review bots**
 
@@ -1768,6 +1768,7 @@ Follow the watching-pr-bot-reviews skill: run `prbots wait <PR> --trigger` in th
 - **Task 3 capture (review fix, commits 7164472 and 209f22c).** jq `@tsv` escaped backslashes and nothing decoded them, so a workspace named `a\b` came back as `a\\b`. `_capture_windows` now builds one JSON object keyed by window PID. It reads the clients JSON on stdin, checks every jq status, and uses `jq -e`, so an empty hyprctl reply fails closed instead of reporting every session as headless. The fixture gains window 370 on workspace `a\b`, and `t_capture_fail_closed` asserts status 1 for bad, non-array and empty replies. Three assertions were added, so later counts are three higher than first planned. The Task 3 code block above shows the original version.
 - **Task 4 save (review fix, commit 782dd38).** A non-numeric `updatedAt` made the per-file jq fail, so `|| continue` dropped the session. On the Mac that changed behavior, because the old script never read the field. The conversion is now total (`if type == "number" … else 0`). Fail-closed exits print `sesh-save: … snapshot left as is` to stderr, and history is copied only after the snapshot write succeeds. The two-instance gate fixture is `SIG1,B`, so the test fails if the exactly-one rule goes. A new test, `t_save_odd_updatedat`, and one stderr assertion add three assertions in all. A second round (commit cd34ea7) made the sort and signature assertions able to fail: the DP-1 session carries the larger id, and the fake hyprctl can insist on the live signature (`HYPR_REQUIRE_SIG`), which `t_save_stale_signature` uses. One more assertion.
 - **Task 5 launcher (review fix, commit 8720ed3).** The `--sid` form's trailing `exec` made the existing form always exit 0. The old script passed on claude's status, which the picker's same-window `exec` shows on the Mac. `sesh-local` now saves `rc=$?` after launching claude and ends with `exit "$rc"`. `t_local_sid`'s title needle is `as "claude · 12345678"` (the old launcher's OSC title matched the looser one), and its calls close stdin. A sandboxed `t_local_real_run` (fake claude exiting 3, recorder shell) adds four assertions.
+- **Task 6 placement (review fix).** A live probe showed Hyprland splits an exec rule's workspace value on whitespace: `[workspace name:sesh probe sp silent]` landed on `sesh`. `_spawn_placed` now sends any name holding whitespace, `[`, `]` or `;` to the hidden `special:sesh-stage`, and Task 7's verify step moves it by address. Before, such names opened unplaced, on the active workspace. `_spawn_placed` also refuses an id that is not a UUID, and the move helpers Lua-escape their address and monitor. The terminal command gains `-e` (foot ignores it; other terminals need it). The Task 6 tests now cover the staging, `[` and `;` guards, a `special:` move, a spaced move and id refusal: seven more assertions.
 
 **Known deviations from the spec text, already folded into the spec.**
 - The gate also passes when the snapshot's `instance` is the live instance.
