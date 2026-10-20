@@ -34,5 +34,7 @@ if type ccf >/dev/null 2>&1; then
 else
   "$HOME/.local/bin/claude" --dangerously-skip-permissions "$@"
 fi
+rc=$?
 # A restored window outlives its session, like any foot window: drop to a shell.
 if [ -n "$keep_shell" ]; then exec "${SHELL:-/bin/zsh}" -i; fi
+exit "$rc"

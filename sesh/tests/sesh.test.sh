@@ -591,13 +591,28 @@ t_local_sid(){ newtmp; export HOME="$TMP"
   mkdir -p "$TMP/work dir"
   f="$(mkproj projS 12345678-aaaa-bbbb-cccc-000000000001 yes "T" "x")"
   sed -i.bak "s#/Users/vania/Projects/projS#$TMP/work dir#" "$f"
-  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 12345678-aaaa-bbbb-cccc-000000000001)"
+  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 12345678-aaaa-bbbb-cccc-000000000001 </dev/null)"
   assert_has "--sid reads the cwd from the transcript"  "would run in $TMP/work dir as" "$out"
   assert_has "--sid titles the window with the id"      'as "claude · 12345678"' "$out"
   assert_has "--sid resumes that session"               "ccf --resume 12345678-aaaa-bbbb-cccc-000000000001" "$out"
   assert_has "--sid keeps the window open with a shell" 'then exec $SHELL -i' "$out"
-  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 99999999-aaaa-bbbb-cccc-000000000009)"
+  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 99999999-aaaa-bbbb-cccc-000000000009 </dev/null)"
   assert_has "--sid without a transcript falls back to HOME" "would run in $TMP as" "$out"
+}
+t_local_real_run(){ newtmp; export HOME="$TMP"
+  # A real (not dry) run with a fake claude, so no Claude starts. stdin is closed and
+  # SHELL is a recorder, so the --sid form's final exec cannot wait for input.
+  mkdir -p "$TMP/.local/bin" "$TMP/work"
+  printf '#!/bin/bash\necho "$PWD|$*" > "%s/fake/claude.ran"\nexit 3\n' "$TMP" > "$TMP/.local/bin/claude"; chmod +x "$TMP/.local/bin/claude"
+  printf '#!/bin/bash\necho "$*" > "%s/fake/shell.ran"\n' "$TMP" > "$TMP/fake/shell"; chmod +x "$TMP/fake/shell"
+  SESH_DRYRUN= SHELL="$TMP/fake/shell" bash "$_BIN/sesh-local" "$TMP/work" myname --resume abc </dev/null >/dev/null; rc=$?
+  if [ "$rc" = 3 ]; then ok "the existing form exits with claude's status, as before"; else no "the existing form should exit 3 (got $rc)"; fi
+  assert_nofile "the existing form does not start a shell" "$TMP/fake/shell.ran"
+  f="$(mkproj projR 12345678-aaaa-bbbb-cccc-000000000002 no "" "x")"
+  sed -i.bak "s#/Users/vania/Projects/projR#$TMP/work#" "$f"
+  SESH_DRYRUN= SHELL="$TMP/fake/shell" bash "$_BIN/sesh-local" --sid 12345678-aaaa-bbbb-cccc-000000000002 </dev/null >/dev/null
+  assert_has  "--sid resumes in the transcript's cwd" "$TMP/work|--dangerously-skip-permissions --resume 12345678-aaaa-bbbb-cccc-000000000002" "$(cat "$TMP/fake/claude.ran" 2>/dev/null)"
+  assert_file "--sid drops to the user's shell after claude exits" "$TMP/fake/shell.ran"
 }
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
@@ -613,7 +628,7 @@ RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
-RUN="$RUN t_local_sid"
+RUN="$RUN t_local_sid t_local_real_run"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
