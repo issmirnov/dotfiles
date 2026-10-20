@@ -92,7 +92,7 @@ EOF
   chmod +x "$TMP/fake/hyprctl"
   export SESH_HYPRCTL="$TMP/fake/hyprctl" SESH_PROC="$TMP/proc" SESH_UNAME=Linux; }
 
-# mkcapture : mkhypr plus seven windows and the processes under them.
+# mkcapture : mkhypr plus eight windows and the processes under them.
 #   300 foot  argo/DP-1     <- 301 zsh <- 302 sesh-local <- 303 claude
 #   310 foot  3/DP-2        <- 311 zsh <- 312 claude
 #   320 scratchpad          <- 321 zsh <- 322 claude
@@ -143,9 +143,9 @@ mkrestore(){ mkhypr
   for i in 1 2 3; do mkproj "p$i" "aaaaaaaa-0000-0000-0000-00000000000$i" no "" "hi" >/dev/null; done
   cat > "$TMP/.local/state/sesh/snapshot.json" <<EOF
 {"saved_at":"t","instance":"OLD","local":[
- {"id":"aaaaaaaa-0000-0000-0000-000000000001","cwd":"$TMP/w/argo","ws":"argo","monitor":"DP-1","at":[0,0],"updated":300},
- {"id":"aaaaaaaa-0000-0000-0000-000000000002","cwd":"$TMP/w/three","ws":"3","monitor":"DP-2","at":[0,0],"updated":200},
- {"id":"aaaaaaaa-0000-0000-0000-000000000003","cwd":"$TMP/w/argo3","ws":"argo","monitor":"DP-1","at":[1900,0],"updated":100}],
+ {"id":"aaaaaaaa-0000-0000-0000-000000000001","cwd":"$TMP/w/argo","ws":"argo","monitor":"DP-1","at":[0,0],"updated":200},
+ {"id":"aaaaaaaa-0000-0000-0000-000000000002","cwd":"$TMP/w/three","ws":"3","monitor":"DP-2","at":[0,0],"updated":100},
+ {"id":"aaaaaaaa-0000-0000-0000-000000000003","cwd":"$TMP/w/argo3","ws":"argo","monitor":"DP-1","at":[1900,0],"updated":300}],
  "remote":[{"host":"dev-1","session":"api"}]}
 EOF
 }
@@ -690,11 +690,12 @@ t_restore_linux_dry(){ newtmp; export HOME="$TMP"; mkrestore
 }
 t_restore_linux_cap_order(){ newtmp; export HOME="$TMP"; mkrestore
   out="$(SESH_CAP=2 SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
-  assert_has   "the cap keeps the newest (id 1)" "--sid aaaaaaaa-0000-0000-0000-000000000001" "$out"
-  assert_has   "the cap keeps the newest (id 2)" "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
-  assert_hasnt "the cap drops the oldest (id 3)" "--sid aaaaaaaa-0000-0000-0000-000000000003" "$out"
+  assert_has   "the cap keeps the newest (id 3, updated 300)" "--sid aaaaaaaa-0000-0000-0000-000000000003" "$out"
+  assert_has   "the cap keeps the newest (id 1, updated 200)" "--sid aaaaaaaa-0000-0000-0000-000000000001" "$out"
+  assert_hasnt "the cap drops the oldest (id 2, updated 100)" "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
   first="$(printf '%s\n' "$out" | grep -o -- '--sid [0-9a-f-]*' | head -1)"
-  if [ "$first" = "--sid aaaaaaaa-0000-0000-0000-000000000001" ]; then ok "spawns follow snapshot order"; else no "the first spawn should be id 1 (got '$first')"; fi
+  if [ "$first" = "--sid aaaaaaaa-0000-0000-0000-000000000001" ]; then ok "spawns follow snapshot order, not updated order"; else no "the first spawn should be id 1 (got '$first')"; fi
+  assert_has   "entries over the cap are logged" "over the cap" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
   clean_env
 }
 t_restore_linux_skips(){ newtmp; export HOME="$TMP"; mkrestore
@@ -772,6 +773,17 @@ t_restore_linux_staged(){ newtmp; export HOME="$TMP"; mkrestore
   assert_has "a window left on the stage is reported"     "still staged 1" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
   clean_env
 }
+t_restore_linux_stale_sig(){ newtmp; export HOME="$TMP"; mkrestore
+  # A shell that outlived a compositor restart still names the dead instance (OLDSIG).
+  HYPRLAND_INSTANCE_SIGNATURE=OLDSIG HYPR_REQUIRE_SIG=1 HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_has "a stale signature adopts the single live instance" "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
+  assert_has "the restore then reaches the live compositor" 'exec_cmd("[workspace name:argo silent] foot ' "$(evals)"
+  rm -f "$TMP/.local/state/sesh/restored" "$TMP/hypr/eval.log"
+  printf '[]\n' > "$TMP/hypr/instances.json"
+  HYPRLAND_INSTANCE_SIGNATURE=OLDSIG bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_nofile "no live instance: no marker" "$TMP/.local/state/sesh/restored"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -788,7 +800,7 @@ RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
 RUN="$RUN t_local_sid t_local_real_run"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
-RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
