@@ -115,6 +115,16 @@ EOF
   mkstat 370 foot 1 1;      mkstat 371 claude 370 11
 }
 
+# mkreg <pid> <id> <cwd> <procStart> [kind] [updatedAt-ms] : a fake registry entry.
+mkreg(){ mkdir -p "$TMP/.claude/sessions"
+  printf '{"pid":%s,"sessionId":"%s","cwd":"%s","procStart":"%s","kind":"%s","updatedAt":%s}\n' \
+    "$1" "$2" "$3" "$4" "${5:-interactive}" "${6:-1000000}" > "$TMP/.claude/sessions/$1.json"; }
+# mksave : mkcapture plus registry entries for claude 303 (argo on DP-1) and 312 (3 on DP-2).
+mksave(){ mkcapture
+  mkreg 303 "aaaaaaaa-0000-0000-0000-000000000303" "/w/argo" 4 interactive 2000000
+  mkreg 312 "bbbbbbbb-0000-0000-0000-000000000312" "/w/three" 5 interactive 1000000; }
+snap(){ cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null; }
+
 # ---------------------------------------------------------------------------
 echo "# name_of"
 t_aititle(){ newtmp; export HOME="$TMP"
@@ -467,6 +477,89 @@ t_capture_darwin(){ newtmp; export HOME="$TMP"
   out="$(SESH_UNAME=Darwin run_fn _capture_windows 303)"
   if [ "$out" = "{}" ]; then ok "darwin capture is empty (no placement)"; else no "darwin capture should be {} (got '$out')"; fi
 }
+echo "# sesh-save on Linux (gate, placement, history)"
+t_save_linux_placement(){ newtmp; export HOME="$TMP"; mksave
+  bash "$SESHSAVE"
+  out="$(snap)"
+  assert_has   "linux save records the instance"    '"instance": "SIG1"' "$out"
+  assert_has   "linux save records the workspace"   '"ws": "argo"'       "$out"
+  assert_has   "linux save records the monitor"     '"monitor": "DP-2"'  "$out"
+  assert_has   "linux save records updated (s)"     '"updated": 2000'    "$out"
+  assert_hasnt "the window address stays out"       'address'            "$out"
+  first="$(jq -r '.local[0].ws' "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null)"
+  if [ "$first" = "argo" ]; then ok "local is sorted by monitor name (DP-1 first)"; else no "local should start with argo on DP-1 (got '$first')"; fi
+  clean_env
+}
+t_save_skips_dead_and_kinds(){ newtmp; export HOME="$TMP"; mksave
+  mkreg 331 "cccccccc-0000-0000-0000-000000000331" "/w/x" 999 interactive   # fixture start time is 7
+  mkreg 341 "dddddddd-0000-0000-0000-000000000341" "/w/y" 8 sdk
+  mkreg 352 "eeeeeeee-0000-0000-0000-000000000352" "/w/z" 9 interactive     # inside tmux
+  bash "$SESHSAVE"
+  out="$(snap)"
+  assert_hasnt "a reused pid (procStart mismatch) is not saved" "cccccccc" "$out"
+  assert_hasnt "a non-interactive session is not saved"         "dddddddd" "$out"
+  assert_hasnt "a tmux session is not saved"                    "eeeeeeee" "$out"
+  assert_has   "a live interactive session is saved"            "aaaaaaaa" "$out"
+  clean_env
+}
+t_save_gate(){ newtmp; export HOME="$TMP"; mksave
+  S="$TMP/.local/state/sesh"
+  printf '{"saved_at":"old","instance":"OLD","local":[{"id":"keep-me"}],"remote":[]}\n' > "$S/snapshot.json"
+  bash "$SESHSAVE"
+  assert_has "an old instance's snapshot is kept until restore runs" "keep-me" "$(snap)"
+  printf 'SIG1\n' > "$S/restored"; bash "$SESHSAVE"
+  assert_hasnt "after restore marks this instance, save writes" "keep-me" "$(snap)"
+  printf '{"saved_at":"x","instance":"SIG1","local":[{"id":"mine"}],"remote":[]}\n' > "$S/snapshot.json"; : > "$S/restored"
+  bash "$SESHSAVE"
+  assert_hasnt "a snapshot this instance wrote may be replaced" '"mine"' "$(snap)"
+  printf '[]\n' > "$TMP/hypr/instances.json"
+  printf '{"saved_at":"y","instance":"SIG1","local":[{"id":"held"}],"remote":[]}\n' > "$S/snapshot.json"
+  bash "$SESHSAVE"
+  assert_has "no live instance: no write" "held" "$(snap)"
+  printf '[{"instance":"A"},{"instance":"B"}]\n' > "$TMP/hypr/instances.json"; bash "$SESHSAVE"
+  assert_has "two live instances: no write" "held" "$(snap)"
+  clean_env
+}
+t_save_first_run(){ newtmp; export HOME="$TMP"; mksave
+  bash "$SESHSAVE"
+  assert_has "first deploy: no snapshot yet, so save writes" "aaaaaaaa" "$(snap)"
+  mkreg 341 "dddddddd-0000-0000-0000-000000000341" "/w/y" 8 interactive
+  bash "$SESHSAVE"
+  assert_has "later saves in the same instance keep writing" "dddddddd" "$(snap)"
+  clean_env
+}
+t_save_fail_closed(){ newtmp; export HOME="$TMP"; mksave
+  printf '{"saved_at":"z","instance":"SIG1","local":[{"id":"intact"}],"remote":[]}\n' > "$TMP/.local/state/sesh/snapshot.json"
+  printf 'garbage\n' > "$TMP/hypr/clients.json"
+  bash "$SESHSAVE"
+  assert_has "a failed hyprctl query leaves the snapshot intact" "intact" "$(snap)"
+  clean_env
+}
+t_save_history(){ newtmp; export HOME="$TMP"; mksave
+  H="$TMP/.local/state/sesh/history"
+  bash "$SESHSAVE"; c1="$(ls "$H" 2>/dev/null | wc -l | tr -d ' ')"
+  mkreg 303 "aaaaaaaa-0000-0000-0000-000000000303" "/w/argo" 4 interactive 3000000   # only updatedAt moves
+  bash "$SESHSAVE"; c2="$(ls "$H" | wc -l | tr -d ' ')"
+  mkreg 341 "dddddddd-0000-0000-0000-000000000341" "/w/y" 8 interactive              # the set changes
+  bash "$SESHSAVE"; c3="$(ls "$H" | wc -l | tr -d ' ')"
+  if [ "$c1" = 1 ] && [ "$c2" = 1 ] && [ "$c3" = 2 ]; then ok "history adds a file only when the set changes"; else no "history counts should be 1/1/2 (got $c1/$c2/$c3)"; fi
+  for i in $(seq 10 34); do touch -t "2001010100$i" "$H/old$i.json"; done
+  rm -f "$TMP/.claude/sessions/341.json"; bash "$SESHSAVE"
+  c4="$(ls "$H" | wc -l | tr -d ' ')"
+  if [ "$c4" = 20 ]; then ok "history is pruned to the newest 20"; else no "history should hold 20 files (got $c4)"; fi
+  clean_env
+}
+t_save_darwin_unchanged(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/.claude/sessions"
+  printf '{"pid":%s,"sessionId":"mac-1","cwd":"/Users/x"}\n' "$$" > "$TMP/.claude/sessions/$$.json"
+  SESH_UNAME=Darwin SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  out="$(snap)"
+  assert_has    "darwin save keeps id and cwd"     '"id": "mac-1"' "$out"
+  assert_hasnt  "darwin save adds no instance"     'instance'      "$out"
+  assert_hasnt  "darwin save adds no placement"    '"ws"'          "$out"
+  assert_hasnt  "darwin save adds no updated"      'updated'       "$out"
+  assert_nofile "darwin save writes no history"    "$TMP/.local/state/sesh/history"
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -480,6 +573,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
 RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
+RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do

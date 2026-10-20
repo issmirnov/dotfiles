@@ -115,3 +115,29 @@ _capture_windows(){
   done
   printf '%s' "$out"
 }
+
+# ---- save gate -----------------------------------------------------------------------
+# _save_gate : may sesh-save write now? SESH_SKIP_BOOTGUARD=1 always says yes.
+#   macOS : not in the first 180 s after boot (the original guard).
+#   Linux : exactly one live Hyprland instance, and one of: no snapshot yet, a snapshot
+#           this instance wrote, or a finished restore in this instance (the `restored`
+#           file). Sets SESH_INSTANCE and exports HYPRLAND_INSTANCE_SIGNATURE.
+# The caller sets SNAP and STATE.
+_save_gate(){
+  local inst="" boot=""
+  case "$SESH_OS" in
+    linux)
+      inst="$("$HYPRCTL" instances -j 2>/dev/null | jq -r 'if type == "array" and length == 1 then .[0].instance else empty end' 2>/dev/null)"
+      if [ -z "$inst" ]; then [ -n "${SESH_SKIP_BOOTGUARD:-}" ]; return; fi
+      SESH_INSTANCE="$inst"; export HYPRLAND_INSTANCE_SIGNATURE="$inst"
+      [ -n "${SESH_SKIP_BOOTGUARD:-}" ] && return 0
+      [ -e "$SNAP" ] || return 0
+      [ "$(jq -r '.instance // empty' "$SNAP" 2>/dev/null)" = "$inst" ] && return 0
+      [ "$(cat "$STATE/restored" 2>/dev/null)" = "$inst" ] ;;
+    darwin)
+      [ -n "${SESH_SKIP_BOOTGUARD:-}" ] && return 0
+      boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/^{ sec = \([0-9]*\),.*/\1/p')
+      [ -z "$boot" ] || [ "$(( $(date +%s) - boot ))" -ge 180 ] ;;
+    *) return 0 ;;
+  esac
+}
