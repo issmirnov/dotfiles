@@ -145,8 +145,9 @@ _save_gate(){
 # ---- placement (Linux / Hyprland) ----------------------------------------------------
 # Probed on Hyprland 0.56.2: an exec with "[workspace <ws> silent]" places the window
 # without moving focus. Adding a `monitor` rule moves focus and warps the cursor, so we
-# never use one. workspace.move shifts an inactive workspace with no focus change.
-# Hyprland ignores unknown keys in these tables, so a typo fails silently.
+# never use one. A rule value is split on whitespace, so names that cannot sit in a rule
+# are staged (see _spawn_placed). workspace.move shifts an inactive workspace with no
+# focus change. Hyprland ignores unknown keys in these tables, so a typo fails silently.
 
 # _lua_esc : escape stdin for a Lua double-quoted string (\ and ").
 _lua_esc(){ sed 's/\\/\\\\/g; s/"/\\"/g'; }
@@ -173,23 +174,26 @@ _hypr_eval(){
 
 # _spawn_placed <id> [ws] : open a foot window that resumes session <id>, silently on
 # workspace <ws>. Hyprland runs the command, so the rule applies from the first frame.
-# Only <id> (a UUID) and fixed paths enter the command. A name holding [ ] or ;
-# cannot sit inside a rule, so that window opens unplaced.
+# Only <id> (a UUID, refused otherwise) and fixed paths enter the command. A rule value
+# cannot hold whitespace (Hyprland splits it; probed on 0.56.2), [ ] or ;, so such a
+# window opens on the hidden special:sesh-stage and restore's verify step moves it.
 _spawn_placed(){
   local id="$1" ws="${2:-}" rule="" cmd="" esc=""
+  case "$id" in ''|*[!0-9a-fA-F-]*) return 1 ;; esac
   case "$ws" in
-    ''|*'['*|*']'*|*';'*) ;;
+    '') ;;
+    *[[:space:]]*|*'['*|*']'*|*';'*) rule="[workspace special:sesh-stage silent] " ;;
     special:*) rule="[workspace $ws silent] " ;;
     *[!0-9]*)  rule="[workspace name:$ws silent] " ;;
     *)         rule="[workspace $ws silent] " ;;
   esac
-  cmd="${rule}${SESH_TERMINAL:-foot} $SESH_DIR/sesh-local --sid $id"
+  cmd="${rule}${SESH_TERMINAL:-foot} -e $SESH_DIR/sesh-local --sid $id"
   esc="$(printf '%s' "$cmd" | _lua_esc)"
   _hypr_eval "hl.dispatch(hl.dsp.exec_cmd(\"$esc\"))"
 }
 
 # _move_window <address> <ws> : move one window to <ws> without following it.
-_move_window(){ _hypr_eval "hl.dispatch(hl.dsp.window.move({ workspace = $(_ws_lua "$2"), follow = false, window = \"address:$1\" }))"; }
+_move_window(){ _hypr_eval "hl.dispatch(hl.dsp.window.move({ workspace = $(_ws_lua "$2"), follow = false, window = \"address:$(printf '%s' "$1" | _lua_esc)\" }))"; }
 
 # _move_workspace <ws> <monitor> : move a workspace to a monitor.
-_move_workspace(){ _hypr_eval "hl.dispatch(hl.dsp.workspace.move({ workspace = $(_ws_lua "$1"), monitor = \"$2\" }))"; }
+_move_workspace(){ _hypr_eval "hl.dispatch(hl.dsp.workspace.move({ workspace = $(_ws_lua "$1"), monitor = \"$(printf '%s' "$2" | _lua_esc)\" }))"; }

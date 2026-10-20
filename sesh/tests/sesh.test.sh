@@ -618,6 +618,7 @@ echo "# Hyprland placement (dry-run Lua)"
 t_spawn_placed_rules(){ newtmp; export HOME="$TMP"
   export SESH_UNAME=Linux SESH_DRYRUN=1
   id=aaaaaaaa-0000-0000-0000-000000000001
+  stage='[workspace special:sesh-stage silent] foot '
   out="$(run_fn _spawn_placed "$id" argo)"
   assert_has "a named workspace gets a silent rule"      '[workspace name:argo silent] foot ' "$out"
   assert_has "only the uuid follows sesh-local --sid"     "/sesh-local --sid $id\"))" "$out"
@@ -625,12 +626,20 @@ t_spawn_placed_rules(){ newtmp; export HOME="$TMP"
   assert_has "a numbered workspace rule"                  '[workspace 3 silent] foot ' "$out"
   out="$(run_fn _spawn_placed "$id" special:stash)"
   assert_has "the stash rule"                             '[workspace special:stash silent] foot ' "$out"
-  out="$(run_fn _spawn_placed "$id" 'my "q" \ws')"
-  assert_has "quotes and backslashes are escaped for Lua" '[workspace name:my \"q\" \\ws silent]' "$out"
+  out="$(run_fn _spawn_placed "$id" 'my"q"\ws')"
+  assert_has "quotes and backslashes are escaped for Lua" '[workspace name:my\"q\"\\ws silent]' "$out"
+  out="$(run_fn _spawn_placed "$id" 'pinley cicd')"
+  assert_has "a name with a space is staged (rules split on whitespace)" "$stage" "$out"
   out="$(run_fn _spawn_placed "$id" 'a]b')"
-  assert_hasnt "a name holding ] opens unplaced"          '[workspace' "$out"
+  assert_has "a name holding ] is staged"                 "$stage" "$out"
+  out="$(run_fn _spawn_placed "$id" 'a;b')"
+  assert_has "a name holding ; is staged"                 "$stage" "$out"
+  out="$(run_fn _spawn_placed "$id" 'a[b')"
+  assert_has "a name holding [ is staged"                 "$stage" "$out"
   out="$(run_fn _spawn_placed "$id" '')"
   assert_has "no workspace opens unplaced"                'exec_cmd("foot ' "$out"
+  out="$(run_fn _spawn_placed 'x; touch /tmp/p #' argo)"; rc=$?
+  if [ "$rc" = 1 ] && [ -z "$out" ]; then ok "a non-uuid id is refused"; else no "a non-uuid id should be refused (rc $rc, out '$out')"; fi
   clean_env
 }
 t_move_lua(){ newtmp; export HOME="$TMP"
@@ -639,8 +648,14 @@ t_move_lua(){ newtmp; export HOME="$TMP"
   assert_has "window move by address, no follow" 'hl.dsp.window.move({ workspace = "name:argo", follow = false, window = "address:0xa1" })' "$out"
   out="$(run_fn _move_window 0xa1 3)"
   assert_has "a numbered target is a bare number" 'workspace = 3,' "$out"
+  out="$(run_fn _move_window 0xa1 special:stash)"
+  assert_has "a special target keeps its prefix" 'workspace = "special:stash",' "$out"
+  out="$(run_fn _move_window 0xa1 'pinley cicd')"
+  assert_has "a move takes a name with a space" 'workspace = "name:pinley cicd",' "$out"
   out="$(run_fn _move_workspace argo DP-1)"
   assert_has "workspace move to a monitor" 'hl.dsp.workspace.move({ workspace = "name:argo", monitor = "DP-1" })' "$out"
+  out="$(run_fn _move_workspace argo 'DP"1')"
+  assert_has "the monitor name is escaped for Lua" 'monitor = "DP\"1"' "$out"
   clean_env
 }
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
