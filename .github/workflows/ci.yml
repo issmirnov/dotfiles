@@ -45,3 +45,15 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint zsh shebangs
         run: cd zsh && if [[ $(grep -r '#!/bin/zsh' . --exclude-dir=zgen) ]]; then echo "Found malformed shebangs"; exit 1; fi
+
+  # Paste regression tests for zsh/config/zsh-paste.zsh. Each test runs an
+  # interactive zsh on a pty and pastes with timed pauses. Its own job, so a
+  # flaky step in the install job can't hide a failure here.
+  test-zsh-paste:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zsh
+        run: sudo apt-get update && sudo apt-get install -y zsh
+      - name: Run paste tests
+        run: python3 -m unittest -v tests.test_zsh_paste
