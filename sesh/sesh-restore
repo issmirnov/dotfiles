@@ -228,7 +228,7 @@ restore_linux(){
   stage="$("$HYPRCTL" clients -j 2>/dev/null | jq -r '.[] | select(.workspace.name == "special:sesh-stage") | [.address, (.pid | tostring)] | join("\u001f")' 2>/dev/null)"
   while IFS=$'\x1f' read -r addr pid; do
     [ -n "$addr" ] || continue
-    id="$(tr '\0' '\n' < "$PROC/$pid/cmdline" 2>/dev/null | awk 'p { print; exit } $0 == "--sid" { p = 1 }')"
+    id="$(tr '\0' '\n' 2>/dev/null < "$PROC/$pid/cmdline" | awk 'p { print; exit } $0 == "--sid" { p = 1 }')"
     ws=""
     if [ -n "$id" ]; then ws="$(jq -r --arg s "$id" '.local[]? | select(.id == $s) | .ws // empty' "$SNAP" 2>/dev/null | head -1)"; fi
     [ -n "$ws" ] || ws="$("$HYPRCTL" activeworkspace -j 2>/dev/null | jq -r '.name // empty' 2>/dev/null)"

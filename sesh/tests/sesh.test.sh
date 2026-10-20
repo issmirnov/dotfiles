@@ -803,23 +803,27 @@ t_restore_linux_cap_running(){ newtmp; export HOME="$TMP"; mkrestore
   assert_has   "running sessions do not use up the cap" "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
   assert_hasnt "a running session is not reopened"      "--sid aaaaaaaa-0000-0000-0000-000000000003" "$out"
   assert_hasnt "nothing counts as over the cap"         "over the cap" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  assert_has   "the dry-run summary counts them"        "running 2" "$out"
   clean_env
 }
 t_restore_linux_stranded(){ newtmp; export HOME="$TMP"; mkrestore
-  # No claude starts (no HYPR_SIMULATE), and two windows sit on the stage. 0xs1's foot
-  # carries --sid of id 1, saved on "pinley cicd"; 0xs2's carries no --sid.
+  # No claude starts (no HYPR_SIMULATE), and three windows sit on the stage. 0xs1's foot
+  # carries --sid of id 1, saved on "pinley cicd"; 0xs2's carries no --sid; 0xs3's
+  # process is gone, so it has no cmdline at all.
   jq '.local[0].ws = "pinley cicd"' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
   cat > "$TMP/hypr/clients.json" <<'EOF'
 [{"address":"0xs1","pid":6001,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]},
- {"address":"0xs2","pid":6002,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]}]
+ {"address":"0xs2","pid":6002,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]},
+ {"address":"0xs3","pid":6003,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]}]
 EOF
   mkdir -p "$TMP/proc/6001" "$TMP/proc/6002"
   printf '%s\0' foot -e /x/sesh-local --sid aaaaaaaa-0000-0000-0000-000000000001 > "$TMP/proc/6001/cmdline"
   printf '%s\0' foot > "$TMP/proc/6002/cmdline"
-  bash "$SESHRESTORE" >/dev/null 2>&1
+  err="$(bash "$SESHRESTORE" 2>&1 >/dev/null)"
   ev="$(evals)"
   assert_has "a stranded window moves to its saved workspace"   'window.move({ workspace = "name:pinley cicd", follow = false, window = "address:0xs1" })' "$ev"
   assert_has "an unmatched window moves to the active workspace" 'window.move({ workspace = 1, follow = false, window = "address:0xs2" })' "$ev"
+  assert_hasnt "a window whose process is gone prints no error"  "cmdline" "$err"
   clean_env
 }
 t_restore_linux_existing_ws(){ newtmp; export HOME="$TMP"; mkrestore
@@ -868,6 +872,15 @@ t_restore_linux_transcript_cwd(){ newtmp; export HOME="$TMP"; mkrestore
   assert_has "the transcript's cwd decides the skip" "aaaaaaaa-0000-0000-0000-000000000002 (cwd gone" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
   clean_env
 }
+t_restore_linux_internal_error(){ newtmp; export HOME="$TMP"; mkrestore
+  # A local list that is the number 2.5 breaks the cap arithmetic, so bash drops the Linux
+  # `if`. Restore must then stop with an error instead of going on to the macOS loop.
+  printf '{"saved_at":"t","instance":"OLD","local":2.5,"remote":[]}\n' > "$TMP/.local/state/sesh/snapshot.json"
+  bash "$SESHRESTORE" >/dev/null 2>&1; rc=$?
+  if [ "$rc" = 1 ]; then ok "an internal error exits 1"; else no "an internal error should exit 1 (got $rc)"; fi
+  assert_has "the stop is logged" "restore stopped on an internal error" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -884,7 +897,7 @@ RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
 RUN="$RUN t_local_sid t_local_real_run"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
-RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd t_restore_linux_internal_error"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do

@@ -34,7 +34,7 @@ Three ideas carry the whole design. None of them depend on this repo.
 2. **One small launcher per session type.** A local session and a remote session open differently, so each has its own launcher script (`sesh-local`, `sesh-remote`). Everything else calls those two.
 3. **The terminal is the state store.** Session identity, titles, and directory all come from the running session (the Claude transcript on disk, the `tmux` session name), so the snapshot holds only pointers (IDs and paths, plus window placement on Linux), never content.
 
-Layered on top: a `mosh` transport that survives sleep, `tmux` for persistence on the remote side, and Ghostty windows that carry real titles.
+Layered on top: a `mosh` transport that survives sleep, `tmux` for persistence on the remote side, and, on macOS, Ghostty windows that carry real titles.
 
 ## Architecture
 
@@ -87,7 +87,7 @@ State lives in `~/.local/state/sesh/`:
 | `sesh/sesh-restore` | Rebuilds the snapshot as windows: Ghostty at login on macOS, placed foot windows at Hyprland start on Linux. Skips live ones; caps the count. |
 | `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. `--sid <uuid>` is the Linux restore form. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 192 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+| `sesh/tests/sesh.test.sh` | 196 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
@@ -121,7 +121,7 @@ Everything machine-specific is small and in known places. The checklist:
    ```
    Then `mkdir -p ~/.ssh/sockets && chmod 700 ~/.ssh/sockets`.
 
-2. **The box name(s) in the scripts**: for a single remote box the scripts read `SESH_HOST` (default `hexane`) — name your ssh alias `hexane`, or export `SESH_HOST=mybox` in your shell, or edit the default in `sesh/sesh`, `sesh/sesh-restore`, `sesh/sesh-remote`. For **several** boxes, set `SESH_HOSTS="box1 box2 box3"` (or list them one per line in `~/.config/sesh/hosts`) and the picker queries every one; `SESH_HOST` is the single-box fallback when neither is set.
+2. **The box name(s) in the scripts**: for a single remote box the scripts read `SESH_HOST` (default `hexane`). Name your ssh alias `hexane`, or export `SESH_HOST=mybox` in your shell, or edit the default in `sesh/sesh`, `sesh/sesh-restore`, `sesh/sesh-remote`. For **several** boxes, set `SESH_HOSTS="box1 box2 box3"` (or list them one per line in `~/.config/sesh/hosts`) and the picker queries every one; `SESH_HOST` is the single-box fallback when neither is set.
 
 3. **The local launcher** (`sesh/sesh-local`): if you do not use a key-routing wrapper, delete the `ccf` branch and run Claude directly:
 
@@ -231,7 +231,7 @@ Run the test suite (temp `HOME`, fixture transcripts, injected `ssh`, no network
 
 ```bash
 bash ~/.dotfiles/sesh/tests/sesh.test.sh
-# -> # passed 192, failed 0
+# -> # passed 196, failed 0
 ```
 
 Preview a restore without opening anything:
@@ -275,7 +275,7 @@ Honest edges, so you know what to expect:
 
 - **Login restore must be loaded and verified.** `sesh-restore` is `RunAtLoad`, so it registers at the next login after the symlink exists. Check `launchctl list | grep sesh` and run `revive` by hand if you logged in before installing it.
 - **Remote markers go stale on reboot.** A remote session is in the snapshot only while its marker PID is alive. If the box is unreachable at restore (one short probe, no retry), remote entries are skipped; run `revive` once the box is back.
-- **Local entries restore first.** With more live local sessions than `SESH_CAP`, remote ones can be cut. Raise `SESH_CAP` if you run many of both.
+- **Local entries restore first (macOS).** With more live local sessions than `SESH_CAP`, remote ones can be cut. Raise `SESH_CAP` if you run many of both.
 - **macOS restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand. On Linux, restore runs at every Hyprland start, so a compositor crash is covered. A single foot window that dies is not reopened, and a plain `revive` cannot bring it back, because the next save (within 60 s) drops it from `snapshot.json`. Reopen it with the `sesh` picker, or from `history/` as the Linux section describes.
 - **A fast re-login on Linux.** A login restore runs for up to about a minute. If you log out and back in while it still runs, the new restore can find its lock and exit. Saves then stay off until you run `revive` once.
 - **Sessions saved without a workspace open where you are.** A session from a shared foot server window, or one saved while it sat on the stage, has no saved workspace. It reopens on the active workspace and takes focus.
