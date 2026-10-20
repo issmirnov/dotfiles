@@ -35,6 +35,9 @@ mkproj(){ local d="$TMP/.claude/projects/$1"; mkdir -p "$d"; local f="$d/$2.json
   printf '{"type":"user","cwd":"/Users/vania/Projects/%s","message":{"role":"user","content":"%s"}}\n' "$1" "$5" >>"$f"
   [ "$3" = yes ] && printf '{"type":"ai-title","aiTitle":"%s"}\n' "$4" >>"$f"
   printf '%s' "$f"; }
+# mktranscript <proj> <id> <cwd> : a one-line transcript whose first cwd is <cwd>.
+mktranscript(){ mkdir -p "$TMP/.claude/projects/$1"
+  printf '{"type":"user","cwd":"%s","message":{"role":"user","content":"hi"}}\n' "$3" > "$TMP/.claude/projects/$1/$2.jsonl"; }
 
 # run_fn <fn> <args...> : source sesh in a clean subshell and call a function.
 # Relies on exported HOME + SESH_* env already set by the caller.
@@ -51,24 +54,27 @@ clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOT
              export SESH_HYPRCTL=false; }
 
 # mkhypr : a fake hyprctl at $TMP/fake/hyprctl. It serves $TMP/hypr/<query>.json for
-# `instances|clients|monitors|workspaces -j` and logs every `eval` to $TMP/hypr/eval.log.
+# `instances|clients|monitors|workspaces|activeworkspace -j` (the active workspace is 1)
+# and logs every `eval` to $TMP/hypr/eval.log.
 # It exports SESH_HYPRCTL, SESH_PROC and SESH_UNAME=Linux.
 # With HYPR_SIMULATE=1, an exec_cmd eval that carries "--sid <uuid>" starts a fake
 # session: a registry entry (procStart 77), a claude -> foot chain in $TMP/proc, and a
-# foot window. The window lands on $HYPR_LAND_WS, or else on the rule's workspace.
+# foot window whose cmdline holds "--sid <uuid>", as a restored window's does. The window
+# lands on $HYPR_LAND_WS, or else on the rule's workspace.
 # A workspace it creates sits on $HYPR_LAND_MON (default DP-2).
-# HYPR_REQUIRE_SIG=1 makes clients/monitors/workspaces fail unless HYPRLAND_INSTANCE_SIGNATURE=SIG1.
+# HYPR_REQUIRE_SIG=1 makes the window queries fail unless HYPRLAND_INSTANCE_SIGNATURE=SIG1.
 mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
   printf '[{"instance":"SIG1","time":1,"pid":100,"wl_socket":"wayland-1"}]\n' > "$TMP/hypr/instances.json"
   printf '[{"id":0,"name":"DP-1","x":0},{"id":2,"name":"DP-2","x":3840}]\n' > "$TMP/hypr/monitors.json"
   printf '[]\n' > "$TMP/hypr/clients.json"
   printf '[]\n' > "$TMP/hypr/workspaces.json"
+  printf '{"id":1,"name":"1","monitor":"DP-1"}\n' > "$TMP/hypr/activeworkspace.json"
   cat > "$TMP/fake/hyprctl" <<'EOF'
 #!/bin/bash
 H="$(cd "$(dirname "$0")/.." && pwd)"
 case "$1" in
   instances) cat "$H/hypr/instances.json" ;;
-  clients|monitors|workspaces)
+  clients|monitors|workspaces|activeworkspace)
     # HYPR_REQUIRE_SIG=1: answer only a caller aimed at the live instance (SIG1), as
     # real hyprctl fails (exit 4) when the signature names a dead instance.
     if [ -n "${HYPR_REQUIRE_SIG:-}" ] && [ "${HYPRLAND_INSTANCE_SIGNATURE:-}" != "SIG1" ]; then exit 4; fi
@@ -82,6 +88,7 @@ case "$1" in
       n=$(wc -l < "$H/hypr/eval.log"); foot=$((7000 + n)); cl=$((8000 + n))
       mkdir -p "$H/proc/$foot" "$H/proc/$cl" "$H/.claude/sessions"
       printf '%s (foot) S 1 0 0 0 0 0 0 0 0 0 0 0 0 0 20 0 1 0 1 0 0\n' "$foot" > "$H/proc/$foot/stat"
+      printf '%s\0' foot -e sesh-local --sid "$sid" > "$H/proc/$foot/cmdline"
       printf '%s (claude) S %s 0 0 0 0 0 0 0 0 0 0 0 0 0 20 0 1 0 77 0 0\n' "$cl" "$foot" > "$H/proc/$cl/stat"
       printf '{"pid":%s,"sessionId":"%s","cwd":"/tmp","procStart":"77","kind":"interactive","updatedAt":1}\n' "$cl" "$sid" > "$H/.claude/sessions/$cl.json"
       jq --argjson p "$foot" --arg w "$ws" '. + [{address: ("0xf" + ($p|tostring)), pid: $p, class: "foot", workspace: {id: 1, name: $w}, monitor: 2, at: [0, 0]}]' "$H/hypr/clients.json" > "$H/hypr/c.tmp" && mv "$H/hypr/c.tmp" "$H/hypr/clients.json"
@@ -140,7 +147,10 @@ mkrestore(){ mkhypr
   export HYPRLAND_INSTANCE_SIGNATURE=SIG1 SESH_STAGGER=0 SESH_VERIFY_WAIT=0 SESH_NOTIFY="$TMP/fake/notify"
   printf '#!/bin/bash\necho "$@" >> "%s/fake/notify.log"\n' "$TMP" > "$TMP/fake/notify"; chmod +x "$TMP/fake/notify"
   mkdir -p "$TMP/w/argo" "$TMP/w/three" "$TMP/w/argo3"
-  for i in 1 2 3; do mkproj "p$i" "aaaaaaaa-0000-0000-0000-00000000000$i" no "" "hi" >/dev/null; done
+  # Each transcript starts in its session's cwd, where sesh-local --sid resumes it.
+  mktranscript p1 aaaaaaaa-0000-0000-0000-000000000001 "$TMP/w/argo"
+  mktranscript p2 aaaaaaaa-0000-0000-0000-000000000002 "$TMP/w/three"
+  mktranscript p3 aaaaaaaa-0000-0000-0000-000000000003 "$TMP/w/argo3"
   cat > "$TMP/.local/state/sesh/snapshot.json" <<EOF
 {"saved_at":"t","instance":"OLD","local":[
  {"id":"aaaaaaaa-0000-0000-0000-000000000001","cwd":"$TMP/w/argo","ws":"argo","monitor":"DP-1","at":[0,0],"updated":200},
@@ -683,6 +693,7 @@ t_restore_linux_dry(){ newtmp; export HOME="$TMP"; mkrestore
   out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
   assert_has    "a dry run plans a placed spawn"         '[workspace name:argo silent] foot ' "$out"
   assert_has    "a numbered workspace is planned"        '[workspace 3 silent] foot ' "$out"
+  assert_has    "a dry run prints a summary"             "dry run: would open 3 window(s)" "$out"
   assert_nofile "a dry run spawns nothing"               "$TMP/hypr/eval.log"
   assert_nofile "a dry run writes no marker"             "$TMP/.local/state/sesh/restored"
   assert_hasnt  "remote entries are not restored on linux" "sesh-remote" "$out"
@@ -784,6 +795,79 @@ t_restore_linux_stale_sig(){ newtmp; export HOME="$TMP"; mkrestore
   assert_nofile "no live instance: no marker" "$TMP/.local/state/sesh/restored"
   clean_env
 }
+t_restore_linux_cap_running(){ newtmp; export HOME="$TMP"; mkrestore
+  # The two newest (ids 3 and 1) are running; id 2 is the one that is missing.
+  mkstat 901 claude 1 55; mkreg 901 "aaaaaaaa-0000-0000-0000-000000000003" "$TMP/w/argo3" 55
+  mkstat 902 claude 1 56; mkreg 902 "aaaaaaaa-0000-0000-0000-000000000001" "$TMP/w/argo" 56
+  out="$(SESH_CAP=2 SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has   "running sessions do not use up the cap" "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
+  assert_hasnt "a running session is not reopened"      "--sid aaaaaaaa-0000-0000-0000-000000000003" "$out"
+  assert_hasnt "nothing counts as over the cap"         "over the cap" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  clean_env
+}
+t_restore_linux_stranded(){ newtmp; export HOME="$TMP"; mkrestore
+  # No claude starts (no HYPR_SIMULATE), and two windows sit on the stage. 0xs1's foot
+  # carries --sid of id 1, saved on "pinley cicd"; 0xs2's carries no --sid.
+  jq '.local[0].ws = "pinley cicd"' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
+  cat > "$TMP/hypr/clients.json" <<'EOF'
+[{"address":"0xs1","pid":6001,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]},
+ {"address":"0xs2","pid":6002,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]}]
+EOF
+  mkdir -p "$TMP/proc/6001" "$TMP/proc/6002"
+  printf '%s\0' foot -e /x/sesh-local --sid aaaaaaaa-0000-0000-0000-000000000001 > "$TMP/proc/6001/cmdline"
+  printf '%s\0' foot > "$TMP/proc/6002/cmdline"
+  bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has "a stranded window moves to its saved workspace"   'window.move({ workspace = "name:pinley cicd", follow = false, window = "address:0xs1" })' "$ev"
+  assert_has "an unmatched window moves to the active workspace" 'window.move({ workspace = 1, follow = false, window = "address:0xs2" })' "$ev"
+  clean_env
+}
+t_restore_linux_existing_ws(){ newtmp; export HOME="$TMP"; mkrestore
+  # argo already exists on DP-2 before the restore, as on a live desktop during a history
+  # revive. Restore must not pull a live workspace over to the saved monitor (DP-1).
+  printf '[{"id":-5,"name":"argo","monitor":"DP-2"}]\n' > "$TMP/hypr/workspaces.json"
+  HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has   "the restore spawns onto the existing workspace" 'exec_cmd("[workspace name:argo silent] foot ' "$ev"
+  assert_hasnt "an existing workspace stays on its monitor"     'workspace.move({ workspace = "name:argo"' "$ev"
+  clean_env
+}
+t_restore_linux_unplugged(){ newtmp; export HOME="$TMP"; mkrestore
+  # Id 2's monitor is unplugged, so its new workspace 7 stays where Hyprland put it. argo
+  # (saved on DP-1, created on DP-2) still moves, which shows the fix step ran.
+  jq '.local[1].ws = "7" | .local[1].monitor = "HDMI-A-9"' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
+  SESH_MON_WAIT=1 HYPR_SIMULATE=1 HYPR_LAND_MON=DP-2 bash "$SESHRESTORE" >/dev/null 2>&1
+  ev="$(evals)"
+  assert_has   "a workspace whose monitor is present moves" 'workspace.move({ workspace = "name:argo", monitor = "DP-1" })' "$ev"
+  assert_hasnt "nothing moves to an unplugged monitor"      'monitor = "HDMI-A-9"' "$ev"
+  clean_env
+}
+t_restore_linux_junk_tunables(){ newtmp; export HOME="$TMP"; mkrestore
+  # A junk tunable must not drop out of restore_linux into the macOS loop, which calls
+  # `open`. A fake `open` on restore's PATH records any call. With no remote entries, the
+  # macOS loop (if reached) makes no network probe.
+  jq '.remote = []' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
+  mkdir -p "$TMP/.local/bin"
+  printf '#!/bin/bash\necho "$@" >> "%s/fake/open.log"\n' "$TMP" > "$TMP/.local/bin/open"; chmod +x "$TMP/.local/bin/open"
+  out="$(SESH_CAP=2x SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_hasnt "a junk SESH_CAP stays out of the macOS loop" "DRYRUN would open" "$out"
+  assert_has   "a junk SESH_CAP falls back to the default"   "--sid aaaaaaaa-0000-0000-0000-000000000002" "$out"
+  SESH_CAP=08 SESH_VERIFY_WAIT=08 HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
+  assert_nofile "a leading zero reads as decimal"            "$TMP/fake/open.log"
+  assert_has    "the restore finishes"                       "restored 3 of 3" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  clean_env
+}
+t_restore_linux_transcript_cwd(){ newtmp; export HOME="$TMP"; mkrestore
+  # Id 1 was saved inside a worktree that is gone now. Its transcript starts in $TMP/w/argo,
+  # which exists, and sesh-local --sid resumes it there, so it must open.
+  jq --arg c "$TMP/w/argo/.claude/worktrees/gone" '.local[0].cwd = $c' "$TMP/.local/state/sesh/snapshot.json" > "$TMP/s.tmp" && mv "$TMP/s.tmp" "$TMP/.local/state/sesh/snapshot.json"
+  # Id 2's transcript starts in a directory that is gone, though its saved cwd exists.
+  mktranscript p2 aaaaaaaa-0000-0000-0000-000000000002 "$TMP/w/removed"
+  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"
+  assert_has "a gone saved cwd does not block a resumable session" "--sid aaaaaaaa-0000-0000-0000-000000000001" "$out"
+  assert_has "the transcript's cwd decides the skip" "aaaaaaaa-0000-0000-0000-000000000002 (cwd gone" "$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  clean_env
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -800,7 +884,7 @@ RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
 RUN="$RUN t_local_sid t_local_real_run"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
-RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
