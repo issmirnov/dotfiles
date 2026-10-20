@@ -586,6 +586,19 @@ t_save_stale_signature(){ newtmp; export HOME="$TMP"; mksave
   assert_has "save reaches the live instance despite a stale signature in the env" "aaaaaaaa" "$(snap)"
   clean_env
 }
+echo "# sesh-local --sid"
+t_local_sid(){ newtmp; export HOME="$TMP"
+  mkdir -p "$TMP/work dir"
+  f="$(mkproj projS 12345678-aaaa-bbbb-cccc-000000000001 yes "T" "x")"
+  sed -i.bak "s#/Users/vania/Projects/projS#$TMP/work dir#" "$f"
+  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 12345678-aaaa-bbbb-cccc-000000000001)"
+  assert_has "--sid reads the cwd from the transcript"  "would run in $TMP/work dir as" "$out"
+  assert_has "--sid titles the window with the id"      'as "claude · 12345678"' "$out"
+  assert_has "--sid resumes that session"               "ccf --resume 12345678-aaaa-bbbb-cccc-000000000001" "$out"
+  assert_has "--sid keeps the window open with a shell" 'then exec $SHELL -i' "$out"
+  out="$(SESH_DRYRUN=1 bash "$_BIN/sesh-local" --sid 99999999-aaaa-bbbb-cccc-000000000009)"
+  assert_has "--sid without a transcript falls back to HOME" "would run in $TMP as" "$out"
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -600,6 +613,7 @@ RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature"
+RUN="$RUN t_local_sid"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
