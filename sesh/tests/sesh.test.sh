@@ -516,7 +516,7 @@ t_save_gate(){ newtmp; export HOME="$TMP"; mksave
   printf '{"saved_at":"y","instance":"SIG1","local":[{"id":"held"}],"remote":[]}\n' > "$S/snapshot.json"
   bash "$SESHSAVE"
   assert_has "no live instance: no write" "held" "$(snap)"
-  printf '[{"instance":"A"},{"instance":"B"}]\n' > "$TMP/hypr/instances.json"; bash "$SESHSAVE"
+  printf '[{"instance":"SIG1"},{"instance":"B"}]\n' > "$TMP/hypr/instances.json"; bash "$SESHSAVE"
   assert_has "two live instances: no write" "held" "$(snap)"
   clean_env
 }
@@ -531,8 +531,9 @@ t_save_first_run(){ newtmp; export HOME="$TMP"; mksave
 t_save_fail_closed(){ newtmp; export HOME="$TMP"; mksave
   printf '{"saved_at":"z","instance":"SIG1","local":[{"id":"intact"}],"remote":[]}\n' > "$TMP/.local/state/sesh/snapshot.json"
   printf 'garbage\n' > "$TMP/hypr/clients.json"
-  bash "$SESHSAVE"
+  err="$(bash "$SESHSAVE" 2>&1 >/dev/null)"
   assert_has "a failed hyprctl query leaves the snapshot intact" "intact" "$(snap)"
+  assert_has "a fail-closed save says why on stderr" "snapshot left as is" "$err"
   clean_env
 }
 t_save_history(){ newtmp; export HOME="$TMP"; mksave
@@ -560,6 +561,16 @@ t_save_darwin_unchanged(){ newtmp; export HOME="$TMP"
   assert_hasnt  "darwin save adds no updated"      'updated'       "$out"
   assert_nofile "darwin save writes no history"    "$TMP/.local/state/sesh/history"
 }
+t_save_odd_updatedat(){ newtmp; export HOME="$TMP"; mksave
+  mkreg 312 "bbbbbbbb-0000-0000-0000-000000000312" "/w/three" 5 interactive '"2026-10-19T10:00:00Z"'
+  bash "$SESHSAVE"
+  assert_has "linux saves a session whose updatedAt is not a number" "bbbbbbbb" "$(snap)"
+  clean_env
+  H2="$TMP/mac"; mkdir -p "$H2/.claude/sessions" "$H2/.local/state/sesh"
+  printf '{"pid":%s,"sessionId":"mac-2","cwd":"/Users/x","updatedAt":"soon"}\n' "$$" > "$H2/.claude/sessions/$$.json"
+  HOME="$H2" SESH_UNAME=Darwin SESH_SKIP_BOOTGUARD=1 bash "$SESHSAVE"
+  assert_has "darwin saves a session whose updatedAt is not a number, as before" '"id": "mac-2"' "$(cat "$H2/.local/state/sesh/snapshot.json" 2>/dev/null)"
+}
 RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_single_fallback t_hosts_single_legacy
      t_self_env t_self_hostname_match t_self_near_miss
      t_cache_hit t_cache_miss_mtime
@@ -573,7 +584,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
 RUN="$RUN t_lib_via_symlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
-RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged"
+RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do

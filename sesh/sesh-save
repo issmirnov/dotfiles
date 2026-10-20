@@ -33,7 +33,7 @@ _save_gate || exit 0
 rows=""
 for j in "$REG"/*.json; do
   [ -e "$j" ] || continue
-  rec="$(jq -r '[(.pid // "" | tostring), (.sessionId // ""), (.cwd // ""), (.procStart // "" | tostring), (.kind // ""), ((.updatedAt // 0) / 1000 | floor | tostring)] | join("\u001f")' "$j" 2>/dev/null)" || continue
+  rec="$(jq -r '[(.pid // "" | tostring), (.sessionId // ""), (.cwd // ""), (.procStart // "" | tostring), (.kind // ""), ((.updatedAt // 0) | if type == "number" then . / 1000 | floor else 0 end | tostring)] | join("\u001f")' "$j" 2>/dev/null)" || continue
   IFS=$'\x1f' read -r pid id cwd pstart kind upd <<< "$rec"
   [ -n "$pid" ] && [ -n "$id" ] || continue
   _want_session "$kind" || continue
@@ -42,7 +42,7 @@ for j in "$REG"/*.json; do
 done
 
 # Placement (Linux). A failed Hyprland query exits here, so no snapshot is written from it.
-cap="$(_capture_windows $(printf '%s' "$rows" | cut -d $'\x1f' -f1))" || exit 0
+cap="$(_capture_windows $(printf '%s' "$rows" | cut -d $'\x1f' -f1))" || { echo "sesh-save: Hyprland query failed; snapshot left as is" >&2; exit 0; }
 local_json="$(printf '%s' "$rows" | jq -R -s -c --argjson cap "$cap" --arg os "$SESH_OS" '
   split("\n") | map(select(length > 0) | split("\u001f"))
   | map(. as $r | ($cap[$r[0]] // {}) as $c
@@ -52,7 +52,7 @@ local_json="$(printf '%s' "$rows" | jq -R -s -c --argjson cap "$cap" --arg os "$
              then {updated: ($r[3] | tonumber? // 0)} + ($c | {ws, monitor, at} | with_entries(select(.value != null)))
              else {} end))
   | unique_by(.id)
-  | if $os == "linux" then sort_by(.monitor // "", .ws // "", (.at // [0, 0])[0], (.at // [0, 0])[1]) else . end')" || exit 0
+  | if $os == "linux" then sort_by(.monitor // "", .ws // "", (.at // [0, 0])[0], (.at // [0, 0])[1]) else . end')" || { echo "sesh-save: jq failed; snapshot left as is" >&2; exit 0; }
 [ -n "$local_json" ] || local_json='[]'
 
 # Remote: markers are host-namespaced (remote/<host>/<session>). Prune dead PIDs,
@@ -92,7 +92,7 @@ remote_json=$(
 [ -n "$remote_json" ] || remote_json='[]'
 
 new="$(jq -n --argjson l "$local_json" --argjson r "$remote_json" --arg ts "$(date -u +%FT%TZ)" --arg inst "${SESH_INSTANCE:-}" \
-  '{saved_at: $ts} + (if $inst != "" then {instance: $inst} else {} end) + {local: $l, remote: $r}')" || exit 0
+  '{saved_at: $ts} + (if $inst != "" then {instance: $inst} else {} end) + {local: $l, remote: $r}')" || { echo "sesh-save: jq failed; snapshot left as is" >&2; exit 0; }
 
 # History (Linux): keep the last 20 distinct snapshots. A change in timestamps alone
 # (saved_at, updated) does not count.
@@ -101,9 +101,10 @@ if [ "$SESH_OS" = linux ] && [ -r "$SNAP" ]; then
   norm='del(.saved_at) | .local |= map(del(.updated))'
   [ "$(jq -cS "$norm" "$SNAP" 2>/dev/null)" = "$(printf '%s' "$new" | jq -cS "$norm" 2>/dev/null)" ] && changed=0
 fi
-printf '%s\n' "$new" > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"
-if [ "$SESH_OS" = linux ] && [ "$changed" = 1 ]; then
-  mkdir -p "$HIST"
-  cp "$SNAP" "$HIST/$(date -u +%Y%m%dT%H%M%SZ).$$.json"
-  ls -1t "$HIST"/*.json 2>/dev/null | tail -n +21 | while IFS= read -r old; do rm -f -- "$old"; done
+if printf '%s\n' "$new" > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"; then
+  if [ "$SESH_OS" = linux ] && [ "$changed" = 1 ]; then
+    mkdir -p "$HIST"
+    cp "$SNAP" "$HIST/$(date -u +%Y%m%dT%H%M%SZ).$$.json"
+    ls -1t "$HIST"/*.json 2>/dev/null | tail -n +21 | while IFS= read -r old; do rm -f -- "$old"; done
+  fi
 fi
