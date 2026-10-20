@@ -33,6 +33,8 @@
     ~/bin/hop: i3/scripts/hop
     ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
     ~/.config/systemd/user/tmux.service: systemd/tmux.service
+    ~/.config/systemd/user/sesh-save.service: sesh/systemd/sesh-save.service
+    ~/.config/systemd/user/sesh-save.timer: sesh/systemd/sesh-save.timer
 
 
 - shell:
@@ -53,3 +55,6 @@
     # Idempotent; safe to re-run.
     - ['if systemctl --user show-environment >/dev/null 2>&1; then systemctl --user daemon-reload && systemctl --user enable tmux.service; else echo "no systemd --user session; skipping tmux.service enable (fine in containers/CI)"; fi', "Enable tmux-resurrect boot-restore (systemd --user)"]
     - ['if loginctl list-users >/dev/null 2>&1; then loginctl enable-linger "$USER" 2>/dev/null || sudo loginctl enable-linger "$USER" || echo "could not enable linger; skipping"; else echo "no logind; skipping linger (fine in containers/CI)"; fi', "Linger so the tmux service starts at boot pre-login"]
+    # sesh auto-save (Hyprland desktops only): sesh-save.timer snapshots the open Claude
+    # sessions and their workspaces every 60 s; hyprland.lua runs sesh-restore at start.
+    - ['if command -v Hyprland >/dev/null 2>&1 && systemctl --user show-environment >/dev/null 2>&1; then systemctl --user daemon-reload && systemctl --user enable --now sesh-save.timer; else echo "no Hyprland or no systemd --user; skipping sesh-save.timer"; fi', "Enable sesh-save.timer (Hyprland desktops)"]
