@@ -1,7 +1,8 @@
 #!/bin/bash
 # sesh-local <cwd> <name> <claude-args...> — window command for sesh / sesh-restore.
-# sesh-local --sid <uuid> — the Linux restore form: read the cwd from the session's
-#   transcript, resume it, then keep the window open with an interactive shell.
+# sesh-local --sid <uuid> — the restore form (sesh-restore's foot windows, and
+#   tmux-resurrect's Claude panes): read the cwd from the session's transcript and
+#   resume it. Outside tmux it then keeps the window open with an interactive shell.
 # cd into <cwd>, title the window "claude · <name>", then launch claude via the `ccf`
 # ccflare launcher with the given args (e.g. --resume <id>). A separate launcher so the
 # caller hands it clean argv through `open -e` (Ghostty's -e preserves spaced args).
@@ -13,7 +14,8 @@ if [ "${1:-}" = "--sid" ]; then
   f="$(ls "$HOME"/.claude/projects/*/"$sid".jsonl 2>/dev/null | head -1)"
   sid_cwd="$(grep -a -m1 '"cwd"' "$f" 2>/dev/null | jq -rc 'select(.cwd!=null)|.cwd' 2>/dev/null | head -1)"
   set -- "${sid_cwd:-$HOME}" "${sid:0:8}" --resume "$sid"
-  keep_shell=1
+  # A tmux pane already has its shell to return to; a foot window does not.
+  [ -n "${TMUX:-}" ] || keep_shell=1
 fi
 cwd="${1:?usage: sesh-local <cwd> <name> <claude-args...>}"; shift
 name="${1:-claude}"; shift

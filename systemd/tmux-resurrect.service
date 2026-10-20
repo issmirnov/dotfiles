@@ -1,6 +1,9 @@
 [Unit]
 Description=tmux server (detached; sessions restored by tmux-resurrect at boot)
 Documentation=man:tmux(1)
+# Not named tmux.service: with @continuum-boot off, tmux-continuum runs
+# `systemctl --user disable tmux.service` on every config load, and that deleted
+# the linked unit. systemd/enable-tmux-resurrect retires the old name.
 
 [Service]
 Type=oneshot

@@ -1,0 +1,93 @@
+#!/bin/bash
+# resurrect-claude-ids <state-file> : tmux-resurrect post-save-layout hook.
+#
+# resurrect restores a Claude pane by command name, and `claude --continue` resumes the
+# newest conversation in the pane's directory. That can be another pane's conversation,
+# or one a foot window resumes (sesh). This hook records the conversation each pane
+# really runs. For every saved pane with a live claude process below it, it reads the
+# session ID from ~/.claude/sessions/<pid>.json and rewrites the saved command to
+# `sesh-local --sid <id>`. A pane that already runs `sesh-local --sid <id>` keeps that
+# ID even when the registry has no entry yet. tmux.conf restores this form through
+# "sesh-local --sid->…/sesh-local --sid *". Any other pane keeps resurrect's command,
+# and the "~claude->…" entry restores it with --continue, as before.
+#
+# Only a UUID taken from the registry or the saved command enters the rewritten
+# command, because restore types it into the pane's shell.
+#
+# Seams for tests: RZ_TMUX (tmux binary), RZ_PS (ps binary), RZ_PROC (/proc root) and
+# RZ_SESSIONS (the registry). Must parse under bash 3.2 (macOS /bin/bash).
+set -u
+f="${1:-}"
+[ -n "$f" ] && [ -f "$f" ] || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+TMUX_BIN="${RZ_TMUX:-tmux}"
+PS_BIN="${RZ_PS:-ps}"
+PROC="${RZ_PROC:-/proc}"
+REG="${RZ_SESSIONS:-$HOME/.claude/sessions}"
+
+# "<session>\t<window>\t<pane>\t<pane pid>" for every live pane, and "<pid> <ppid> <comm>"
+# for every process. A failed query leaves the state file as resurrect wrote it.
+panes="$("$TMUX_BIN" list-panes -a -F '#{session_name}	#{window_index}	#{pane_index}	#{pane_pid}' 2>/dev/null)" || exit 0
+procs="$("$PS_BIN" -A -o pid= -o ppid= -o comm= 2>/dev/null)" || exit 0
+
+# _claude_under <pid> : the PID of the first claude process at most four levels below
+# <pid>. A pane that resurrect restored runs zsh -> sesh-local -> claude.
+_claude_under(){
+  printf '%s\n' "$procs" | awk -v root="$1" '
+    { pid[NR] = $1; ppid[NR] = $2; comm[NR] = $3 }
+    END {
+      front[root] = 1
+      for (d = 1; d <= 4; d++) {
+        n = 0
+        for (i = 1; i <= NR; i++) if (ppid[i] in front) {
+          if (comm[i] ~ /(^|\/)claude$/) { print pid[i]; exit }
+          below[pid[i]] = 1; n++
+        }
+        if (n == 0) exit
+        delete front
+        for (p in below) front[p] = 1
+        delete below
+      }
+    }'
+}
+
+# _session_of <pid> : the session ID that the registry records for claude process <pid>.
+# Non-zero for a missing entry, a non-interactive session, an ID that is not a UUID, or
+# (on Linux) an entry whose procStart is not this process's start time.
+_session_of(){
+  local pid="$1" rec="" id="" kind="" start="" st=""
+  [ -f "$REG/$pid.json" ] || return 1
+  rec="$(jq -r '[(.sessionId // "" | tostring), (.kind // "" | tostring), (.procStart // "" | tostring)] | join("\u001f")' "$REG/$pid.json" 2>/dev/null)" || return 1
+  IFS=$'\x1f' read -r id kind start <<< "$rec"
+  case "$id" in ''|*[!0-9a-f-]*) return 1 ;; esac
+  [ -z "$kind" ] || [ "$kind" = interactive ] || return 1
+  if [ -n "$start" ] && [ -r "$PROC/$pid/stat" ]; then
+    st="$(cat "$PROC/$pid/stat" 2>/dev/null)"
+    set -- ${st##*) }
+    [ "${20:-}" = "$start" ] || return 1
+  fi
+  printf '%s' "$id"
+}
+
+map=""
+while IFS=$'\t' read -r s w p pp; do
+  [ -n "${pp:-}" ] || continue
+  c="$(_claude_under "$pp")"
+  [ -n "$c" ] || continue
+  id="$(_session_of "$c")" || continue
+  map="$map$s"$'\t'"$w"$'\t'"$p"$'\t'"$id"$'\n'
+done <<< "$panes"
+
+tmp="$f.claude-ids.$$"
+# The map is the first input (stdin); a leading marker line keeps it non-empty, so
+# NR == FNR stays true only while awk reads it.
+{ printf '#map\n'; printf '%s' "$map"; } | awk -F'\t' -v OFS='\t' '
+  NR == FNR { if (NF == 4) id[$1 FS $2 FS $3] = $4; next }
+  $1 == "pane" {
+    k = $2 FS $3 FS $6
+    if (k in id) new = id[k]
+    else if (match($11, /sesh-local --sid [0-9a-f-]+/)) new = substr($11, RSTART + 17, RLENGTH - 17)
+    else new = ""
+    if (new != "") { print $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, ":sesh-local --sid " new; next }
+  }
+  { print }' - "$f" > "$tmp" && mv -f "$tmp" "$f" || rm -f "$tmp"

@@ -1,0 +1,26 @@
+#!/bin/bash
+# enable-tmux-resurrect : run by ./install (ubuntu.conf.yaml) on Linux. Enables
+# tmux-resurrect.service, which starts the tmux server at boot and restores the saved
+# sessions, and retires the unit's old name.
+#
+# The old name, tmux.service, kept deleting itself. With @continuum-boot off,
+# tmux-continuum runs `systemctl --user disable tmux.service` on every config load, and
+# that removes a linked unit file of that name. Boot restore then worked for one boot
+# after each ./install.
+#
+# This never stops or starts a unit. The old unit's ExecStop kills the tmux server and
+# every session on it, and starting the new one restores into a live server.
+#
+# Seam for tests: RZ_SYSTEMCTL (systemctl binary).
+set -u
+SYSTEMCTL="${RZ_SYSTEMCTL:-systemctl}"
+if ! "$SYSTEMCTL" --user show-environment >/dev/null 2>&1; then
+  echo "no systemd --user session; skipping tmux-resurrect.service (fine in containers/CI)"
+  exit 0
+fi
+# Once the old unit file is gone from the repo, its links dangle. Drop those links.
+u="$HOME/.config/systemd/user"
+for l in "$u/tmux.service" "$u/default.target.wants/tmux.service"; do
+  if [ -L "$l" ] && [ ! -e "$l" ]; then rm -f "$l" && echo "removed the old link $l"; fi
+done
+"$SYSTEMCTL" --user daemon-reload && "$SYSTEMCTL" --user enable tmux-resurrect.service
