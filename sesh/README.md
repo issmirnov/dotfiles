@@ -4,6 +4,7 @@
 
 - **Local** Claude Code sessions on your Mac, resumed in their own directory.
 - **Remote** `tmux` sessions on a box you reach over `mosh`, reattached in place.
+- **Linux desktop** Claude sessions in foot windows on Hyprland, reopened on their own workspaces. See [Linux (Hyprland)](#linux-hyprland-auto-save-and-restore).
 
 The working set is whatever was **live** when you last worked, captured in a snapshot and rebuilt at the next login. You never curate a list.
 
@@ -73,11 +74,14 @@ State lives in `~/.local/state/sesh/`:
 | File | What it does |
 |------|--------------|
 | `sesh/sesh` | On-demand picker/opener over local + remote sessions. Sourceable; has a test suite. |
-| `sesh/sesh-save` | Snapshots live local (PID-checked) + remote (marker) sessions to `snapshot.json`. |
-| `sesh/sesh-restore` | Rebuilds the snapshot at login as Ghostty windows; skips live ones; caps the count. |
-| `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. |
+| `sesh/lib/os.sh` | OS-specific primitives the three scripts share: window spawn, liveness, Hyprland capture and placement, the save gate. |
+| `sesh/systemd/sesh-save.{service,timer}` | Linux: runs `sesh-save` every 60 s. |
+| `hypr/hyprland.lua` | Linux: runs `sesh-restore` at Hyprland start. |
+| `sesh/sesh-save` | Snapshots live local (PID-checked) + remote (marker) sessions to `snapshot.json`. On Linux it also records each window's workspace and monitor. |
+| `sesh/sesh-restore` | Rebuilds the snapshot as windows: Ghostty at login on macOS, placed foot windows at Hyprland start on Linux. Skips live ones; caps the count. |
+| `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. `--sid <uuid>` is the Linux restore form. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 66 tests (cache, multi-host, self-detection, single-host fallback); injects `ssh` so no network is touched. |
+| `sesh/tests/sesh.test.sh` | 176 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
@@ -151,6 +155,37 @@ On the Mac:
    ```
    You want a line for each label. `sesh-save` runs on an interval, so it stays listed. `sesh-restore` is `RunAtLoad`, so it runs once at login and then shows its last exit code.
 
+## Linux (Hyprland): auto-save and restore
+
+On a Hyprland desktop, `sesh` saves the Claude sessions open in terminal windows and reopens them when Hyprland starts. That covers a reboot, a logout and a compositor crash. Each session comes back in a foot window, resumed by ID, on the workspace and monitor it had. Focus does not move.
+
+How it works:
+
+1. `sesh-save.timer` runs `sesh-save` every 60 s. For each live interactive Claude session, `sesh-save` walks parent PIDs up to a PID that `hyprctl clients` lists. That window gives the workspace, monitor and position.
+2. At Hyprland start, `hyprland.lua` runs `sesh-restore`. It opens the newest `SESH_CAP` sessions (default 20), 1.5 s apart, through `[workspace <ws> silent]` exec rules. Then it moves any workspace it created to the saved monitor and sends one notification. A workspace name with a space, [, ] or ; cannot sit in an exec rule, so that window opens on the hidden special:sesh-stage and restore moves it into place by address.
+3. A gate protects the snapshot. `sesh-save` writes only when one Hyprland instance is live, and that instance wrote the snapshot or finished its restore. So a save right after login or a crash cannot replace your sessions with an empty set.
+
+Not restored: the SUPER+C scratchpad, claude inside tmux (tmux-resurrect's job), headless sessions and remote (mosh) windows.
+
+Install on a Hyprland box:
+
+1. `./install` links `sesh/systemd/sesh-save.{service,timer}` into `~/.config/systemd/user/`, and it enables the timer when `Hyprland` is installed. To do it by hand, link the two files, then run `systemctl --user daemon-reload && systemctl --user enable --now sesh-save.timer`.
+2. `hypr/hyprland.lua` already runs `sesh-restore` inside `hl.on("hyprland.start", …)`.
+
+Check it:
+
+- `systemctl --user list-timers sesh-save.timer` shows the timer.
+- `jq '.local[] | {id, ws, monitor}' ~/.local/state/sesh/snapshot.json` lists the saved sessions and their workspaces.
+- `SESH_DRYRUN=1 revive` prints the windows a restore would open.
+- `~/.local/state/sesh/restore.log` records each restore.
+
+Recover sessions that died without a reboot, for example after earlyoom killed a few:
+
+1. Pick a file in `~/.local/state/sesh/history/`, which keeps the last 20 distinct snapshots.
+2. Run `SESH_SNAPSHOT=<that file> revive`. Restore skips sessions that are running, so only the missing ones open.
+
+If saves stop after a Hyprland restart, the restore for that instance never ran. Run `revive` once.
+
 ## Gotchas that cost us hours
 
 Each of these was a real bug. They are the reason the scripts look the way they do.
@@ -188,7 +223,7 @@ Run the test suite (temp `HOME`, fixture transcripts, injected `ssh`, no network
 
 ```bash
 bash ~/.dotfiles/sesh/tests/sesh.test.sh
-# -> # passed 18, failed 0
+# -> # passed 176, failed 0
 ```
 
 Preview a restore without opening anything:
@@ -213,10 +248,18 @@ SESH_DRYRUN=1 sesh myproj   # prints the action instead of taking it
 | | `SESH_REMOTE_TTL` | Remote cache TTL in seconds (default 60) |
 | | `SESH_NEG_TTL` | Negative-cache TTL in seconds (default 30) |
 | | `SESH_LIST` | Newest-N local transcripts to consider (default 25) |
-| | `SESH_CAP` | Max windows `sesh-restore` opens (default 12) |
+| | `SESH_CAP` | Max windows `sesh-restore` opens (default 12 on macOS, 20 on Linux) |
 | | `SESH_HOSTS` | Space-separated boxes the picker queries (else `~/.config/sesh/hosts`, else `SESH_HOST`) |
 | | `SESH_HOST` | Single remote box: picker fallback & `sesh-remote` default (default `hexane`) |
 | | `SESH_SSH` | ssh binary, a test seam |
+| | `SESH_TERMINAL` | Linux terminal for a new window (default foot) |
+| | `SESH_STAGGER` | Linux: seconds between restored windows (default 1.5) |
+| | `SESH_VERIFY_WAIT` | Linux: whole seconds restore waits for windows to start (default 15) |
+| | `SESH_MON_WAIT` | Linux: 0.2 s polls restore waits for the saved monitors (default 50) |
+| | `SESH_SNAPSHOT` | Restore from this file instead of `snapshot.json` |
+| | `SESH_SKIP_BOOTGUARD` | Skip the save gate (manual runs and tests) |
+| | `SESH_HYPRCTL`, `SESH_PROC`, `SESH_NOTIFY`, `SESH_UNAME` | Test seams: `hyprctl` binary, `/proc` root, notifier, OS |
+| | `SESH_TEST_ONLY` | Run only the named tests in the suite |
 
 ## Known limitations
 
@@ -225,7 +268,7 @@ Honest edges, so you know what to expect:
 - **Login restore must be loaded and verified.** `sesh-restore` is `RunAtLoad`, so it registers at the next login after the symlink exists. Check `launchctl list | grep sesh` and run `revive` by hand if you logged in before installing it.
 - **Remote markers go stale on reboot.** A remote session is in the snapshot only while its marker PID is alive. If the box is unreachable at restore (one short probe, no retry), remote entries are skipped; run `revive` once the box is back.
 - **Local entries restore first.** With more live local sessions than `SESH_CAP`, remote ones can be cut. Raise `SESH_CAP` if you run many of both.
-- **Restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand.
+- **macOS restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand. On Linux, restore runs at every Hyprland start, so a compositor crash is covered. A single foot window that dies still needs `revive`.
 
 ## See also
 
