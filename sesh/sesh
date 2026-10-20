@@ -28,31 +28,26 @@
 #                          picker's host when SESH_HOSTS and the hosts file are both unset
 #        SESH_SSH          ssh binary to use (default ssh; a test/CI seam)
 #        SESH_TMUX         local tmux binary (default tmux; a test seam)
-#        SESH_TERMINAL     Linux terminal binary for a new window (default alacritty)
+#        SESH_TERMINAL     Linux terminal binary for a new window (default foot)
 #        SESH_TERMINAL_APP macOS .app bundle for a new window (default Ghostty)
 set -u
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# Follow symlinks by hand: BSD readlink before macOS 12.3 has no -f.
+SESH_DIR="${BASH_SOURCE[0]}"
+while [ -L "$SESH_DIR" ]; do
+  _sesh_l="$(readlink "$SESH_DIR")"
+  case "$_sesh_l" in /*) SESH_DIR="$_sesh_l" ;; *) SESH_DIR="$(dirname "$SESH_DIR")/$_sesh_l" ;; esac
+done
+SESH_DIR="$(cd -P "$(dirname "$SESH_DIR")" && pwd -P)"
 SESH_LOCAL="$HOME/.dotfiles/sesh/sesh-local"
 SESH_REMOTE="$HOME/.dotfiles/sesh/sesh-remote"
 PROJECTS="$HOME/.claude/projects"
 STATE="$HOME/.local/state/sesh"
 N="${SESH_LIST:-25}"
 
-# OS-family primitives. SESH_UNAME overrides $(uname) so the suite drives both branches.
-case "${SESH_UNAME:-$(uname)}" in
-  Darwin)
-    _mtime(){ stat -f %m "$1" 2>/dev/null; }
-    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[darwin]: open -na %s --args -e %s\n' "${SESH_TERMINAL_APP:-/Applications/Ghostty.app}" "$*"; return; fi
-                     open -na "${SESH_TERMINAL_APP:-/Applications/Ghostty.app}" --args -e "$@"; } ;;
-  Linux)
-    _mtime(){ stat -c %Y "$1" 2>/dev/null; }
-    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[linux]: setsid -f %s -e %s\n' "${SESH_TERMINAL:-alacritty}" "$*"; return; fi
-                     mkdir -p "$STATE" 2>/dev/null; setsid -f "${SESH_TERMINAL:-alacritty}" -e "$@" 2>>"$STATE/spawn.err"; } ;;
-  *)
-    _mtime(){ stat -c %Y "$1" 2>/dev/null || stat -f %m "$1" 2>/dev/null; }
-    _spawn_window(){ if [ -n "${SESH_DRYRUN:-}" ]; then printf 'spawn[other]: %s -e %s\n' "${SESH_TERMINAL:-xterm}" "$*"; return; fi
-                     "${SESH_TERMINAL:-xterm}" -e "$@" & } ;;
-esac
+# OS-family primitives (_mtime, _spawn_window, …) live in lib/os.sh, shared with
+# sesh-save and sesh-restore. SESH_UNAME overrides $(uname) so the suite drives both branches.
+. "$SESH_DIR/lib/os.sh"
 _age(){ local m; m="$(_mtime "$1")"; if [ -z "$m" ]; then echo 999999999; else echo $(( $(date +%s) - m )); fi; }
 
 # name_of <jsonl> [id] : latest ai-title -> first user msg (<=48 chars) -> short id.

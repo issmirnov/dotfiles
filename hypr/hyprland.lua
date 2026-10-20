@@ -113,6 +113,11 @@ hl.on("hyprland.start", function()
     -- "no screen capture" by probing mid-restart above (bounded ~10s, then launches).
     hl.exec_cmd("for _ in $(seq 1 50); do gdbus introspect --session --dest org.freedesktop.portal.Desktop --object-path /org/freedesktop/portal/desktop 2>/dev/null | grep -q portal.ScreenCast && break; sleep 0.2; done; exec " .. browser)
     hl.exec_cmd(terminal)
+    -- sesh: reopen the Claude sessions that were open when this desktop last went away
+    -- (reboot, logout or crash), each in foot on its saved workspace, silently.
+    -- sesh-save.timer starts saving again once this restore finishes.
+    -- Log: ~/.local/state/sesh/restore.log. Preview: SESH_DRYRUN=1 revive
+    hl.exec_cmd("~/.dotfiles/sesh/sesh-restore")
     -- night shift: hyprsunset (native); temps/times live in hyprsunset.conf (day 4500K / night 3200K).
     -- NOTE: hyprsunset switches on fixed wall-clock times, not astronomical sunset like wlsunset did.
     hl.exec_cmd("hyprsunset")

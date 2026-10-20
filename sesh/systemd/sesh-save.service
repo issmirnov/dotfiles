@@ -1,0 +1,6 @@
+[Unit]
+Description=sesh: snapshot open Claude sessions and their Hyprland placement
+
+[Service]
+Type=oneshot
+ExecStart=%h/.dotfiles/sesh/sesh-save

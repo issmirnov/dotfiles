@@ -1,0 +1,13 @@
+[Unit]
+Description=sesh: snapshot open Claude sessions every 60s
+
+[Timer]
+# The pattern chrome-ws-snapshot.timer already uses on hexane. No Condition= on the
+# service: a skipped start leaves OnUnitActiveSec nothing to count from. sesh-save's
+# own gate handles a box with no Hyprland.
+OnBootSec=1min
+OnUnitActiveSec=60s
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

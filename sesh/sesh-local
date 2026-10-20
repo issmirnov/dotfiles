@@ -1,11 +1,26 @@
 #!/bin/bash
-# sesh-local <cwd> <name> <claude-args...> — Ghostty window command for sesh / sesh-restore.
+# sesh-local <cwd> <name> <claude-args...> — window command for sesh / sesh-restore.
+# sesh-local --sid <uuid> — the Linux restore form: read the cwd from the session's
+#   transcript, resume it, then keep the window open with an interactive shell.
 # cd into <cwd>, title the window "claude · <name>", then launch claude via the `ccf`
 # ccflare launcher with the given args (e.g. --resume <id>). A separate launcher so the
 # caller hands it clean argv through `open -e` (Ghostty's -e preserves spaced args).
+# SESH_DRYRUN=1 prints what it would run.
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/bin:/bin:/usr/sbin:/sbin"
+keep_shell=""
+if [ "${1:-}" = "--sid" ]; then
+  sid="${2:?usage: sesh-local --sid <uuid>}"
+  f="$(ls "$HOME"/.claude/projects/*/"$sid".jsonl 2>/dev/null | head -1)"
+  sid_cwd="$(grep -a -m1 '"cwd"' "$f" 2>/dev/null | jq -rc 'select(.cwd!=null)|.cwd' 2>/dev/null | head -1)"
+  set -- "${sid_cwd:-$HOME}" "${sid:0:8}" --resume "$sid"
+  keep_shell=1
+fi
 cwd="${1:?usage: sesh-local <cwd> <name> <claude-args...>}"; shift
 name="${1:-claude}"; shift
+if [ -n "${SESH_DRYRUN:-}" ]; then
+  printf 'would run in %s as "claude · %s": ccf %s%s\n' "$cwd" "$name" "$*" "${keep_shell:+; then exec \$SHELL -i}"
+  exit 0
+fi
 printf '\033]0;claude · %s\007' "$name"   # initial title; claude's TUI may update it
 cd "$cwd" 2>/dev/null || cd "$HOME"
 unset CLAUDE_CODE_CHILD_SESSION   # a window spawned from within Claude still saves its transcript
@@ -19,3 +34,7 @@ if type ccf >/dev/null 2>&1; then
 else
   "$HOME/.local/bin/claude" --dangerously-skip-permissions "$@"
 fi
+rc=$?
+# A restored window outlives its session, like any foot window: drop to a shell.
+if [ -n "$keep_shell" ]; then exec "${SHELL:-/bin/zsh}" -i; fi
+exit "$rc"

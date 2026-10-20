@@ -5,33 +5,60 @@
 #   local  = Claude Code sessions in ~/.claude/sessions/*.json with a live PID
 #   remote = hexane tmux sessions with a live presence marker (written by sesh-remote)
 #
-# Run on an interval by a LaunchAgent so the last snapshot before shutdown ~= what
-# you had open; sesh-restore rebuilds it at next login. Also runnable by hand.
+# Run on an interval so the last snapshot before shutdown ~= what you had open;
+# sesh-restore rebuilds it at next login. Also runnable by hand.
+#   macOS : a LaunchAgent runs it every 120 s.
+#   Linux : sesh-save.timer runs it every 60 s. Each local session also records its
+#           window's Hyprland workspace, monitor and position, and history/ keeps the
+#           last 20 distinct snapshots.
+# The save gate (lib/os.sh _save_gate) keeps an early save from overwriting the
+# snapshot before sesh-restore has read it. SESH_SKIP_BOOTGUARD=1 skips the gate.
 set -u
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+# Follow symlinks by hand: BSD readlink before macOS 12.3 has no -f.
+SESH_DIR="${BASH_SOURCE[0]}"
+while [ -L "$SESH_DIR" ]; do
+  _sesh_l="$(readlink "$SESH_DIR")"
+  case "$_sesh_l" in /*) SESH_DIR="$_sesh_l" ;; *) SESH_DIR="$(dirname "$SESH_DIR")/$_sesh_l" ;; esac
+done
+SESH_DIR="$(cd -P "$(dirname "$SESH_DIR")" && pwd -P)"
 STATE="$HOME/.local/state/sesh"
 SNAP="$STATE/snapshot.json"
+HIST="$STATE/history"
 REG="$HOME/.claude/sessions"
 MARKS="$STATE/remote"
 mkdir -p "$STATE" "$MARKS"
 command -v jq >/dev/null || exit 0
+. "$SESH_DIR/lib/os.sh"
 
-# Skip the early-boot window so we never overwrite the pre-shutdown snapshot
-# before sesh-restore has rebuilt it at login (otherwise an empty login snapshot
-# would erase what you had open). Snapshots resume a few minutes in.
-boot=$(sysctl -n kern.boottime 2>/dev/null | sed -n 's/^{ sec = \([0-9]*\),.*/\1/p')
-if [ -z "${SESH_SKIP_BOOTGUARD:-}" ] && [ -n "$boot" ] && [ "$(( $(date +%s) - boot ))" -lt 180 ]; then exit 0; fi
+_save_gate || exit 0
 
-# Local: live Claude sessions (registry carries sessionId + cwd + pid).
-local_json=$(
-  for j in "$REG"/*.json; do
-    [ -e "$j" ] || continue
-    pid=$(jq -r '.pid // empty' "$j" 2>/dev/null)
-    { [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; } || continue
-    jq -c '{id: .sessionId, cwd: (.cwd // "")}' "$j" 2>/dev/null
-  done | jq -s 'map(select(.id != null)) | unique_by(.id)'
-)
+# Local: live Claude sessions (the registry carries sessionId, cwd, pid and procStart).
+# Fields are joined with \x1f: `read` collapses runs of tabs and would shift an empty field.
+rows=""
+for j in "$REG"/*.json; do
+  [ -e "$j" ] || continue
+  rec="$(jq -r '[(.pid // "" | tostring), (.sessionId // ""), (.cwd // ""), (.procStart // "" | tostring), (.kind // ""), ((.updatedAt // 0) | if type == "number" then . / 1000 | floor else 0 end | tostring)] | join("\u001f")' "$j" 2>/dev/null)" || continue
+  IFS=$'\x1f' read -r pid id cwd pstart kind upd <<< "$rec"
+  [ -n "$pid" ] && [ -n "$id" ] || continue
+  _want_session "$kind" || continue
+  _alive "$pid" "$pstart" || continue
+  rows="$rows$pid"$'\x1f'"$id"$'\x1f'"$cwd"$'\x1f'"$upd"$'\n'
+done
+
+# Placement (Linux). A failed Hyprland query exits here, so no snapshot is written from it.
+cap="$(_capture_windows $(printf '%s' "$rows" | cut -d $'\x1f' -f1))" || { echo "sesh-save: Hyprland query failed; snapshot left as is" >&2; exit 0; }
+local_json="$(printf '%s' "$rows" | jq -R -s -c --argjson cap "$cap" --arg os "$SESH_OS" '
+  split("\n") | map(select(length > 0) | split("\u001f"))
+  | map(. as $r | ($cap[$r[0]] // {}) as $c
+        | select(($c.skip // "") == "")
+        | {id: $r[1], cwd: $r[2]}
+          + (if $os == "linux"
+             then {updated: ($r[3] | tonumber? // 0)} + (if ($c.ws // "") == "special:sesh-stage" then {} else ($c | {ws, monitor, at} | with_entries(select(.value != null))) end)
+             else {} end))
+  | unique_by(.id)
+  | if $os == "linux" then sort_by(.monitor // "", .ws // "", (.at // [0, 0])[0], (.at // [0, 0])[1]) else . end')" || { echo "sesh-save: jq failed; snapshot left as is" >&2; exit 0; }
 [ -n "$local_json" ] || local_json='[]'
 
 # Remote: markers are host-namespaced (remote/<host>/<session>). Prune dead PIDs,
@@ -70,5 +97,20 @@ remote_json=$(
 )
 [ -n "$remote_json" ] || remote_json='[]'
 
-jq -n --argjson l "$local_json" --argjson r "$remote_json" --arg ts "$(date -u +%FT%TZ)" \
-  '{saved_at:$ts, local:$l, remote:$r}' > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"
+new="$(jq -n --argjson l "$local_json" --argjson r "$remote_json" --arg ts "$(date -u +%FT%TZ)" --arg inst "${SESH_INSTANCE:-}" \
+  '{saved_at: $ts} + (if $inst != "" then {instance: $inst} else {} end) + {local: $l, remote: $r}')" || { echo "sesh-save: jq failed; snapshot left as is" >&2; exit 0; }
+
+# History (Linux): keep the last 20 distinct snapshots. A change in timestamps alone
+# (saved_at, updated) does not count.
+changed=1
+if [ "$SESH_OS" = linux ] && [ -r "$SNAP" ]; then
+  norm='del(.saved_at) | .local |= map(del(.updated))'
+  [ "$(jq -cS "$norm" "$SNAP" 2>/dev/null)" = "$(printf '%s' "$new" | jq -cS "$norm" 2>/dev/null)" ] && changed=0
+fi
+if printf '%s\n' "$new" > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"; then
+  if [ "$SESH_OS" = linux ] && [ "$changed" = 1 ]; then
+    mkdir -p "$HIST"
+    cp "$SNAP" "$HIST/$(date -u +%Y%m%dT%H%M%SZ).$$.json"
+    ls -1t "$HIST"/*.json 2>/dev/null | tail -n +21 | while IFS= read -r old; do rm -f -- "$old"; done
+  fi
+fi
