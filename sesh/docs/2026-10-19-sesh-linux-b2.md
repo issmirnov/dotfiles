@@ -45,7 +45,7 @@
 | `hypr/hyprland.lua` | Run `sesh-restore` in `hyprland.start` | 8 |
 | `sesh/README.md` | Linux section, tables, limitations, test count | 9 |
 
-The suite grows from 66 to 172 tests: 67 after Task 1, 74 after Task 2, 86 after Task 3, 115 after Task 4, 124 after Task 5, 141 after Task 6 and 172 after Task 7 (Tasks 3 to 7 gained assertions in review; see Revisions).
+The suite grows from 66 to 176 tests: 67 after Task 1, 74 after Task 2, 86 after Task 3, 115 after Task 4, 124 after Task 5, 141 after Task 6 and 176 after Task 7 (Tasks 3 to 7 gained assertions in review; see Revisions).
 
 ---
 
@@ -1445,7 +1445,7 @@ Before you save, check the macOS section against the original. `git -C "$WT" dif
 - [ ] **Step 6: Run the suite**
 
 Run: `SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -2`
-Expected: `# passed 172, failed 0`
+Expected: `# passed 176, failed 0`
 
 - [ ] **Step 7: Commit**
 
@@ -1635,7 +1635,7 @@ In the table under `## The pieces (file map)`:
    ```
 4. Replace the `sesh/tests/sesh.test.sh` row with:
    ```markdown
-   | `sesh/tests/sesh.test.sh` | 172 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+   | `sesh/tests/sesh.test.sh` | 176 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
    ```
 5. Directly after the `sesh/sesh` row, add:
    ```markdown
@@ -1664,7 +1664,7 @@ In the table under `## The pieces (file map)`:
    ```markdown
    - **macOS restore fires at login, not on crash.** After a force-quit or a terminal crash, run `revive` by hand. On Linux, restore runs at every Hyprland start, so a compositor crash is covered. A single foot window that dies still needs `revive`.
    ```
-4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 172, failed 0`.
+4. In `## Verify and test`, replace the line `# -> # passed 18, failed 0` with `# -> # passed 176, failed 0`.
 
 - [ ] **Step 5: Run the full checks on hexane**
 
@@ -1674,7 +1674,7 @@ SESH_BIN="$WT/sesh/sesh" bash "$WT/sesh/tests/sesh.test.sh" | tail -1
 for f in sesh sesh-save sesh-restore sesh-local sesh-remote lib/os.sh; do bash -n "$WT/sesh/$f" && echo "syntax ok: $f"; done
 python3 ~/.claude/skills/de-slopping/ste_lint.py "$WT/sesh/docs/2026-10-19-sesh-linux-b2-design.md" | tail -1
 ```
-Expected: `# passed 172, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
+Expected: `# passed 176, failed 0`, six `syntax ok` lines, and `0 hard` in the lint summary.
 
 - [ ] **Step 6: Run the suite under the Mac's bash 3.2**
 
@@ -1685,7 +1685,7 @@ Run:
 tar -C "$WT" -cf - sesh | ssh -o BatchMode=yes -o ConnectTimeout=5 laptop 'rm -rf /tmp/sesh-b2 && mkdir -p /tmp/sesh-b2 && tar -C /tmp/sesh-b2 -xf -'
 ssh -o BatchMode=yes laptop 'cd /tmp && PATH=/opt/homebrew/bin:$PATH SESH_BIN=/tmp/sesh-b2/sesh/sesh /bin/bash /tmp/sesh-b2/sesh/tests/sesh.test.sh | tail -1; rm -rf /tmp/sesh-b2'
 ```
-Expected: `# passed 172, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
+Expected: `# passed 176, failed 0`. If the laptop is unreachable, report that and continue: Task 11 repeats this check.
 
 - [ ] **Step 7: Commit**
 
@@ -1715,7 +1715,7 @@ gh pr create --repo issmirnov/dotfiles --base master --head feat/sesh-linux-b2 \
   --title "sesh: Linux auto-save and login restore for foot windows (B2)" --body-file <body file>
 ```
 
-Write the body in plain English with no em-dashes. Cover what it does, how it is tested (172 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+Write the body in plain English with no em-dashes. Cover what it does, how it is tested (176 tests on hexane and under the Mac's bash 3.2), what is deliberately left out, and the deploy steps from Task 11. End it with `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
 
 - [ ] **Step 3: Wait for the review bots**
 
@@ -1770,6 +1770,11 @@ Follow the watching-pr-bot-reviews skill: run `prbots wait <PR> --trigger` in th
 - **Task 5 launcher (review fix, commit 8720ed3).** The `--sid` form's trailing `exec` made the existing form always exit 0. The old script passed on claude's status, which the picker's same-window `exec` shows on the Mac. `sesh-local` now saves `rc=$?` after launching claude and ends with `exit "$rc"`. `t_local_sid`'s title needle is `as "claude · 12345678"` (the old launcher's OSC title matched the looser one), and its calls close stdin. A sandboxed `t_local_real_run` (fake claude exiting 3, recorder shell) adds four assertions.
 - **Task 6 placement (review fix).** A live probe showed Hyprland splits an exec rule's workspace value on whitespace: `[workspace name:sesh probe sp silent]` landed on `sesh`. `_spawn_placed` now sends any name holding whitespace, `[`, `]` or `;` to the hidden `special:sesh-stage`, and Task 7's verify step moves it by address. Before, such names opened unplaced, on the active workspace. `_spawn_placed` also refuses an id that is not a UUID, and the move helpers Lua-escape their address and monitor. The terminal command gains `-e` (foot ignores it; other terminals need it). The Task 6 tests now cover the staging, `[` and `;` guards, a `special:` move, a spaced move and id refusal: seven more assertions.
 - **Task 7 amendments (commit 8603f30).** Two guards came out of the Task 6 review. If a verify move ever failed, a window would sit on `special:sesh-stage`, the next save would record that, and every later restore would hide it again. So `sesh-save` now saves a window on the stage without placement, and it reopens visibly. `_capture_windows` is unchanged, because restore needs the staged address. Restore also counts windows still on the stage after its fixes, and puts `still staged N` in the log and the notification. Two tests (`t_save_drops_stage`, `t_restore_linux_staged`) add four assertions.
+- **Task 7 restore (review fix, commit 55db1cd).**
+  - A `revive` from a shell that outlived a compositor restart wrote its dead signature to `restored`, which held off every save. Restore now uses the signature only if `hyprctl instances` lists it, adopts the single live instance otherwise, and gives up when it cannot tell.
+  - `SESH_VERIFY_WAIT` is a wall-clock deadline (`$SECONDS`) with one registry scan per poll. `_running_sessions` and `_pid_in` replace `_linux_running`, which rescanned the registry for every id. A 3 s wait used to take 20 s or more.
+  - Entries over the cap are logged and counted, a non-integer wait falls back to 15, and a failed window capture is logged.
+  - The `mkrestore` fixture's `updated` values (200/100/300) now differ from snapshot order, so the cap and order assertions can fail. `t_restore_linux_stale_sig` and an over-cap assertion add four assertions.
 
 **Known deviations from the spec text, already folded into the spec.**
 - The gate also passes when the snapshot's `instance` is the live instance.
