@@ -32,7 +32,13 @@
 #        SESH_TERMINAL_APP macOS .app bundle for a new window (default Ghostty)
 set -u
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-SESH_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+# Follow symlinks by hand: BSD readlink before macOS 12.3 has no -f.
+SESH_DIR="${BASH_SOURCE[0]}"
+while [ -L "$SESH_DIR" ]; do
+  _sesh_l="$(readlink "$SESH_DIR")"
+  case "$_sesh_l" in /*) SESH_DIR="$_sesh_l" ;; *) SESH_DIR="$(dirname "$SESH_DIR")/$_sesh_l" ;; esac
+done
+SESH_DIR="$(cd -P "$(dirname "$SESH_DIR")" && pwd -P)"
 SESH_LOCAL="$HOME/.dotfiles/sesh/sesh-local"
 SESH_REMOTE="$HOME/.dotfiles/sesh/sesh-remote"
 PROJECTS="$HOME/.claude/projects"

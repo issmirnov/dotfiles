@@ -87,7 +87,7 @@ State lives in `~/.local/state/sesh/`:
 | `sesh/sesh-restore` | Rebuilds the snapshot as windows: Ghostty at login on macOS, placed foot windows at Hyprland start on Linux. Skips live ones; caps the count. |
 | `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. `--sid <uuid>` is the Linux restore form. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 196 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+| `sesh/tests/sesh.test.sh` | 199 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
@@ -231,7 +231,7 @@ Run the test suite (temp `HOME`, fixture transcripts, injected `ssh`, no network
 
 ```bash
 bash ~/.dotfiles/sesh/tests/sesh.test.sh
-# -> # passed 196, failed 0
+# -> # passed 199, failed 0
 ```
 
 Preview a restore without opening anything:

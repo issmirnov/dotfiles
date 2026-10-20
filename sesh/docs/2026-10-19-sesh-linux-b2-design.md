@@ -50,11 +50,11 @@ B1 planned this file under the name `sesh-os.sh`. It holds every OS-specific pri
 
 Rules for the file:
 
-- Each script finds it through its own resolved path: `readlink -f "${BASH_SOURCE[0]}"`, then `<dir>/lib/os.sh`. GNU and macOS both support `readlink -f` (lorium runs macOS 27.0.1). So a worktree run loads that worktree's copy.
+- Each script finds it through its own resolved path, then `<dir>/lib/os.sh`. The script follows symlinks from `${BASH_SOURCE[0]}` with a plain `readlink` loop, then takes `cd -P` and `pwd -P` of the last directory. BSD readlink before macOS 12.3 has no `-f`, so the scripts never use it. A worktree run loads that worktree's copy.
 - It must parse under bash 3.2, the Mac's `/bin/bash`. So it uses no associative arrays, no `mapfile` and no `${x,,}`.
 - `sesh` drops its inline OS block. Its Linux new-window default changes from alacritty to foot, the `terminal` in hyprland.lua. foot ignores `-e`, so the spawn form stays the same.
 
-B1 kept these functions inline for two reasons. A `dirname`-based sibling source breaks when `sesh` is a file symlink, and bash 3.2 has no `realpath`. `readlink -f` is a separate binary on both systems, so it removes that problem.
+B1 kept these functions inline for two reasons. A `dirname`-based sibling source breaks when `sesh` is a file symlink, and bash 3.2 has no `realpath`. The `readlink` loop solves both, with no `-f` and no `realpath`.
 
 ### B. Capture: Linux `_capture_windows`
 

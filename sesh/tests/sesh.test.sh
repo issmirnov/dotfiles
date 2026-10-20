@@ -467,6 +467,25 @@ t_lib_via_symlink(){ newtmp; export HOME="$TMP"
   want="$(cd "$_BIN" && pwd -P)"
   if [ "$out" = "$want" ]; then ok "sesh through a symlink resolves its real dir and loads lib/os.sh"; else no "SESH_DIR via symlink should be $want (got '$out')"; fi
 }
+t_lib_via_symlink_bsd_readlink(){ newtmp; export HOME="$TMP"
+  # BSD readlink before macOS 12.3 has no -f. A fake on the scripts' PATH refuses it, and
+  # each script, reached through a symlink, must still find lib/os.sh beside its real file.
+  # Each run starts in $TMP, so a fallback to $PWD cannot find the lib by accident.
+  mkdir -p "$TMP/.local/bin" "$TMP/bin"
+  printf '#!/bin/bash\n[ "${1:-}" = -f ] && { echo "readlink: illegal option -- f" >&2; exit 1; }\nexec %s "$@"\n' "$(command -v readlink)" > "$TMP/.local/bin/readlink"
+  chmod +x "$TMP/.local/bin/readlink"
+  ln -s "$SESH" "$TMP/bin/sesh"; ln -s "$SESHSAVE" "$TMP/bin/sesh-save"; ln -s "$SESHRESTORE" "$TMP/bin/sesh-restore"
+  out="$( ( cd "$TMP" && set +u && source "$TMP/bin/sesh" >/dev/null 2>&1; type _spawn_window >/dev/null 2>&1 && printf '%s' "$SESH_DIR" ) </dev/null )"
+  want="$(cd "$_BIN" && pwd -P)"
+  if [ "$out" = "$want" ]; then ok "sesh finds its real dir without readlink -f"; else no "SESH_DIR without readlink -f should be $want (got '$out')"; fi
+  err="$( (cd "$TMP" && SESH_UNAME=Darwin SESH_SKIP_BOOTGUARD=1 bash "$TMP/bin/sesh-save") 2>&1 >/dev/null </dev/null )"
+  assert_hasnt "sesh-save loads lib/os.sh without readlink -f" "os.sh" "$err"
+  # Two hops, the first relative: rel/sesh-restore -> ../bin/sesh-restore -> the real file.
+  mkdir -p "$TMP/rel"; ln -s ../bin/sesh-restore "$TMP/rel/sesh-restore"
+  err="$( (cd "$TMP" && SESH_UNAME=Darwin SESH_DRYRUN=1 bash "$TMP/rel/sesh-restore") 2>&1 >/dev/null </dev/null )"
+  assert_hasnt "sesh-restore follows a relative link chain without readlink -f" "os.sh" "$err"
+  clean_env
+}
 echo "# process helpers (fake /proc)"
 t_proc_stat_parse(){ newtmp; export HOME="$TMP"
   mkstat 4242 "tmux: server" 77 9001
@@ -891,7 +910,7 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
      t_open_here t_spawn_branches t_mtime_real t_open_remote_passes_host
      t_hxconnect_host_marker t_save_host_namespaced t_save_migrates_live_flat
      t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host"
-RUN="$RUN t_lib_via_symlink"
+RUN="$RUN t_lib_via_symlink t_lib_via_symlink_bsd_readlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
