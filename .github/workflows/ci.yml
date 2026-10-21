@@ -60,7 +60,8 @@ jobs:
 
   # tmux-resurrect boot restore: the post-save hook that records each Claude pane's
   # session ID, the restore entries in tmux.conf (run through resurrect's own
-  # matching code) and the unit's enable script. Fakes tmux, ps, /proc and systemctl.
+  # matching code), the unit's enable script, and resurrect-save (the minute timer's
+  # and the shutdown saver's save). Fakes tmux, ps, /proc, systemctl and busctl.
   test-tmux-resurrect:
     runs-on: ubuntu-latest
     steps:
@@ -69,3 +70,5 @@ jobs:
         run: git submodule update --init tmux/plugins/tmux-resurrect
       - name: Run tests
         run: bash tmux/tests/resurrect-claude-ids.test.sh
+      - name: Run resurrect-save tests
+        run: bash tmux/tests/resurrect-save.test.sh

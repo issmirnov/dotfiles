@@ -1,0 +1,16 @@
+[Unit]
+Description=tmux-resurrect: save the tmux sessions at shutdown and reboot
+
+[Service]
+# systemd-inhibit holds a logind delay lock while the script waits. On shutdown or
+# reboot, logind announces PrepareForShutdown and waits for delay locks (up to
+# InhibitDelayMaxSec, 5 s by default) before systemd stops anything. The script saves
+# while every pane is still running, then exits and releases the lock. An ExecStop=
+# save on tmux-resurrect.service would race: each pane runs in its own
+# tmux-spawn-*.scope, which systemd stops at the same time as that unit.
+ExecStart=/usr/bin/systemd-inhibit --what=shutdown --mode=delay --who=tmux-resurrect --why="Save tmux sessions" %h/.dotfiles/tmux/resurrect-save --at-shutdown
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

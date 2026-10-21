@@ -171,7 +171,7 @@ How it works:
 2. At Hyprland start, `hyprland.lua` runs `sesh-restore`. It sets aside the sessions that are running, then opens the newest `SESH_CAP` of the rest (default 20), 1.5 s apart, through `[workspace <ws> silent]` exec rules. Then it moves any workspace it created to the saved monitor and sends one notification. A workspace name with a space, [, ] or ; cannot sit in an exec rule, so that window opens on the hidden special:sesh-stage and restore moves it into place by address. If a window is still on the stage after that, because its session started late or not at all, restore finds the session from the `--sid` in the window's command line and moves the window to its saved workspace. A window it cannot match moves to the active workspace.
 3. A gate protects the snapshot. `sesh-save` writes only when exactly one Hyprland instance is live and one of these holds: there is no snapshot yet, that instance wrote the snapshot, or that instance finished its restore. So a save right after login or a crash cannot replace your sessions with an empty set.
 
-Not restored here: the SUPER+C scratchpad, claude inside tmux, headless sessions and remote (mosh) windows. tmux panes come back at boot through `tmux-resurrect.service`, and each Claude pane resumes its own session by ID (see `tmux/tmux.conf`).
+Not restored here: the SUPER+C scratchpad, claude inside tmux, headless sessions and remote (mosh) windows. tmux panes come back at boot through `tmux-resurrect.service`, and each Claude pane resumes its own session by ID (see `tmux/tmux.conf`). `tmux-resurrect-save.timer` saves them every 60 s, and `tmux-resurrect-shutdown.service` saves them once more at shutdown or reboot.
 
 Install on a Hyprland box:
 

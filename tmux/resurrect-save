@@ -1,0 +1,60 @@
+#!/bin/bash
+# resurrect-save [--at-shutdown] : save the tmux environment with tmux-resurrect. Linux
+# only; run by systemd --user units instead of continuum.
+#
+# continuum saves from the status line: only while a client is attached, and at most
+# every 15 min. Nothing saved at shutdown, so a Claude pane started after the last save
+# came back as a bare shell after a reboot. Two units run this script instead:
+#   tmux-resurrect-save.timer         every 60 s, attached or not;
+#   tmux-resurrect-shutdown.service   --at-shutdown, under a logind delay lock. When
+#                                     logind announces a shutdown or reboot it saves
+#                                     once, before systemd stops any pane, and exits so
+#                                     the shutdown goes on.
+#
+# It saves through the server's own resurrect save script, so the post-save hook
+# (resurrect-claude-ids) runs as it does for prefix+Ctrl-s. A server with no sessions is
+# not saved: that is a boot before the restore, a failed restore, or everything closed,
+# and its save would replace the restore point with an empty one. One save runs at a time.
+#
+# Seams for tests: RZ_TMUX (tmux binary), RZ_BUSCTL (busctl binary), RZ_LOCK (lock file).
+set -u
+TMUX_BIN="${RZ_TMUX:-tmux}"
+BUSCTL="${RZ_BUSCTL:-busctl}"
+LOCK="${RZ_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/tmux-resurrect-save.lock}"
+
+# _save : one resurrect save, if the server has a session and resurrect is loaded.
+_save(){
+  [ -n "$("$TMUX_BIN" list-sessions -F '#{session_name}' 2>/dev/null)" ] || return 0
+  local script
+  script="$("$TMUX_BIN" show-options -gqv @resurrect-save-script-path 2>/dev/null)"
+  [ -n "$script" ] || return 0
+  (
+    if command -v flock >/dev/null 2>&1; then
+      exec 9>"$LOCK" && flock -w 10 9 || exit 0
+    fi
+    "$TMUX_BIN" run-shell "$(printf '%q' "$script") quiet"
+  )
+}
+
+# _preparing : is logind under way with a shutdown or reboot? Any process on the system
+# bus can send a PrepareForShutdown signal, but only logind sets this property.
+_preparing(){
+  [ "$("$BUSCTL" --system get-property org.freedesktop.login1 /org/freedesktop/login1 \
+       org.freedesktop.login1.Manager PreparingForShutdown 2>/dev/null)" = "b true" ]
+}
+
+if [ "${1:-}" = --at-shutdown ]; then
+  # Older busctl has no wait verb. Exit 0 then: a failing unit would restart forever.
+  if ! "$BUSCTL" --help 2>/dev/null | grep -q '^ *wait '; then
+    echo "busctl has no wait verb; tmux will not be saved at shutdown" >&2
+    exit 0
+  fi
+  while :; do
+    "$BUSCTL" --system wait /org/freedesktop/login1 org.freedesktop.login1.Manager \
+      PrepareForShutdown >/dev/null 2>&1
+    rc=$?
+    if _preparing; then _save; exit 0; fi
+    [ "$rc" -eq 0 ] || exit "$rc"
+  done
+fi
+_save

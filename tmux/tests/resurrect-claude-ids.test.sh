@@ -4,7 +4,7 @@
 #     session ID (fake tmux, ps, /proc and registry);
 #   - the @resurrect-processes entries in tmux/tmux.conf, run through tmux-resurrect's
 #     own matching code (the submodule must be checked out);
-#   - systemd/enable-tmux-resurrect (fake systemctl and HOME).
+#   - systemd/enable-tmux-resurrect (fake systemctl, tmux and HOME).
 #
 #   bash tmux/tests/resurrect-claude-ids.test.sh
 set -u
@@ -122,7 +122,14 @@ echo "\$*" >> "$T/systemctl.log"
 [ "\$*" = "--user show-environment" ] && [ -n "\${RZ_FAKE_NO_BUS:-}" ] && exit 1
 exit 0
 EOF
-chmod +x "$T/bin/systemctl"
+# The live tmux server; it logs into the same file, so the test sees the order of calls.
+cat > "$T/bin/tmux-live" <<EOF
+#!/bin/bash
+echo "tmux \$*" >> "$T/systemctl.log"
+[ -z "\${RZ_FAKE_NO_TMUX_SERVER:-}" ]
+EOF
+chmod +x "$T/bin/systemctl" "$T/bin/tmux-live"
+export RZ_TMUX="$T/bin/tmux-live"
 ln -s "$T/gone/systemd/tmux.service" "$U/tmux.service"
 ln -s "$T/gone/systemd/tmux.service" "$U/default.target.wants/tmux.service"
 out="$(HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" RZ_FAKE_NO_BUS=1 bash "$ENABLE")"; rc=$?
@@ -132,7 +139,12 @@ rm -f "$T/systemctl.log"
 HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" bash "$ENABLE" >/dev/null
 check "the dangling old unit link is removed"                    "$( [ -L "$U/tmux.service" ] && echo kept || echo removed)" "removed"
 check "the dangling old enable link is removed"                  "$( [ -L "$U/default.target.wants/tmux.service" ] && echo kept || echo removed)" "removed"
-check "it reloads and enables tmux-resurrect.service, and starts or stops nothing" "$(tr '\n' '|' < "$T/systemctl.log")" "--user show-environment|--user daemon-reload|--user enable tmux-resurrect.service|"
+check "it reloads, enables tmux-resurrect.service, and enables and restarts the savers" "$(tr '\n' '|' < "$T/systemctl.log")" "--user show-environment|--user daemon-reload|--user enable tmux-resurrect.service|--user enable tmux-resurrect-save.timer tmux-resurrect-shutdown.service|tmux set-option -g @continuum-save-interval 0|--user restart tmux-resurrect-save.timer tmux-resurrect-shutdown.service|"
+check "it turns off the live server's continuum autosave before the timer starts" "$(grep -n -e '@continuum-save-interval 0' -e 'restart tmux-resurrect-save.timer' "$T/systemctl.log" | cut -d: -f2- | tr '\n' '|')" "tmux set-option -g @continuum-save-interval 0|--user restart tmux-resurrect-save.timer tmux-resurrect-shutdown.service|"
+check "it never starts, stops or restarts tmux-resurrect.service" "$(grep -cE '(start|stop) .*tmux-resurrect\.service' "$T/systemctl.log")" "0"
+rm -f "$T/systemctl.log"
+HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" RZ_FAKE_NO_TMUX_SERVER=1 bash "$ENABLE" >/dev/null; rc=$?
+check "with no tmux server running it still restarts the savers"  "$rc|$(grep -c 'restart tmux-resurrect-save.timer' "$T/systemctl.log")" "0|1"
 touch "$T/live.service"; ln -s "$T/live.service" "$U/tmux.service"
 HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" bash "$ENABLE" >/dev/null
 check "a tmux.service link that still resolves is kept"          "$( [ -L "$U/tmux.service" ] && echo kept || echo removed)" "kept"
