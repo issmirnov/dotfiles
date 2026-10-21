@@ -33,6 +33,9 @@
     ~/bin/hop: i3/scripts/hop
     ~/bin/i3_switch_workspace.sh: i3/scripts/i3_switch_workspace.sh
     ~/.config/systemd/user/tmux-resurrect.service: systemd/tmux-resurrect.service
+    ~/.config/systemd/user/tmux-resurrect-save.service: systemd/tmux-resurrect-save.service
+    ~/.config/systemd/user/tmux-resurrect-save.timer: systemd/tmux-resurrect-save.timer
+    ~/.config/systemd/user/tmux-resurrect-shutdown.service: systemd/tmux-resurrect-shutdown.service
     ~/.config/systemd/user/sesh-save.service: sesh/systemd/sesh-save.service
     ~/.config/systemd/user/sesh-save.timer: sesh/systemd/sesh-save.timer
 
@@ -52,8 +55,9 @@
     # it starts at boot without a login session. Guarded on a reachable systemd
     # --user bus / logind so `./install` still succeeds where neither exists
     # (containers, CI) while still surfacing real errors on a systemd host.
-    # The script also drops the dangling links of the unit's old name,
-    # tmux.service. Idempotent; safe to re-run.
+    # The script also enables and restarts the savers (tmux-resurrect-save.timer,
+    # tmux-resurrect-shutdown.service) and drops the dangling links of the unit's
+    # old name, tmux.service. Idempotent; safe to re-run.
     - [systemd/enable-tmux-resurrect, "Enable tmux-resurrect boot-restore (systemd --user)"]
     - ['if loginctl list-users >/dev/null 2>&1; then loginctl enable-linger "$USER" 2>/dev/null || sudo loginctl enable-linger "$USER" || echo "could not enable linger; skipping"; else echo "no logind; skipping linger (fine in containers/CI)"; fi', "Linger so the tmux service starts at boot pre-login"]
     # sesh auto-save (Hyprland desktops only): sesh-save.timer snapshots the open Claude

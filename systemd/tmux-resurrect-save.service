@@ -1,0 +1,9 @@
+[Unit]
+Description=tmux-resurrect: save the tmux sessions
+# Never during the boot restore: a save of a half-restored server would replace the
+# restore point.
+After=tmux-resurrect.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/.dotfiles/tmux/resurrect-save

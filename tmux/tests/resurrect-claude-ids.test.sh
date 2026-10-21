@@ -132,7 +132,8 @@ rm -f "$T/systemctl.log"
 HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" bash "$ENABLE" >/dev/null
 check "the dangling old unit link is removed"                    "$( [ -L "$U/tmux.service" ] && echo kept || echo removed)" "removed"
 check "the dangling old enable link is removed"                  "$( [ -L "$U/default.target.wants/tmux.service" ] && echo kept || echo removed)" "removed"
-check "it reloads and enables tmux-resurrect.service, and starts or stops nothing" "$(tr '\n' '|' < "$T/systemctl.log")" "--user show-environment|--user daemon-reload|--user enable tmux-resurrect.service|"
+check "it reloads, enables tmux-resurrect.service, and enables and restarts the savers" "$(tr '\n' '|' < "$T/systemctl.log")" "--user show-environment|--user daemon-reload|--user enable tmux-resurrect.service|--user enable tmux-resurrect-save.timer tmux-resurrect-shutdown.service|--user restart tmux-resurrect-save.timer tmux-resurrect-shutdown.service|"
+check "it never starts, stops or restarts tmux-resurrect.service" "$(grep -cE '(start|stop) .*tmux-resurrect\.service' "$T/systemctl.log")" "0"
 touch "$T/live.service"; ln -s "$T/live.service" "$U/tmux.service"
 HOME="$H" RZ_SYSTEMCTL="$T/bin/systemctl" bash "$ENABLE" >/dev/null
 check "a tmux.service link that still resolves is kept"          "$( [ -L "$U/tmux.service" ] && echo kept || echo removed)" "kept"

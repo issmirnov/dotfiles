@@ -1,0 +1,13 @@
+[Unit]
+Description=tmux-resurrect: save the tmux sessions every 60s, attached or not
+
+[Timer]
+# continuum saves only while a client is attached, every 15 min. Same cadence as
+# sesh-save.timer. No Condition= on the service: a skipped start leaves
+# OnUnitActiveSec nothing to count from. resurrect-save skips an empty server itself.
+OnBootSec=1min
+OnUnitActiveSec=60s
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target
