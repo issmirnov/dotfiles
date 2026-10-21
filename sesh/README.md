@@ -87,7 +87,7 @@ State lives in `~/.local/state/sesh/`:
 | `sesh/sesh-restore` | Rebuilds the snapshot as windows: Ghostty at login on macOS, placed foot windows at Hyprland start on Linux. Skips live ones; caps the count. |
 | `sesh/sesh-local` | Launcher for a **local** Claude session: `cd`, set title, resume Claude. `--sid <uuid>` is the Linux restore form. |
 | `sesh/sesh-remote` | Launcher for a **remote** session: write marker, set title, `mosh box -- tmux new-session -A -s <name>`. |
-| `sesh/tests/sesh.test.sh` | 200 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
+| `sesh/tests/sesh.test.sh` | 202 tests (cache, multi-host, self-detection, Linux save and restore). Fakes `ssh`, `hyprctl` and `/proc`, so nothing live is touched. |
 | `sesh/launchagents/localhost.sesh-save.plist` | Runs `sesh-save` every 120s. |
 | `sesh/launchagents/localhost.sesh-restore.plist` | Runs `sesh-restore` once at login (`RunAtLoad`). |
 | `ghostty/config` | `window-save-state = never` (see gotchas) and the theme. |
@@ -205,6 +205,7 @@ Each of these was a real bug. They are the reason the scripts look the way they 
 - **`mosh` needs a UTF-8 locale on the server.** mosh-server refuses to start unless the remote box has a real UTF-8 locale, because your client forwards `LC_ALL`/`LANG` and the server must honor it. A minimal server image can lack it, or even lack the `locales` package. The failure looks like `mosh: Did not find mosh server startup message` after a wall of `setlocale` warnings. Diagnose with `ssh box 'LC_ALL=en_US.UTF-8 locale charmap'` (you want `UTF-8`, not `US-ASCII` / `ANSI_X3.4-1968`). Fix on the box: `sudo apt-get install -y locales && sudo locale-gen en_US.UTF-8`, matching the locale your client sends.
 - **LaunchAgents get a minimal `PATH`.** Each script sets its own `PATH` and calls Claude by absolute path (`~/.local/bin/claude`). A LaunchAgent will not find a tool on your interactive shell `PATH`.
 - **The Claude project slug is lossy.** `~/.claude/projects/<slug>/` collapses dotted paths, so the real working directory is read from inside the session's `.jsonl` (`.cwd`), not from the slug.
+- **A local rc file can move the session.** `sesh-local` sources `~/.zshrc.local` for `ccf`, and on some boxes that file cds to a default project on login. So `sesh-local` cds into the session's directory after sourcing it, not before. Otherwise every restored session starts in that project.
 - **Spawning a window from inside Claude.** `sesh-local` unsets `CLAUDE_CODE_CHILD_SESSION`, or the child session does not save its own transcript and cannot be restored later.
 - **Tell "empty" apart from "down".** `sesh` appends `echo __SESH_OK__` after `tmux ls` over ssh. The sentinel means "connected, zero sessions"; its absence means the connect failed. Both return non-zero otherwise, so without it a dead tunnel and an empty server look the same.
 - **Do not let a login snapshot erase the pre-shutdown one.** On macOS, `sesh-save` exits early if system uptime is under 180s. Otherwise the first snapshot after boot (nothing open yet) overwrites the set you had before shutdown, before `sesh-restore` reads it. On Linux the save gate does this job (see the Linux section).
@@ -231,7 +232,7 @@ Run the test suite (temp `HOME`, fixture transcripts, injected `ssh`, no network
 
 ```bash
 bash ~/.dotfiles/sesh/tests/sesh.test.sh
-# -> # passed 200, failed 0
+# -> # passed 202, failed 0
 ```
 
 Preview a restore without opening anything:

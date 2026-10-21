@@ -665,6 +665,22 @@ t_local_real_run(){ newtmp; export HOME="$TMP"
   assert_has  "--sid resumes in the transcript's cwd" "$TMP/work|--dangerously-skip-permissions --resume 12345678-aaaa-bbbb-cccc-000000000002" "$(cat "$TMP/fake/claude.ran" 2>/dev/null)"
   assert_file "--sid drops to the user's shell after claude exits" "$TMP/fake/shell.ran"
 }
+t_local_rc_cd(){ newtmp; export HOME="$TMP"
+  # Some boxes' ~/.zshrc.local cds to a default project on login (dev-1 does). sesh-local
+  # sources that file for ccf, and the session must still start in its own directory.
+  mkdir -p "$TMP/.local/bin" "$TMP/work" "$TMP/elsewhere"
+  printf '#!/bin/bash\necho "$PWD" > "%s/fake/claude.ran"\n' "$TMP" > "$TMP/.local/bin/claude"; chmod +x "$TMP/.local/bin/claude"
+  printf 'cd "%s/elsewhere"\n' "$TMP" > "$TMP/.zshrc.local"
+  SESH_DRYRUN= bash "$_BIN/sesh-local" "$TMP/work" myname --resume abc </dev/null >/dev/null
+  got="$(cat "$TMP/fake/claude.ran" 2>/dev/null)"
+  if [ "$got" = "$TMP/work" ]; then ok "an rc file that cds does not move the picker's session"; else no "claude should start in $TMP/work (got '$got')"; fi
+  rm -f "$TMP/fake/claude.ran"
+  f="$(mkproj projD 12345678-aaaa-bbbb-cccc-000000000004 no "" "x")"
+  sed -i.bak "s#/Users/vania/Projects/projD#$TMP/work#" "$f"
+  TMUX= SESH_DRYRUN= SHELL=/usr/bin/true bash "$_BIN/sesh-local" --sid 12345678-aaaa-bbbb-cccc-000000000004 </dev/null >/dev/null
+  got="$(cat "$TMP/fake/claude.ran" 2>/dev/null)"
+  if [ "$got" = "$TMP/work" ]; then ok "an rc file that cds does not move a restored session"; else no "--sid should start claude in $TMP/work (got '$got')"; fi
+}
 echo "# Hyprland placement (dry-run Lua)"
 t_spawn_placed_rules(){ newtmp; export HOME="$TMP"
   export SESH_UNAME=Linux SESH_DRYRUN=1
@@ -916,7 +932,7 @@ RUN="$RUN t_lib_via_symlink t_lib_via_symlink_bsd_readlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
 RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
 RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
-RUN="$RUN t_local_sid t_local_real_run"
+RUN="$RUN t_local_sid t_local_real_run t_local_rc_cd"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
 RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd t_restore_linux_internal_error"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
