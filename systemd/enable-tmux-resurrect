@@ -16,9 +16,10 @@
 # unit's ExecStop kills the tmux server and every session on it, and starting the new
 # one restores into a live server.
 #
-# Seam for tests: RZ_SYSTEMCTL (systemctl binary).
+# Seams for tests: RZ_SYSTEMCTL (systemctl binary), RZ_TMUX (tmux binary).
 set -u
 SYSTEMCTL="${RZ_SYSTEMCTL:-systemctl}"
+TMUX_BIN="${RZ_TMUX:-tmux}"
 if ! "$SYSTEMCTL" --user show-environment >/dev/null 2>&1; then
   echo "no systemd --user session; skipping tmux-resurrect.service (fine in containers/CI)"
   exit 0
@@ -29,5 +30,9 @@ for l in "$u/tmux.service" "$u/default.target.wants/tmux.service"; do
   if [ -L "$l" ] && [ ! -e "$l" ]; then rm -f "$l" && echo "removed the old link $l"; fi
 done
 "$SYSTEMCTL" --user daemon-reload && "$SYSTEMCTL" --user enable tmux-resurrect.service &&
-  "$SYSTEMCTL" --user enable tmux-resurrect-save.timer tmux-resurrect-shutdown.service &&
-  "$SYSTEMCTL" --user restart tmux-resurrect-save.timer tmux-resurrect-shutdown.service
+  "$SYSTEMCTL" --user enable tmux-resurrect-save.timer tmux-resurrect-shutdown.service || exit
+# A running tmux server keeps the tmux.conf it loaded, so its continuum would go on
+# saving next to the timer, outside resurrect-save's lock, until the next config load.
+# Turn it off before the timer starts. With no server running this fails, which is fine.
+"$TMUX_BIN" set-option -g @continuum-save-interval 0 2>/dev/null
+"$SYSTEMCTL" --user restart tmux-resurrect-save.timer tmux-resurrect-shutdown.service
