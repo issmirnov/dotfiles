@@ -38,8 +38,9 @@ if ! zgen saved; then
 	zgen load zsh-users/zsh-autosuggestions
 	zgen load zsh-users/zsh-completions
 	zgen load djui/alias-tips
-	zgen load wfxr/forgit
-	zgen load ocodo/ollama_zsh_completion
+	# zgen defaults to the master branch; these two renamed theirs to main
+	zgen load wfxr/forgit forgit.plugin.zsh main
+	zgen load ocodo/ollama_zsh_completion ollama_zsh_completion.plugin.zsh main
 	#zgen load romkatv/zsh-prompt-benchmark
 
 	# As per instructions, load this last so that it wraps ZLE widgets.
