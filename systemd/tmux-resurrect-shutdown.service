@@ -1,12 +1,19 @@
 [Unit]
 Description=tmux-resurrect: save the tmux sessions at shutdown and reboot
+# The script exits non-zero when its listener fails, and Restart=on-failure starts a
+# new one. Give up after 5 starts in 10 min, so a listener that always fails can't loop
+# forever. The default limit, 5 starts in 10 s, never trips with RestartSec=5s.
+StartLimitIntervalSec=10min
+StartLimitBurst=5
 
 [Service]
 # systemd-inhibit holds a logind delay lock while the script waits. On shutdown or
 # reboot, logind announces PrepareForShutdown and waits for delay locks (up to
-# InhibitDelayMaxSec, 5 s by default) before systemd stops anything. The script saves
-# while every pane is still running, then exits and releases the lock. An ExecStop=
-# save on tmux-resurrect.service would race: each pane runs in its own
+# InhibitDelayMaxSec, 5 s by default) before systemd stops anything. The script hears
+# the signal through `busctl wait` (systemd 257 and later: Arch, Ubuntu 26.04) or,
+# where busctl has no wait verb (systemd 255: Ubuntu 24.04), through `gdbus monitor`.
+# It saves while every pane is still running, then exits and releases the lock. An
+# ExecStop= save on tmux-resurrect.service would race: each pane runs in its own
 # tmux-spawn-*.scope, which systemd stops at the same time as that unit.
 ExecStart=/usr/bin/systemd-inhibit --what=shutdown --mode=delay --who=tmux-resurrect --why="Save tmux sessions" %h/.dotfiles/tmux/resurrect-save --at-shutdown
 Restart=on-failure
