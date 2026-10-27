@@ -247,7 +247,8 @@ elif [ -n "$SEVEN_PART" ]; then
     RATE_PART="${TPM_STR}${SEVEN_PART}"
 fi
 
-# Context window progress bar
+# Line 2: model, effort and context bar, then usage
+LINE2="${CYAN}${MODEL}${RESET}${EFFORT_DISPLAY}"
 if [ -n "$PCT" ]; then
     PCT_INT=$(printf "%.0f" "$PCT")
     FILLED=$((PCT_INT / 10))
@@ -264,17 +265,15 @@ if [ -n "$PCT" ]; then
         BAR_COLOR="$GREEN"
     fi
 
-    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b | ${BAR_COLOR}%s %d%%${RESET}" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY" "$BAR" "$PCT_INT")
-else
-    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY")
+    LINE2="${LINE2} | ${BAR_COLOR}${BAR} ${PCT_INT}%${RESET}"
 fi
 
 # Append extra segments (only when non-empty)
-[ -n "$COST_STR" ] && RESULT="${RESULT} | ${COST_STR}"
-[ -n "$LINES_STR" ] && RESULT="${RESULT} | ${LINES_STR}"
-[ -n "$CACHE_STR" ] && RESULT="${RESULT} | ${CACHE_STR}"
-[ -n "$DURATION_STR" ] && RESULT="${RESULT} | ${CYAN}⏱ ${DURATION_STR}${RESET}"
-[ -n "$RATE_PART" ] && RESULT="${RESULT} | ${RATE_PART}"
-[ -n "$META_STR" ] && RESULT="${RESULT} | ${META_STR}"
+[ -n "$COST_STR" ] && LINE2="${LINE2} | ${COST_STR}"
+[ -n "$LINES_STR" ] && LINE2="${LINE2} | ${LINES_STR}"
+[ -n "$CACHE_STR" ] && LINE2="${LINE2} | ${CACHE_STR}"
+[ -n "$DURATION_STR" ] && LINE2="${LINE2} | ${CYAN}⏱ ${DURATION_STR}${RESET}"
+[ -n "$RATE_PART" ] && LINE2="${LINE2} | ${RATE_PART}"
+[ -n "$META_STR" ] && LINE2="${LINE2} | ${META_STR}"
 
-printf '%b' "$RESULT"
+printf '%b\n%b' "$PROMPT_PART" "$LINE2"
