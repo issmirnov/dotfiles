@@ -43,6 +43,21 @@ yabai -m config left_padding                 10
 yabai -m config right_padding                10
 yabai -m config window_gap                   10
 
+# ── focus-follows-mouse self-heal ───────────────────────────────────────────
+# yabai suspends focus_follows_mouse at runtime (reported state "disabled" — NOT
+# a value you can set) during fn-drags, Mission Control, display changes, and
+# sleep/wake, then re-enables it on the matching "end" event. Under full SIP
+# without the scripting addition it sometimes misses that event and stays stuck
+# disabled, so FFM silently dies. Re-assert autoraise on the events that strand
+# it. application_front_switched is the catch-all: it fires on every app focus
+# change (which always follows a drag / Mission Control) and keeps firing even
+# while FFM is dead — unlike the mouse events FFM itself depends on.
+yabai -m signal --add event=system_woke                action="yabai -m config focus_follows_mouse autoraise"
+yabai -m signal --add event=display_added              action="yabai -m config focus_follows_mouse autoraise"
+yabai -m signal --add event=display_removed            action="yabai -m config focus_follows_mouse autoraise"
+yabai -m signal --add event=mission_control_exit       action="yabai -m config focus_follows_mouse autoraise"
+yabai -m signal --add event=application_front_switched action="yabai -m config focus_follows_mouse autoraise"
+
 # ── simple-bar / Übersicht refresh signals ──────────────────────────────────
 # DISABLED: Übersicht is not installed, so these osascript calls errored on every
 # space/window event ("Can't get application id tracesOf.Uebersicht"). Re-enable
