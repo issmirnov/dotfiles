@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 input=$(cat)
 
-BOLD_GREEN='\033[1;32m'
 CYAN='\033[36m'
 BOLD_BLUE='\033[1;34m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
+BOLD_YELLOW='\033[1;33m'
 RED='\033[31m'
 BOLD_RED='\033[1;31m'
 MAGENTA='\033[35m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
-HOME_DIR="$HOME"
-DIR="${DIR/#$HOME_DIR/~}"
-BASENAME=$(basename "$DIR")
-REAL_DIR="${DIR/#\~/$HOME_DIR}"
+# Where Claude is now, and where the session was launched. EnterWorktree
+# re-points project_dir at the worktree; worktree.original_cwd keeps the launch dir.
+REAL_DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
+LAUNCH_DIR=$(echo "$input" | jq -r '.worktree.original_cwd // .workspace.project_dir // empty')
+[ -z "$LAUNCH_DIR" ] && LAUNCH_DIR="$REAL_DIR"
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // ""')
 SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
@@ -28,8 +28,14 @@ COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // empty')
 CACHE_CREATE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // empty')
 
-# Robbyrussell-style prompt
-PROMPT_PART="${BOLD_GREEN}➜${RESET} ${CYAN}${BASENAME}${RESET}"
+# ~-abbreviate $HOME itself or a $HOME/ prefix only, so /home/vania2 stays put
+tildify() {
+    case "$1" in
+        "$HOME") printf '%s' "~" ;;
+        "$HOME"/*) printf '%s' "~${1#"$HOME"}" ;;
+        *) printf '%s' "$1" ;;
+    esac
+}
 
 # Git info with dirty indicator (cached for 10 seconds to avoid hammering large repos)
 GIT_CACHE_FILE="/tmp/claude-statusline-git-${SESSION_ID:-$$}.cache"
@@ -64,18 +70,31 @@ elif [ -d "${REAL_DIR}/.git" ] || git -C "$REAL_DIR" rev-parse --git-dir >/dev/n
     echo "${NOW_SECS} ${REAL_DIR}" > "$GIT_CACHE_FILE"
     echo "$GIT_PART" >> "$GIT_CACHE_FILE"
 fi
-PROMPT_PART="${PROMPT_PART}${GIT_PART}"
+# Line 1: host, launch dir, worktree, where Claude moved to, git, session name
+HOST="${HOSTNAME%%.*}"
+if [ -n "$SSH_CONNECTION" ]; then
+    HOST_PART="${BOLD_YELLOW}${HOST}${RESET}"
+else
+    HOST_PART="${DIM}${HOST}${RESET}"
+fi
 
-# Worktree indicator
 WORKTREE=$(echo "$input" | jq -r '.worktree.name // ""')
+WORKTREE_PATH=$(echo "$input" | jq -r '.worktree.path // ""')
+REST_PART=""
 if [ -n "$WORKTREE" ]; then
-    PROMPT_PART="${PROMPT_PART} ${YELLOW}🌿 ${WORKTREE}${RESET}"
+    REST_PART="${REST_PART} ${YELLOW}🌿 ${WORKTREE}${RESET}"
+fi
+# Moved away from the launch dir (the worktree root is already shown by 🌿)
+if [ "$REAL_DIR" != "$LAUNCH_DIR" ] && [ "$REAL_DIR" != "$WORKTREE_PATH" ]; then
+    REST_PART="${REST_PART} ${DIM}→${RESET} ${CYAN}$(basename "$REAL_DIR")${RESET}"
+fi
+REST_PART="${REST_PART}${GIT_PART}"
+if [ -n "$SESSION_NAME" ]; then
+    REST_PART="${REST_PART} ${MAGENTA}[${SESSION_NAME}]${RESET}"
 fi
 
-# Session name
-if [ -n "$SESSION_NAME" ]; then
-    PROMPT_PART="${PROMPT_PART} ${MAGENTA}[${SESSION_NAME}]${RESET}"
-fi
+LAUNCH_SHOWN=$(tildify "$LAUNCH_DIR")
+LINE1="${HOST_PART} ${CYAN}${LAUNCH_SHOWN}${RESET}${REST_PART}"
 
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
@@ -276,4 +295,4 @@ fi
 [ -n "$RATE_PART" ] && LINE2="${LINE2} | ${RATE_PART}"
 [ -n "$META_STR" ] && LINE2="${LINE2} | ${META_STR}"
 
-printf '%b\n%b' "$PROMPT_PART" "$LINE2"
+printf '%b\n%b' "$LINE1" "$LINE2"

@@ -16,6 +16,7 @@ import os
 import pathlib
 import re
 import subprocess
+import tempfile
 import unittest
 import uuid
 
@@ -81,6 +82,68 @@ class TwoLines(unittest.TestCase):
         _, plain = render(self.PAYLOAD)
         for segment in ("Opus", "⚡", "%", "$", "⏱"):
             self.assertNotIn(segment, plain[0])
+
+
+class LineOne(unittest.TestCase):
+    WT = "/home/u/proj/.claude/worktrees/feat"
+    WT_INFO = {"name": "feat", "path": WT, "original_cwd": "/home/u/proj"}
+
+    def test_not_moved_shows_host_and_launch_dir(self):
+        _, plain = render(ws("/home/u/proj"))
+        self.assertEqual(plain[0], "testhost ~/proj")
+
+    def test_moved_shows_arrow_and_current_folder(self):
+        _, plain = render(ws("/home/u/proj", project="/home/u"))
+        self.assertEqual(plain[0], "testhost ~ → proj")
+
+    def test_worktree_root_shows_leaf_not_arrow(self):
+        _, plain = render({**ws(self.WT), "worktree": self.WT_INFO})
+        self.assertEqual(plain[0], "testhost ~/proj 🌿 feat")
+
+    def test_worktree_subdir_shows_leaf_then_arrow(self):
+        _, plain = render({**ws(self.WT + "/charts", project=self.WT), "worktree": self.WT_INFO})
+        self.assertEqual(plain[0], "testhost ~/proj 🌿 feat → charts")
+
+    def test_session_name_comes_last(self):
+        _, plain = render({**ws("/home/u/proj", project="/home/u"), "session_name": "Fix it"})
+        self.assertEqual(plain[0], "testhost ~ → proj [Fix it]")
+
+    def test_git_segment_follows_the_move(self):
+        with tempfile.TemporaryDirectory() as home:
+            repo = pathlib.Path(home, "proj")
+            subprocess.run(["git", "init", "-q", "-b", "main", str(repo)], check=True)
+            subprocess.run(
+                ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t",
+                 "-c", "commit.gpgsign=false", "commit", "-q", "--no-verify",
+                 "--allow-empty", "-m", "init"],
+                check=True,
+            )
+            _, plain = render(ws(str(repo), project=home), home=home)
+        self.assertEqual(plain[0], "testhost ~ → proj git:(main)")
+
+    def test_no_project_dir_falls_back_to_current_dir(self):
+        _, plain = render({"workspace": {"current_dir": "/home/u/proj"}})
+        self.assertEqual(plain[0], "testhost ~/proj")
+
+    def test_launch_dir_outside_home_stays_absolute(self):
+        _, plain = render(ws("/srv/data"))
+        self.assertEqual(plain[0], "testhost /srv/data")
+
+    def test_home_prefix_must_be_a_whole_component(self):
+        _, plain = render(ws("/home/u2/x"))
+        self.assertEqual(plain[0], "testhost /home/u2/x")
+
+    def test_host_is_cut_at_the_first_dot(self):
+        _, plain = render(ws("/home/u/proj"), hostname="lorium.local")
+        self.assertEqual(plain[0], "lorium ~/proj")
+
+    def test_local_host_is_dim(self):
+        raw, _ = render(ws("/home/u/proj"))
+        self.assertTrue(raw[0].startswith("\x1b[2mtesthost\x1b[0m "), repr(raw[0]))
+
+    def test_ssh_host_is_bold_yellow(self):
+        raw, _ = render(ws("/home/u/proj"), ssh="10.0.0.2 50000 10.0.0.1 22")
+        self.assertTrue(raw[0].startswith("\x1b[1;33mtesthost\x1b[0m "), repr(raw[0]))
 
 
 if __name__ == "__main__":
