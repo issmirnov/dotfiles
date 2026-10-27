@@ -37,7 +37,7 @@ effort, context bar, cost, cache and duration leave no room for more.
 | Shown | Source | Notes |
 |---|---|---|
 | Host | bash `$HOSTNAME`, cut at the first `.` | No fork. `hexane` here, `lorium` on the laptop. Bash keeps a value passed in the environment, so tests can pin it. |
-| Launch directory | `.worktree.original_cwd // .workspace.project_dir` | EnterWorktree points `project_dir` at the worktree (seen in the 2.1.311 binary). `worktree.original_cwd` keeps the directory from before the worktree. ExitWorktree restores `project_dir`. |
+| Launch directory | At the session's first render: `.worktree.original_cwd // .workspace.project_dir`. The script saves it to `/tmp/claude-statusline-launch-<session_id>.dir` and reuses it. | The payload loses the launch directory later. EnterWorktree points `project_dir` at the worktree (seen in the 2.1.311 binary). `worktree.original_cwd` is wherever Claude was when it entered, so a `cd` before the worktree changes it. ExitWorktree restores `project_dir`. |
 | Current directory | `.workspace.current_dir // .cwd` | Same as today. |
 | Worktree | `.worktree.name`, `.worktree.path` | Present only in a worktree session. |
 | Width | `$COLUMNS` | Claude Code sets it before it runs the script. |
@@ -119,6 +119,11 @@ Line 2 has no width check.
 - **Current directory inside or outside the launch directory:** both show only
   the basename after `→`. No relative paths.
 - **No git repository:** no git segment, as today.
+- **Claude moves, then enters a worktree:** line 1 keeps the saved launch
+  directory. The live demo found this case: `worktree.original_cwd` pointed at
+  the subdirectory.
+- **No `session_id`:** the script saves nothing and reads the launch directory
+  from the payload on each render.
 
 ## Testing
 
@@ -138,6 +143,8 @@ Cases:
 - Worktree session at the worktree root: the launch directory is
   `original_cwd`, `🌿 <name>` shows, and `→` does not.
 - Worktree session in a subdirectory: `🌿 <name> → <subdir>`.
+- One session that moves into `sub/` and then enters a worktree: line 1 keeps
+  the launch directory from the first render.
 - SSH: the raw output wraps the host in bold yellow. Local: dim.
 - Narrow `COLUMNS`: the script shortens the path. Wide `COLUMNS`: the full
   path shows.

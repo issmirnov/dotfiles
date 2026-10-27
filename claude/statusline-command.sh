@@ -12,17 +12,28 @@ MAGENTA='\033[35m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-# Where Claude is now, and where the session was launched. EnterWorktree
-# re-points project_dir at the worktree; worktree.original_cwd keeps the launch dir.
+# Where Claude is now
 REAL_DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
-LAUNCH_DIR=$(echo "$input" | jq -r '.worktree.original_cwd // .workspace.project_dir // empty')
-[ -z "$LAUNCH_DIR" ] && LAUNCH_DIR="$REAL_DIR"
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // ""')
 SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
 SESSION_NAME=$(echo "$input" | jq -r '.session_name // ""')
 OUTPUT_STYLE=$(echo "$input" | jq -r '.output_style.name // ""')
 COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
+
+# Where the session was launched. The payload loses it later: EnterWorktree
+# re-points project_dir at the worktree, and worktree.original_cwd is wherever
+# Claude was when it entered. So keep the first value seen for each session.
+LAUNCH_DIR=""
+LAUNCH_FILE="/tmp/claude-statusline-launch-${SESSION_ID}.dir"
+if [ -n "$SESSION_ID" ] && [ -s "$LAUNCH_FILE" ]; then
+    LAUNCH_DIR=$(<"$LAUNCH_FILE")
+fi
+if [ -z "$LAUNCH_DIR" ]; then
+    LAUNCH_DIR=$(echo "$input" | jq -r '.worktree.original_cwd // .workspace.project_dir // empty')
+    [ -z "$LAUNCH_DIR" ] && LAUNCH_DIR="$REAL_DIR"
+    [ -n "$SESSION_ID" ] && printf '%s\n' "$LAUNCH_DIR" > "$LAUNCH_FILE"
+fi
 
 # Cache efficiency
 CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // empty')

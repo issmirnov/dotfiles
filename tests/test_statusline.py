@@ -31,9 +31,21 @@ def ws(current, project=None):
     return {"workspace": {"current_dir": current, "project_dir": project or current}}
 
 
-def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost"):
-    """Run the script on payload. Returns (raw_lines, plain_lines)."""
-    sid = f"test-{uuid.uuid4().hex}"
+def cleanup(sid):
+    """Remove the per-session state the script keeps in /tmp."""
+    for f in pathlib.Path("/tmp").glob(f"claude-statusline-*-{sid}*"):
+        f.unlink()
+
+
+def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost", sid=None):
+    """Run the script on payload. Returns (raw_lines, plain_lines).
+
+    With no sid, each call is a fresh session and its /tmp state is removed.
+    Pass a sid to run several renders as one session; the caller cleans up.
+    """
+    fresh = sid is None
+    if fresh:
+        sid = f"test-{uuid.uuid4().hex}"
     data = {"session_id": sid, "model": {"display_name": "Opus 5.5"}, **payload}
     env = {
         "PATH": os.environ["PATH"],
@@ -52,9 +64,8 @@ def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost"):
             capture_output=True, encoding="utf-8", check=True,
         ).stdout
     finally:
-        # The script keeps per-session git and tokens/min state in /tmp.
-        for f in pathlib.Path("/tmp").glob(f"claude-statusline-*-{sid}*"):
-            f.unlink()
+        if fresh:
+            cleanup(sid)
     raw = out.split("\n")
     return raw, [ANSI.sub("", line) for line in raw]
 
@@ -144,6 +155,20 @@ class LineOne(unittest.TestCase):
     def test_ssh_host_is_bold_yellow(self):
         raw, _ = render(ws("/home/u/proj"), ssh="10.0.0.2 50000 10.0.0.1 22")
         self.assertTrue(raw[0].startswith("\x1b[1;33mtesthost\x1b[0m "), repr(raw[0]))
+
+
+class LaunchDirSticks(unittest.TestCase):
+    def test_launch_dir_survives_a_cd_then_a_worktree(self):
+        # Claude cd's into sub/, then enters a worktree. worktree.original_cwd is
+        # then .../sub, but line 1 keeps the directory from the first render.
+        sid = f"test-{uuid.uuid4().hex}"
+        self.addCleanup(cleanup, sid)
+        render(ws("/home/u/proj"), sid=sid)
+        render(ws("/home/u/proj/sub", project="/home/u/proj"), sid=sid)
+        wt = "/home/u/proj/.claude/worktrees/demo"
+        info = {"name": "demo", "path": wt, "original_cwd": "/home/u/proj/sub"}
+        _, plain = render({**ws(wt), "worktree": info}, sid=sid)
+        self.assertEqual(plain[0], "testhost ~/proj 🌿 demo")
 
 
 class NarrowWindows(unittest.TestCase):
