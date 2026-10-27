@@ -30,7 +30,14 @@ The user-level Claude Code config. Notable knobs in use:
 
 ## `statusline-command.sh`
 
-Custom statusline renderer invoked on each prompt. Shows model, session cost, rate-limit headroom, git branch/dirty state, and turn duration. Caches git ops for 10s and uses session-scoped temp files so multiple concurrent Claude Code sessions don't stomp each other's state.
+Custom status line renderer. Claude Code runs it on each update and shows each printed line as a row, above its own permission-mode row. It prints two lines:
+
+1. **Where the session is:** the host (dim locally, bold yellow over SSH), the directory Claude was launched in, `🌿 <worktree>`, `→ <folder>` after Claude moves away from the launch directory, the git branch with a dirty mark, and the session name.
+2. **What the session uses:** model, effort, context bar, cost, lines changed, cache hit rate, duration, and rate-limit headroom.
+
+The launch directory comes from `worktree.original_cwd`, else `workspace.project_dir`, because EnterWorktree points `project_dir` at the worktree. If line 1 is wider than the window (`$COLUMNS`), the launch path shortens fish-style, for example `~/P/1/a/shotcraft-videos`.
+
+The script caches git results for 10 seconds. Temp files are per session, so concurrent sessions don't overwrite each other's state. Tests: `python3 -m unittest -v tests.test_statusline`.
 
 ## Workspace-trust quirk (gotcha)
 

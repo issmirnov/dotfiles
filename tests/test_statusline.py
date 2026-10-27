@@ -146,5 +146,30 @@ class LineOne(unittest.TestCase):
         self.assertTrue(raw[0].startswith("\x1b[1;33mtesthost\x1b[0m "), repr(raw[0]))
 
 
+class NarrowWindows(unittest.TestCase):
+    LONG = "/home/u/Projects/1.Personal/ai/shotcraft-videos"
+
+    def test_wide_window_keeps_the_full_path(self):
+        _, plain = render(ws(self.LONG), columns=200)
+        self.assertEqual(plain[0], "testhost ~/Projects/1.Personal/ai/shotcraft-videos")
+
+    def test_narrow_window_shortens_the_launch_path_fish_style(self):
+        _, plain = render(ws(self.LONG), columns=40)
+        self.assertEqual(plain[0], "testhost ~/P/1/a/shotcraft-videos")
+
+    def test_dot_component_keeps_two_characters(self):
+        _, plain = render(ws("/home/u/.dotfiles-worktrees/statusline"), columns=20)
+        self.assertEqual(plain[0], "testhost ~/.d/statusline")
+
+    def test_only_the_launch_path_is_shortened(self):
+        moved = ws("/home/u/Projects/1.Personal/ops/argo-k8s", project="/home/u/Projects/1.Personal/ops")
+        _, plain = render(moved, columns=30)
+        self.assertEqual(plain[0], "testhost ~/P/1/ops → argo-k8s")
+
+    def test_no_columns_means_no_shortening(self):
+        _, plain = render(ws(self.LONG), columns=None)
+        self.assertEqual(plain[0], "testhost ~/Projects/1.Personal/ai/shotcraft-videos")
+
+
 if __name__ == "__main__":
     unittest.main()

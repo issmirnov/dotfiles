@@ -37,6 +37,30 @@ tildify() {
     esac
 }
 
+# fish-style: every component but the last cut to 1 char (2 for dot-names)
+shorten_path() {
+    local IFS=/ out="" i c last
+    local -a parts
+    read -ra parts <<< "$1"
+    last=$(( ${#parts[@]} - 1 ))
+    for i in "${!parts[@]}"; do
+        c=${parts[i]}
+        if [ "$i" -lt "$last" ] && [ -n "$c" ] && [ "$c" != "~" ]; then
+            if [[ $c == .* ]]; then c=${c:0:2}; else c=${c:0:1}; fi
+        fi
+        out="${out}${c}"
+        [ "$i" -lt "$last" ] && out="${out}/"
+    done
+    printf '%s' "${out:-/}"
+}
+
+# Characters a string takes on screen, minus the literal \033[…m color codes
+visible_len() {
+    local s
+    s=$(printf '%s' "$1" | sed 's/\\033\[[0-9;]*m//g')
+    printf '%s' "${#s}"
+}
+
 # Git info with dirty indicator (cached for 10 seconds to avoid hammering large repos)
 GIT_CACHE_FILE="/tmp/claude-statusline-git-${SESSION_ID:-$$}.cache"
 GIT_CACHE_TTL=10
@@ -93,7 +117,15 @@ if [ -n "$SESSION_NAME" ]; then
     REST_PART="${REST_PART} ${MAGENTA}[${SESSION_NAME}]${RESET}"
 fi
 
+# Narrow window: if line 1 won't fit, shorten only the launch path, fish-style.
+# The 4 columns of slack cover Claude Code's own spacing and the double-width 🌿.
 LAUNCH_SHOWN=$(tildify "$LAUNCH_DIR")
+if [[ $COLUMNS =~ ^[0-9]+$ ]]; then
+    LINE1_WIDTH=$(( $(visible_len "${HOST_PART} ${REST_PART}") + ${#LAUNCH_SHOWN} ))
+    if [ "$LINE1_WIDTH" -gt $((COLUMNS - 4)) ]; then
+        LAUNCH_SHOWN=$(shorten_path "$LAUNCH_SHOWN")
+    fi
+fi
 LINE1="${HOST_PART} ${CYAN}${LAUNCH_SHOWN}${RESET}${REST_PART}"
 
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
