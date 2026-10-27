@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 input=$(cat)
 
-BOLD_GREEN='\033[1;32m'
 CYAN='\033[36m'
 BOLD_BLUE='\033[1;34m'
 GREEN='\033[32m'
 YELLOW='\033[33m'
+BOLD_YELLOW='\033[1;33m'
 RED='\033[31m'
 BOLD_RED='\033[1;31m'
 MAGENTA='\033[35m'
 DIM='\033[2m'
 RESET='\033[0m'
 
-DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
-HOME_DIR="$HOME"
-DIR="${DIR/#$HOME_DIR/~}"
-BASENAME=$(basename "$DIR")
-REAL_DIR="${DIR/#\~/$HOME_DIR}"
+# Where Claude is now
+REAL_DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // ""')
 SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
@@ -24,12 +21,56 @@ SESSION_NAME=$(echo "$input" | jq -r '.session_name // ""')
 OUTPUT_STYLE=$(echo "$input" | jq -r '.output_style.name // ""')
 COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 
+# Where the session was launched. The payload loses it later: EnterWorktree
+# re-points project_dir at the worktree, and worktree.original_cwd is wherever
+# Claude was when it entered. So keep the first value seen for each session.
+LAUNCH_DIR=""
+LAUNCH_FILE="/tmp/claude-statusline-launch-${SESSION_ID}.dir"
+if [ -n "$SESSION_ID" ] && [ -s "$LAUNCH_FILE" ]; then
+    LAUNCH_DIR=$(<"$LAUNCH_FILE")
+fi
+if [ -z "$LAUNCH_DIR" ]; then
+    LAUNCH_DIR=$(echo "$input" | jq -r '.worktree.original_cwd // .workspace.project_dir // empty')
+    [ -z "$LAUNCH_DIR" ] && LAUNCH_DIR="$REAL_DIR"
+    [ -n "$SESSION_ID" ] && printf '%s\n' "$LAUNCH_DIR" > "$LAUNCH_FILE"
+fi
+
 # Cache efficiency
 CACHE_READ=$(echo "$input" | jq -r '.context_window.current_usage.cache_read_input_tokens // empty')
 CACHE_CREATE=$(echo "$input" | jq -r '.context_window.current_usage.cache_creation_input_tokens // empty')
 
-# Robbyrussell-style prompt
-PROMPT_PART="${BOLD_GREEN}➜${RESET} ${CYAN}${BASENAME}${RESET}"
+# ~-abbreviate $HOME itself or a $HOME/ prefix only, so /home/vania2 stays put
+tildify() {
+    case "$1" in
+        "$HOME") printf '%s' "~" ;;
+        "$HOME"/*) printf '%s' "~${1#"$HOME"}" ;;
+        *) printf '%s' "$1" ;;
+    esac
+}
+
+# fish-style: every component but the last cut to 1 char (2 for dot-names)
+shorten_path() {
+    local IFS=/ out="" i c last
+    local -a parts
+    read -ra parts <<< "$1"
+    last=$(( ${#parts[@]} - 1 ))
+    for i in "${!parts[@]}"; do
+        c=${parts[i]}
+        if [ "$i" -lt "$last" ] && [ -n "$c" ] && [ "$c" != "~" ]; then
+            if [[ $c == .* ]]; then c=${c:0:2}; else c=${c:0:1}; fi
+        fi
+        out="${out}${c}"
+        [ "$i" -lt "$last" ] && out="${out}/"
+    done
+    printf '%s' "${out:-/}"
+}
+
+# Characters a string takes on screen, minus the literal \033[…m color codes
+visible_len() {
+    local s
+    s=$(printf '%s' "$1" | sed 's/\\033\[[0-9;]*m//g')
+    printf '%s' "${#s}"
+}
 
 # Git info with dirty indicator (cached for 10 seconds to avoid hammering large repos)
 GIT_CACHE_FILE="/tmp/claude-statusline-git-${SESSION_ID:-$$}.cache"
@@ -64,18 +105,39 @@ elif [ -d "${REAL_DIR}/.git" ] || git -C "$REAL_DIR" rev-parse --git-dir >/dev/n
     echo "${NOW_SECS} ${REAL_DIR}" > "$GIT_CACHE_FILE"
     echo "$GIT_PART" >> "$GIT_CACHE_FILE"
 fi
-PROMPT_PART="${PROMPT_PART}${GIT_PART}"
+# Line 1: host, launch dir, worktree, where Claude moved to, git, session name
+HOST="${HOSTNAME%%.*}"
+if [ -n "$SSH_CONNECTION" ]; then
+    HOST_PART="${BOLD_YELLOW}${HOST}${RESET}"
+else
+    HOST_PART="${DIM}${HOST}${RESET}"
+fi
 
-# Worktree indicator
 WORKTREE=$(echo "$input" | jq -r '.worktree.name // ""')
+WORKTREE_PATH=$(echo "$input" | jq -r '.worktree.path // ""')
+REST_PART=""
 if [ -n "$WORKTREE" ]; then
-    PROMPT_PART="${PROMPT_PART} ${YELLOW}🌿 ${WORKTREE}${RESET}"
+    REST_PART="${REST_PART} ${YELLOW}🌿 ${WORKTREE}${RESET}"
+fi
+# Moved away from the launch dir (the worktree root is already shown by 🌿)
+if [ "$REAL_DIR" != "$LAUNCH_DIR" ] && [ "$REAL_DIR" != "$WORKTREE_PATH" ]; then
+    REST_PART="${REST_PART} ${DIM}→${RESET} ${CYAN}$(basename "$REAL_DIR")${RESET}"
+fi
+REST_PART="${REST_PART}${GIT_PART}"
+if [ -n "$SESSION_NAME" ]; then
+    REST_PART="${REST_PART} ${MAGENTA}[${SESSION_NAME}]${RESET}"
 fi
 
-# Session name
-if [ -n "$SESSION_NAME" ]; then
-    PROMPT_PART="${PROMPT_PART} ${MAGENTA}[${SESSION_NAME}]${RESET}"
+# Narrow window: if line 1 won't fit, shorten only the launch path, fish-style.
+# The 4 columns of slack cover Claude Code's own spacing and the double-width 🌿.
+LAUNCH_SHOWN=$(tildify "$LAUNCH_DIR")
+if [[ $COLUMNS =~ ^[0-9]+$ ]]; then
+    LINE1_WIDTH=$(( $(visible_len "${HOST_PART} ${REST_PART}") + ${#LAUNCH_SHOWN} ))
+    if [ "$LINE1_WIDTH" -gt $((COLUMNS - 4)) ]; then
+        LAUNCH_SHOWN=$(shorten_path "$LAUNCH_SHOWN")
+    fi
 fi
+LINE1="${HOST_PART} ${CYAN}${LAUNCH_SHOWN}${RESET}${REST_PART}"
 
 PCT=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 
@@ -247,7 +309,8 @@ elif [ -n "$SEVEN_PART" ]; then
     RATE_PART="${TPM_STR}${SEVEN_PART}"
 fi
 
-# Context window progress bar
+# Line 2: model, effort and context bar, then usage
+LINE2="${CYAN}${MODEL}${RESET}${EFFORT_DISPLAY}"
 if [ -n "$PCT" ]; then
     PCT_INT=$(printf "%.0f" "$PCT")
     FILLED=$((PCT_INT / 10))
@@ -264,17 +327,15 @@ if [ -n "$PCT" ]; then
         BAR_COLOR="$GREEN"
     fi
 
-    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b | ${BAR_COLOR}%s %d%%${RESET}" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY" "$BAR" "$PCT_INT")
-else
-    RESULT=$(printf "%b | ${CYAN}%s${RESET}%b" "$PROMPT_PART" "$MODEL" "$EFFORT_DISPLAY")
+    LINE2="${LINE2} | ${BAR_COLOR}${BAR} ${PCT_INT}%${RESET}"
 fi
 
 # Append extra segments (only when non-empty)
-[ -n "$COST_STR" ] && RESULT="${RESULT} | ${COST_STR}"
-[ -n "$LINES_STR" ] && RESULT="${RESULT} | ${LINES_STR}"
-[ -n "$CACHE_STR" ] && RESULT="${RESULT} | ${CACHE_STR}"
-[ -n "$DURATION_STR" ] && RESULT="${RESULT} | ${CYAN}⏱ ${DURATION_STR}${RESET}"
-[ -n "$RATE_PART" ] && RESULT="${RESULT} | ${RATE_PART}"
-[ -n "$META_STR" ] && RESULT="${RESULT} | ${META_STR}"
+[ -n "$COST_STR" ] && LINE2="${LINE2} | ${COST_STR}"
+[ -n "$LINES_STR" ] && LINE2="${LINE2} | ${LINES_STR}"
+[ -n "$CACHE_STR" ] && LINE2="${LINE2} | ${CACHE_STR}"
+[ -n "$DURATION_STR" ] && LINE2="${LINE2} | ${CYAN}⏱ ${DURATION_STR}${RESET}"
+[ -n "$RATE_PART" ] && LINE2="${LINE2} | ${RATE_PART}"
+[ -n "$META_STR" ] && LINE2="${LINE2} | ${META_STR}"
 
-printf '%b' "$RESULT"
+printf '%b\n%b' "$LINE1" "$LINE2"

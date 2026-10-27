@@ -58,6 +58,16 @@ jobs:
       - name: Run paste tests
         run: python3 -m unittest -v tests.test_zsh_paste
 
+  # Status line rendering for claude/statusline-command.sh: both rows, the host,
+  # the launch directory, moves, worktrees and narrow-window shortening. Runs the
+  # script on JSON payloads; the runner image already has bash, jq and git.
+  test-statusline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run status line tests
+        run: python3 -m unittest -v tests.test_statusline
+
   # tmux-resurrect boot restore: the post-save hook that records each Claude pane's
   # session ID, the restore entries in tmux.conf (run through resurrect's own
   # matching code), the unit's enable script, and resurrect-save (the minute timer's
