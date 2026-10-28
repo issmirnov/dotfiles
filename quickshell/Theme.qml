@@ -49,6 +49,13 @@ Singleton {
     readonly property color scratchBar:   _v ? "#7a1420" : "#8f1d29"   // bar bg while special:scratch is up (red)
     readonly property color scratchBadge: _v ? "#f5606e" : "#ef6d78"   // ◆ scratch badge fill (red)
 
+    // --- Claude usage chips: fill of the ccflare primary account's chip (ClaudePool →
+    // UsageChip), by its worse window. ai_usage's pct_color thresholds in pastel, so the
+    // dark chipText stays readable: mint <70 · amber 70–89 · rose ≥90.
+    readonly property color usageOk:   _v ? "#3fae6a" : "#a2f0c8"
+    readonly property color usageWarn: _v ? "#e0973b" : "#f0c489"
+    readonly property color usageCrit: _v ? "#f7768e" : "#f0a2b8"
+
     // --- metrics ---
     readonly property int deckHeight: chipHeight + 8          // pill + 4px pad each side (=40); ↑ this to loosen the inter-row gap, ↓ to tighten
     readonly property int barHeight:  deckHeight * 2          // two decks touching, no middle gap (=80, was 90)
@@ -70,5 +77,12 @@ Singleton {
         var sat   = 0.55 + 0.25 * t;    // calmer when idle, more saturated when hot
         var light = 0.80 - 0.05 * t;    // stay light enough for the dark chip text
         return Qt.hsla(hue, sat, light, 1);
+    }
+
+    // Fill for a usage chip at `pct` (0–100) — see usageOk/usageWarn/usageCrit.
+    function usageFill(pct) {
+        if (pct >= 90) return usageCrit;
+        if (pct >= 70) return usageWarn;
+        return usageOk;
     }
 }

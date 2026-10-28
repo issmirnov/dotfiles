@@ -7,23 +7,30 @@ import QtQuick
 // and drops down a read-only popup with 5h + weekly meter bars, reset countdowns and the
 // weekly pace token. Popup mechanics (anchor, focus-grab dismiss, on-demand detail gated
 // on visibility) are cloned from StatChip.qml; detail JSON comes from `ai_usage __detail`.
+// Fed mode: ClaudePool.qml sets `entry` (one `ai_usage __pool` row) and the chip runs no
+// blocklet of its own; the ccflare primary gets a pastel fill, blocked standbys dim.
 Rectangle {
     id: chip
     property string exec: "/home/vania/.dotfiles/i3/blocklets/ai_usage"
     property string instance: ""            // -> BLOCK_INSTANCE ("claude:<acct>" | "codex")
     property int interval: 60000
+    property var entry: null                // ClaudePool row (text,color,primary,blocked,worst,status); null = run own blocklet
 
-    property string fullText: ""
-    property string emittedColor: ""
+    property string fullText: entry ? (entry.text || "") : ""
+    property string emittedColor: entry ? (entry.color || "") : ""
     property var detail: ({})               // parsed `ai_usage __detail` JSON: {title, windows:[…]}
+    readonly property bool primary: !!(entry && entry.primary)
+    readonly property bool blocked: !!(entry && !entry.primary && entry.blocked)
 
     height: Theme.chipHeight
     width: t.width + 18
     radius: Theme.chipRadius
-    color: Theme.surface
+    color: primary ? Theme.usageFill(entry.worst || 0) : Theme.surface
+    Behavior on color { ColorAnimation { duration: 300 } }
+    opacity: blocked ? 0.55 : 1
     visible: fullText !== ""
 
-    // ---- chip text + color: run the blocklet on a timer (mirrors Blocklet.qml) ----
+    // ---- chip text + color: run the blocklet on a timer (mirrors Blocklet.qml); off when fed ----
     Process {
         id: proc
         command: ["/usr/bin/env", "BLOCK_INSTANCE=" + chip.instance, chip.exec]
@@ -38,7 +45,7 @@ Rectangle {
     }
     Timer {
         interval: chip.interval
-        running: true
+        running: chip.entry === null
         repeat: true
         triggeredOnStart: true
         onTriggered: proc.running = true
@@ -48,7 +55,8 @@ Rectangle {
         id: t
         anchors.centerIn: parent
         text: chip.fullText
-        color: chip.emittedColor !== "" ? chip.emittedColor : Theme.subtext
+        color: chip.primary ? Theme.chipText
+             : chip.emittedColor !== "" ? chip.emittedColor : Theme.subtext
         font.pixelSize: Theme.fontSize
     }
 
@@ -124,13 +132,26 @@ Rectangle {
                 anchors.margins: 12
                 spacing: 12
 
-                Text {
+                Column {                            // title + (fed chips) the ccflare state line
                     width: parent.width
-                    text: chip.detail.title || chip.fullText
-                    color: chip.emittedColor !== "" ? chip.emittedColor : Theme.text
-                    font.pixelSize: Theme.fontSize
-                    font.bold: true
-                    elide: Text.ElideRight
+                    spacing: 2
+
+                    Text {
+                        width: parent.width
+                        text: chip.detail.title || chip.fullText
+                        color: chip.emittedColor !== "" ? chip.emittedColor : Theme.text
+                        font.pixelSize: Theme.fontSize
+                        font.bold: true
+                        elide: Text.ElideRight
+                    }
+                    Text {
+                        width: parent.width
+                        visible: text !== ""
+                        text: chip.entry ? (chip.entry.status || "") : ""
+                        color: Theme.subtext
+                        font.pixelSize: 13
+                        elide: Text.ElideRight
+                    }
                 }
 
                 Repeater {

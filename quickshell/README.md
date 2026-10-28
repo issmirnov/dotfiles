@@ -35,7 +35,9 @@ See `../hypr/hyprland.lua` for the compositor side.
 | `Workspaces.qml` | **Per-monitor workspace pills** — sort, click, and app icons (the focus of this doc). |
 | `Theme.qml` | Singleton palette + metrics; `variant` flips `"pastel"`/`"vivid"`. |
 | `Clock.qml` | Center date/time (`SystemClock`). |
-| `Blocklet.qml` | Generic i3blocks-script runner; reuses `../i3/blocklets/*` verbatim (worldclock, `ai_usage`). |
+| `Blocklet.qml` | Generic i3blocks-script runner; reuses `../i3/blocklets/*` verbatim (worldclock). |
+| `ClaudePool.qml` | The better-ccflare Claude fleet: one `UsageChip` per Anthropic account from `ai_usage __pool`, in ccflare priority order; the account ccflare routes to next is filled, blocked ones dim. |
+| `UsageChip.qml` | A Claude/Codex usage chip with a 5h + weekly meter popup; runs its own `ai_usage` instance, or is fed a row by `ClaudePool`. |
 | `Audio.qml` | PipeWire volume; left-click opens a draggable slider `PopupWindow`. |
 | `Sys.qml` / `Stats.qml` | `Sys` runs `lib/sysinfo.sh` (cpu/mem/temp/net/load); `Stats` renders the chips. |
 | `IdleToggle.qml` | Idle-inhibitor toggle (named `IdleToggle`, **not** `IdleInhibitor` — see gotchas). |

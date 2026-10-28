@@ -40,12 +40,12 @@ CX 5h 3%  wk 11% ✅
 
 ### Data source
 
-Reads the same private endpoints the official UIs use (Claude Code's `/usage`, Codex's
-`/status`):
+Claude comes from better-ccflare, which tracks every account in its pool; Codex reads the
+same private endpoint its official UI uses (`/status`):
 
-| Provider | Endpoint | OAuth token (read at runtime) |
-|----------|----------|-------------------------------|
-| Claude | `GET https://api.anthropic.com/api/oauth/usage` | `~/.claude/.credentials.json` → `.claudeAiOauth.accessToken` |
+| Provider | Endpoint | Token (read at runtime) |
+|----------|----------|-------------------------|
+| Claude | `GET $CCFLARE_BASE/api/accounts` on better-ccflare (default `http://10.3.39.6:8080`): usage for every Anthropic account in the pool | Bearer token in `~/.config/ccflare/token` (`CCFLARE_TOKEN_FILE`) |
 | Codex  | `GET https://chatgpt.com/backend-api/wham/usage` | `~/.codex/auth.json` → `.tokens.access_token` (+ `.account_id`) |
 
 **No secrets live in this repo.** Tokens are read from `$HOME` at call time and never
@@ -54,9 +54,26 @@ script **never refreshes** the OAuth token (read-only, so it can't race a live C
 session) and always exits 0 so a failure can't break the bar. On error / expiry it shows
 the last cached value dimmed gray, or `CC ?` / `CX ?` if there's nothing cached.
 
-Claude's endpoint returns sticky `429`s without a `User-Agent: claude-code/<ver>` header
-and shouldn't be polled faster than ~180s; the in-script cache TTL enforces that floor
-regardless of the configured `interval`.
+Claude's numbers come from better-ccflare, which polls Anthropic itself, so the Claude
+cache TTL is only 60s; Codex's is 120s. Both floors hold regardless of the configured
+`interval`.
+
+### `__pool`: the ccflare fleet for Quickshell
+
+`BLOCK_INSTANCE=claude ai_usage __pool` prints one JSON array that
+`quickshell/ClaudePool.qml` turns into one chip per Anthropic account. It's sorted by
+ccflare `priority` (lower first, ties by name); each object carries:
+
+| Field | Meaning |
+|-------|---------|
+| `primary` | ccflare's `isPrimary`: the account the next request goes to |
+| `blocked` | `reauth` / `paused` / `limited`, first match, mirroring ccflare's availability check; never set on the primary |
+| `text`, `color` | the per-account chip text (🔑 / ⏸ / ⏳ after the tag when blocked) and its pct color |
+| `worst` | max of the 5h and 7d utilization; drives the primary chip's fill |
+| `status` | popup line, e.g. `primary · priority 1`, `paused (manual) · priority 11` |
+| `stale` | the cache had expired and the fetch failed: `primary` forced off, color gray |
+
+`ai_usage __poolrender [1]` renders JSON from stdin (`1` = stale); the tests use it.
 
 ### Weekly pace indicator
 
