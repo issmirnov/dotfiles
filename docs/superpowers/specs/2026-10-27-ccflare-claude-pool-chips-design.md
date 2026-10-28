@@ -151,6 +151,8 @@ lines in `Bar.qml`.
 | ccflare reachable | chips in priority order, primary filled |
 | ccflare down, cache expired but present | same order, all chips gray, none filled |
 | no cache and ccflare down | one gray `CC ?` chip |
+| ccflare reachable, no Anthropic accounts left | one gray `CC ?` chip: an empty pool, rendered live and not cached (the shared cache keeps the last good fleet) |
+| ccflare reachable, Anthropic accounts but no usage yet (just restarted) | last good fleet from the cache, gray, nothing filled |
 | every account blocked (`isPrimary` false everywhere) | all chips dimmed with glyphs, none filled |
 | an account added/removed/renamed in ccflare | chip set and order update on the next poll |
 

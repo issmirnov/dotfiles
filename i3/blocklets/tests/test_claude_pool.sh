@@ -72,4 +72,24 @@ assert_eq "expired cache: unlit"     "0"     "$(nprimary "$old")"
 TMP2=$(mktemp -d)
 assert_eq "no cache: []" "[]" "$(AIUSAGE_CACHE_DIR="$TMP2" AIUSAGE_NO_FETCH=1 BLOCK_INSTANCE=claude bash "$S" __pool)"
 rm -rf "$TMP" "$TMP2"
+
+# --- __pool fetch path, served over file:// (fetch_claude curls "$CCFLARE_BASE/api/accounts") ---
+SRV=$(mktemp -d); mkdir -p "$SRV/api"; echo dummy > "$SRV/token"; TMP3=$(mktemp -d)
+pool_fetch() { AIUSAGE_CACHE_DIR="$TMP3" CCFLARE_BASE="file://$SRV" CCFLARE_TOKEN_FILE="$SRV/token" BLOCK_INSTANCE=claude bash "$S" __pool; }
+anthropic_cached() { jq '[.[] | select(.provider=="anthropic")] | length' "$TMP3/claude.json"; }
+cp "$F" "$SRV/api/accounts"
+fetched=$(pool_fetch)
+assert_eq "fetched fleet: live"             "false" "$(field claude-vaniaspeedy stale "$fetched")"
+assert_eq "fetched fleet: written to cache" "5"     "$(anthropic_cached)"
+# a reachable ccflare with no Anthropic accounts left is an empty pool, not an outage
+echo '[{"name":"lena-chatgpt","provider":"codex"}]' > "$SRV/api/accounts"
+touch -d '2 minutes ago' "$TMP3/claude.json"
+assert_eq "no Anthropic accounts left: empty pool" "[]" "$(pool_fetch)"
+assert_eq "empty pool isn't cached"                "5"  "$(anthropic_cached)"
+# Anthropic accounts without usage yet (ccflare just restarted): last good fleet, stale
+echo '[{"name":"claude-vaniaspeedy","provider":"anthropic","priority":2,"isPrimary":true}]' > "$SRV/api/accounts"
+nousage=$(pool_fetch)
+assert_eq "no usage yet: last good fleet" "5"    "$(jq length <<<"$nousage")"
+assert_eq "no usage yet: stale"           "true" "$(field claude-vaniaspeedy stale "$nousage")"
+rm -rf "$SRV" "$TMP3"
 finish

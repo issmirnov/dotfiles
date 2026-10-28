@@ -277,16 +277,27 @@ render_pool() {
   jq -cs . <<<"$rows"
 }
 
-# __pool: load the claude fleet like main() (fresh cache, else fetch, else expired cache)
-# and render it. Stale = the cache was already past its TTL before load_json AND load_json
-# didn't rewrite it, i.e. the fetch failed and it served the expired copy.
+# __pool: the claude fleet for ClaudePool.qml. Same acquisition as main() (fresh cache, else
+# fetch, else expired cache), but it tells render_pool when the data is stale, and it takes
+# a reachable ccflare with no Anthropic accounts left as an empty pool, not an outage.
 pool_main() {
-  local cache="$CACHE_DIR/$PROVIDER.json" now m0 m1 json stale=0
-  now=$(date +%s); m0=$(stat -c %Y "$cache" 2>/dev/null || echo 0)
-  json=$(load_json) || json="[]"
-  m1=$(stat -c %Y "$cache" 2>/dev/null || echo 0)
-  [ $(( now - m0 )) -ge "$(cache_ttl)" ] && [ "$m1" = "$m0" ] && stale=1
-  render_pool "$json" "$stale"
+  local cache="$CACHE_DIR/$PROVIDER.json" mtime json
+  mkdir -p "$CACHE_DIR"
+  mtime=$(stat -c %Y "$cache" 2>/dev/null)
+  if [ -n "$mtime" ] && [ $(( $(date +%s) - mtime )) -lt "$(cache_ttl)" ]; then
+    render_pool "$(cat "$cache")" 0; return
+  fi
+  json=$("fetch_$PROVIDER")
+  if "validate_$PROVIDER" "$json"; then
+    printf '%s' "$json" > "$cache"; render_pool "$json" 0; return
+  fi
+  # validate_claude wants usage numbers, so it rejects a fleet with no Anthropic accounts.
+  # Render that live but don't cache it: the shared cache keeps the last good fleet.
+  if jq -e 'type == "array" and all(.[]; .provider != "anthropic")' >/dev/null 2>&1 <<<"$json"; then
+    render_pool "$json" 0; return
+  fi
+  if [ -f "$cache" ]; then render_pool "$(cat "$cache")" 1; return; fi
+  echo "[]"
 }
 
 main() {
