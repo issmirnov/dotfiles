@@ -52,13 +52,11 @@ PanelWindow {
                 anchors.rightMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.gap
-                // One chip per Anthropic account so each carries its own color (sl can be
-                // red while ig stays green). `claude:<name>` renders + colors that account
-                // solo; a bare "claude" would bundle them all under the single worst color.
-                // Each usage chip drops down a 5h + weekly meter popup on click (UsageChip.qml).
-                UsageChip { instance: "claude:claude-smirnovlabs" }
-                UsageChip { instance: "claude:claude_isgmirnov" }
-                UsageChip { instance: "claude:claude-vaniaspeedy" }
+                // One chip per ccflare Anthropic account, each with its own color (sl can be
+                // red while ig stays green), left→right in ccflare priority order; the account
+                // ccflare routes the next request to is filled (ClaudePool.qml). Each usage
+                // chip drops down a 5h + weekly meter popup on click (UsageChip.qml).
+                ClaudePool {}
                 UsageChip { instance: "codex" }
                 Brightness {}
                 Audio {}
