@@ -80,7 +80,7 @@ ascending, ties broken by `name`. Each entry:
 | `worst` | max of 5h and 7d utilization, int |
 | `text` | today's per-account chip text (the `full_text` the `claude:<name>` instance renders), with the blocked glyph inserted after the tag: `CC ig ⏸ 100/58` |
 | `color` | `pct_color(worst)`, or `#888888` when `stale` |
-| `status` | popup status line, e.g. `primary · priority 1`, `standby #2 · priority 2` (#N = position in the sorted list), `paused (manual) · priority 11`, `rate-limited until 14:05 · priority 2`, `needs re-auth · priority 2`; when `stale`, `ccflare unreachable · priority N` |
+| `status` | popup status line, e.g. `primary · priority 1`, `standby #2 · priority 2` (#N = position in the sorted list), `paused (manual) · priority 11`, `rate-limited until Tue 14:05 · priority 2` (weekday included: a weekly-limit backoff can last days), `needs re-auth · priority 2`; when `stale`, `ccflare unreachable · priority N` |
 | `stale` | `true` when ccflare couldn't be reached and the data is from an expired cache. It only forces `primary` off, the color gray and the stale status line; `blocked` and the glyphs still reflect the cached data |
 
 `blocked` mirrors ccflare's own availability check (`isAccountAvailable`),
