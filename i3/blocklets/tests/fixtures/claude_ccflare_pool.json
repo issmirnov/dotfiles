@@ -1,0 +1,18 @@
+[
+  {"name": "lena-chatgpt", "provider": "codex", "priority": 0, "isPrimary": false, "paused": false},
+  {"name": "claude-zeta", "provider": "anthropic", "priority": 2, "isPrimary": false,
+   "paused": true, "pauseReason": "manual", "requiresReauth": true, "rateLimitedUntil": null,
+   "usageData": {"five_hour": {"utilization": 0, "resets_at": null}, "seven_day": {"utilization": 0, "resets_at": null}}},
+  {"name": "claude-smirnovlabs", "provider": "anthropic", "priority": 11, "isPrimary": false,
+   "paused": true, "pauseReason": "manual", "requiresReauth": false, "rateLimitedUntil": 1000,
+   "usageData": {"five_hour": {"utilization": 0, "resets_at": null}, "seven_day": {"utilization": 2.4, "resets_at": null}}},
+  {"name": "claude-vaniaspeedy", "provider": "anthropic", "priority": 2, "isPrimary": true,
+   "paused": false, "pauseReason": null, "requiresReauth": false, "rateLimitedUntil": null,
+   "usageData": {"five_hour": {"utilization": 75, "resets_at": null}, "seven_day": {"utilization": 29, "resets_at": null}}},
+  {"name": "claude_isgmirnov", "provider": "anthropic", "priority": 1, "isPrimary": false,
+   "paused": false, "pauseReason": null, "requiresReauth": false, "rateLimitedUntil": 4102444800000,
+   "usageData": {"five_hour": {"utilization": 100, "resets_at": null}, "seven_day": {"utilization": 58, "resets_at": null}}},
+  {"name": "claude-omega", "provider": "anthropic", "priority": 20, "isPrimary": false,
+   "paused": false, "pauseReason": null, "requiresReauth": false, "rateLimitedUntil": 1000,
+   "usageData": {"five_hour": {"utilization": 10, "resets_at": null}, "seven_day": {"utilization": 30, "resets_at": null}}}
+]

@@ -4,6 +4,7 @@
 #   claude -> better-ccflare fleet (all Anthropic accounts) via $CCFLARE_BASE/api/accounts;
 #            Bearer token read at runtime from ~/.config/ccflare/token (untracked, NOT in repo).
 #   codex  -> ChatGPT usage via the ~/.codex OAuth token read from $HOME.
+#   __pool -> the claude fleet as JSON for quickshell's ClaudePool.qml (see render_pool).
 # No secrets are stored in this file — safe to commit to a public repo.
 set -u
 CACHE_DIR="${AIUSAGE_CACHE_DIR:-$HOME/.cache/i3blocks-aiusage}"
@@ -138,11 +139,15 @@ render_codex() {
   for ((i = 1; i < ${#segs[@]}; i++)); do full="$full ${segs[i]}"; short="$short/${pcts[i]}"; done
   printf '%s\n%s\n%s\n' "$full" "$short" "$(pct_color "$gmax")"
 }
+# Cache TTL in seconds. Claude reads better-ccflare on the LAN (ccflare polls Anthropic
+# itself), so a short TTL is free and keeps the bar's primary-account cue current.
+cache_ttl() { case "$PROVIDER" in codex) echo 120;; *) echo 60;; esac; }
+
 # Raw provider JSON for the detail popups: fresh cache, else fetch (cache on success),
 # else stale cache. Same acquisition as main() but returns the JSON instead of rendering.
 load_json() {
   local ttl cache mtime json
-  case "$PROVIDER" in codex) ttl=120;; *) ttl=180;; esac
+  ttl=$(cache_ttl)
   mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$PROVIDER.json"
   mtime=$(stat -c %Y "$cache" 2>/dev/null)
   if [ -n "$mtime" ] && [ $(( $(date +%s) - mtime )) -lt "$ttl" ]; then cat "$cache"; return 0; fi
@@ -210,9 +215,83 @@ detail_codex() {
   jq -cn --argjson wins "$wins" '{title:"Codex", windows:$wins}'
 }
 
+# The claude fleet as JSON for quickshell's ClaudePool.qml: one object per Anthropic account,
+# sorted by ccflare priority (lower = preferred), ties by name. `primary` is ccflare's
+# isPrimary (where the next request goes). `blocked` mirrors ccflare's availability check,
+# first match wins: requiresReauth -> reauth, paused -> paused, rateLimitedUntil (epoch ms)
+# still ahead -> limited. The primary is never blocked: ccflare flags a paused account
+# primary when it will auto-unpause it. `text` = the per-account chip text with the glyph
+# after the tag. $2=1 marks the data stale (expired cache, ccflare unreachable): nothing
+# primary, gray, "ccflare unreachable"; blocked/glyphs keep the cached state.
+# Input: raw /api/accounts JSON. Output: one JSON array line ([] when there's nothing).
+render_pool() {
+  local json=$1 stale=${2:-0} now_ms pos=0 rows="" name prio isprim reauth paused reason rl_until
+  local five sev tag worst blocked glyph primary status full pre text color stale_b=false
+  now_ms=$(( $(date +%s) * 1000 ))
+  [ "$stale" = 1 ] && stale_b=true
+  # NOTE: "null" (not "") for absent fields — a `read` over @tsv collapses empty middle fields.
+  while IFS=$'\t' read -r name prio isprim reauth paused reason rl_until five sev; do
+    [ -z "$name" ] && continue
+    pos=$(( pos + 1 ))
+    tag=$(short_tag "$name")
+    five=${five%.*}; sev=${sev%.*}
+    worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
+    blocked=""; glyph=""
+    if [ "$isprim" != "true" ]; then
+      if   [ "$reauth" = "true" ]; then blocked=reauth; glyph="🔑"
+      elif [ "$paused" = "true" ]; then blocked=paused; glyph="⏸"
+      elif [ "$rl_until" != "null" ] && [ "${rl_until%.*}" -gt "$now_ms" ]; then blocked=limited; glyph="⏳"
+      fi
+    fi
+    primary=false; [ "$isprim" = "true" ] && [ "$stale" != 1 ] && primary=true
+    if   [ "$stale" = 1 ];        then status="ccflare unreachable"
+    elif [ "$primary" = "true" ]; then status="primary"
+    else
+      case "$blocked" in
+        reauth)  status="needs re-auth" ;;
+        paused)  status="paused"; [ "$reason" != "null" ] && status="paused ($reason)" ;;
+        limited) status="rate-limited until $(date -d "@$(( ${rl_until%.*} / 1000 ))" '+%a %H:%M')" ;;
+        *)       status="standby #$pos" ;;
+      esac
+    fi
+    status="$status · priority $prio"
+    full=$(ACCT=$name render_claude "$json" | sed -n 1p)
+    pre="CC $tag "; text=$full
+    [ -n "$glyph" ] && text="$pre$glyph ${full#"$pre"}"
+    if [ "$stale" = 1 ]; then color="#888888"; else color=$(pct_color "$worst"); fi
+    rows+=$(jq -cn --arg name "$name" --arg tag "$tag" --argjson priority "$prio" \
+        --argjson primary "$primary" --arg blocked "$blocked" --argjson worst "$worst" \
+        --arg text "$text" --arg color "$color" --arg status "$status" --argjson stale "$stale_b" \
+        '{name:$name, tag:$tag, priority:$priority, primary:$primary, blocked:$blocked,
+          worst:$worst, text:$text, color:$color, status:$status, stale:$stale}')$'\n'
+  done < <(jq -r '
+      [ .[]? | objects | select(.provider=="anthropic") ]
+      | sort_by([ (.priority // 0), .name ]) | .[]
+      | [ .name, (.priority // 0), (.isPrimary // false), (.requiresReauth // false),
+          (.paused // false),
+          ((.pauseReason // "") | if . == "" then "null" else . end),
+          (.rateLimitedUntil // "null"),
+          (.usageData.five_hour.utilization // 0),
+          (.usageData.seven_day.utilization // 0) ] | @tsv
+    ' <<<"$json" 2>/dev/null)
+  jq -cs . <<<"$rows"
+}
+
+# __pool: load the claude fleet like main() (fresh cache, else fetch, else expired cache)
+# and render it. Stale = the cache was already past its TTL before load_json AND load_json
+# didn't rewrite it, i.e. the fetch failed and it served the expired copy.
+pool_main() {
+  local cache="$CACHE_DIR/$PROVIDER.json" now m0 m1 json stale=0
+  now=$(date +%s); m0=$(stat -c %Y "$cache" 2>/dev/null || echo 0)
+  json=$(load_json) || json="[]"
+  m1=$(stat -c %Y "$cache" 2>/dev/null || echo 0)
+  [ $(( now - m0 )) -ge "$(cache_ttl)" ] && [ "$m1" = "$m0" ] && stale=1
+  render_pool "$json" "$stale"
+}
+
 main() {
   local provider="$PROVIDER" ttl cache json
-  case "$provider" in codex) ttl=120;; *) ttl=180;; esac
+  ttl=$(cache_ttl)
   mkdir -p "$CACHE_DIR"; cache="$CACHE_DIR/$provider.json"
 
   # 1) fresh cache -> live color
@@ -309,6 +388,8 @@ case "${1:-}" in
   __render)     "render_$PROVIDER" "$(cat)"; exit $? ;;
   __detail)     if json=$(load_json) && out=$("detail_$PROVIDER" "$json"); then printf '%s\n' "$out"
                 else printf '{"title":"%s","windows":[]}\n' "$(label)"; fi; exit 0 ;;
+  __pool)       pool_main; exit 0 ;;
+  __poolrender) render_pool "$(cat)" "${2:-0}"; exit 0 ;;
   __maprollout) map_rollout_line; exit $? ;;
   *)        main ;;
 esac
