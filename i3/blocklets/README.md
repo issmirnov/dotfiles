@@ -7,8 +7,8 @@ Each script prints the i3blocks 3-line protocol — `full_text`, `short_text`, `
 (`#RRGGBB`); `markup=none` is set globally.
 
 Most files here are stock [i3blocks-contrib](https://github.com/vivien/i3blocks-contrib)
-scripts (`battery`, `cpu_usage`, `disk`, `memory`, `volume`, `iface`, `wifi`, …). The three
-documented below — `ai_usage`, `network`, and `worldclock` — are custom.
+scripts (`battery`, `cpu_usage`, `disk`, `memory`, `volume`, `iface`, `wifi`, …). The four
+documented below — `ai_usage`, `network`, `worldclock`, and `claude_peak` — are custom.
 
 > **Reload:** i3blocks only re-reads its config when the bar (re)starts. After editing
 > `i3blocks.conf`, run **`i3-msg restart`** (in-place; windows/workspaces preserved). A
@@ -127,15 +127,36 @@ drops the labels (`21:03 22:03`).
 Pure `date`/`TZ` — no network, no secrets, always exits 0. The `WORLDCLOCK_NOW=<epoch>` seam
 pins "now" so the summer/winter tests assert exact strings across a DST boundary.
 
+## `claude_peak` — Claude peak hours
+
+Claude's weekday peak hours: Monday to Friday, 05:00–11:00 `America/Los_Angeles`, the
+window that [claude-peak-time.pages.dev](https://claude-peak-time.pages.dev/) shows. The
+Quickshell bar shows it as a chip left of the Claude usage chips. `i3blocks.conf` has no
+block for it.
+
+| When (Pacific, Mon–Fri) | Renders | Color |
+|-------------------------|---------|-------|
+| 05:00–11:00 | `⚡ peak 49m` (time left) | amber `#f0c489` |
+| 04:00–05:00 | `peak in 45m` | none (bar default) |
+| any other time | nothing (block hidden) | |
+
+The start is inclusive and the end is exclusive. The script follows Pacific time, not
+ccflare's `peakHours.active`: ccflare hard-codes 13:00–19:00 UTC, one hour late during PDT.
+Since 2026-05-06 the peak-hour cut no longer applies to Claude Code on Pro and Max
+([Anthropic](https://www.anthropic.com/news/higher-limits-spacex)).
+
+Pure `date`/`TZ`: no network, no secrets, always exits 0. The `CLAUDE_PEAK_NOW=<epoch>` seam
+pins "now" so the tests cover both window edges in PDT and PST.
+
 ## Tests
 
-Dependency-free bash harness (no `bats`/`shellcheck` required). All three custom scripts
+Dependency-free bash harness (no `bats`/`shellcheck` required). All four custom scripts
 expose env-var seams (`AIUSAGE_CACHE_DIR`, `AIUSAGE_NO_FETCH`, `AIUSAGE_ROLLOUT_FILE`,
-`NET_TEST_IF`/`NET_TEST_WIRELESS`/`NET_TEST_SSID`/`NET_TEST_SIGNAL`, `WORLDCLOCK_NOW`) and
-hidden dispatch verbs (`__color`, `__reset`, `__pace`, `__render`, `__maprollout`) so every
-branch — thresholds, pace math, parsing, caching, fallbacks, all network states, world-clock
-DST collapse — is testable offline against synthetic fixtures (no live network or tokens
-needed).
+`NET_TEST_IF`/`NET_TEST_WIRELESS`/`NET_TEST_SSID`/`NET_TEST_SIGNAL`, `WORLDCLOCK_NOW`,
+`CLAUDE_PEAK_NOW`) and hidden dispatch verbs (`__color`, `__reset`, `__pace`, `__render`,
+`__maprollout`) so every branch — thresholds, pace math, parsing, caching, fallbacks, all
+network states, world-clock DST collapse, peak-hour edges — is testable offline against
+synthetic fixtures (no live network or tokens needed).
 
 ```sh
 bash tests/run.sh        # runs every tests/test_*.sh (skips on macOS)

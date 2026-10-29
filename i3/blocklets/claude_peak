@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# claude_peak — i3blocks segment: Claude peak hours, Mon–Fri 05:00–11:00
+# America/Los_Angeles (the window claude-peak-time.pages.dev shows).
+#   peak                 -> "⚡ peak 49m"   amber, counts down to the end
+#   up to 1h before peak -> "peak in 45m"  no color line (the bar's dim default)
+#   any other time       -> empty (hides the block)
+# Pure date/TZ — no network, no secrets, always exits 0. Test seam:
+# CLAUDE_PEAK_NOW=<epoch> pins now.
+set -u
+
+PEAK_TZ=America/Los_Angeles
+PEAK_START=05:00       # Pacific, inclusive
+PEAK_END=11:00         # Pacific, exclusive
+WARN_S=3600            # heads-up this long before the start
+PEAK_COLOR='#f0c489'   # pastel amber (Theme.usageWarn)
+
+fmt() {   # seconds -> 1h49m / 49m / <1m (same as quickshell/lib/cal-next)
+  local s=$1
+  if   [ "$s" -ge 3600 ]; then printf '%dh%dm' $(( s / 3600 )) $(( (s % 3600) / 60 ))
+  elif [ "$s" -lt 60 ];   then printf '<1m'
+  else printf '%dm' $(( s / 60 )); fi
+}
+
+now=${CLAUDE_PEAK_NOW:-$(date +%s)}
+read -r dow day < <(TZ=$PEAK_TZ date -d "@$now" '+%u %F')   # 1=Mon..7=Sun, Pacific date
+pt() { TZ=$PEAK_TZ date -d "$day $1" +%s; }                 # <HH:MM> Pacific that day -> epoch
+
+if [ "$dow" -le 5 ]; then
+  start=$(pt "$PEAK_START"); end=$(pt "$PEAK_END")
+  if [ "$now" -ge "$start" ] && [ "$now" -lt "$end" ]; then
+    left=$(fmt $(( end - now )))
+    printf '⚡ peak %s\npeak %s\n%s\n' "$left" "$left" "$PEAK_COLOR"
+    exit 0
+  fi
+  if [ "$now" -lt "$start" ] && [ $(( start - now )) -le "$WARN_S" ]; then
+    left=$(fmt $(( start - now )))
+    printf 'peak in %s\npeak in %s\n' "$left" "$left"
+    exit 0
+  fi
+fi
+printf '\n\n'   # off-peak: empty full_text hides the block
+exit 0
