@@ -1,7 +1,7 @@
 # Claude peak-hours chip: design
 
 **Date:** 2026-10-29
-**Status:** Draft, awaiting review.
+**Status:** Approved 2026-10-29, built in the same PR.
 **Author:** Ivan + Claude
 
 ## Motivation
