@@ -46,12 +46,19 @@ PanelWindow {
                 anchors.verticalCenter: parent.verticalCenter
             }
 
-            // right — AI usage (Claude/Codex), brightness, audio, stats, idle-inhibitor
+            // right — Claude peak hours, AI usage (Claude/Codex), brightness, audio, stats, idle-inhibitor
             Row {
                 anchors.right: parent.right
                 anchors.rightMargin: 12
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.gap
+                // Claude peak hours (Mon–Fri 05:00–11:00 Pacific): amber "⚡ peak 49m" until the
+                // end, a dim "peak in 45m" the hour before, hidden otherwise. The path is relative
+                // to shellDir (like ClaudePool), so a worktree build runs its own script.
+                Blocklet {
+                    exec: Quickshell.shellDir + "/../i3/blocklets/claude_peak"
+                    interval: 30000
+                }
                 // One chip per ccflare Anthropic account, each with its own color (sl can be
                 // red while ig stays green), left→right in ccflare priority order; the account
                 // ccflare routes the next request to is filled (ClaudePool.qml). Each usage
