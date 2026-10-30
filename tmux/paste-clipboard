@@ -1,0 +1,25 @@
+#!/bin/sh
+# Middle-click paste from the system clipboard, for tmux's MouseDown2Pane in foot
+# (one shared clipboard, see ~/.dotfiles/hypr/scripts/clipsync).
+#
+#   paste-clipboard CLIENT PANE
+#
+# Asks CLIENT's terminal for its clipboard over OSC 52 (refresh-client -l). tmux
+# stores the reply as a new paste buffer. This waits for that buffer and pastes
+# it by name into PANE. If no reply arrives within 2 s, it pastes nothing rather
+# than an older tmux buffer.
+client=$1 pane=$2
+newest() { tmux list-buffers -F '#{buffer_name}' 2>/dev/null | head -n 1; }
+
+before=$(newest)
+tmux refresh-client -t "$client" -l || exit 0
+i=0
+while [ "$i" -lt 40 ]; do
+    sleep 0.05
+    now=$(newest)
+    if [ -n "$now" ] && [ "$now" != "$before" ]; then
+        exec tmux paste-buffer -p -b "$now" -t "$pane"
+    fi
+    i=$((i + 1))
+done
+tmux display-message -c "$client" "middle-click: no clipboard reply from the terminal"
