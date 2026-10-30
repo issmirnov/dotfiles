@@ -10,8 +10,10 @@
 #     what you copied.
 #   • PRIMARY mirrors CLIPBOARD, so middle-click pastes the main clipboard in
 #     any app that pastes PRIMARY. When an app drops PRIMARY, it is refilled.
-#   • Text only. Images, file lists and anything a password manager marks
-#     sensitive never reach PRIMARY; PRIMARY is cleared instead.
+#   • Text only. If the clipboard has no plain-text form (an image), or a
+#     password manager marks it sensitive, PRIMARY is cleared instead. Files
+#     copied in a file manager reach PRIMARY as their plain-text form (paths),
+#     the same text Ctrl+V pastes into a terminal.
 #
 # Known gaps:
 #   • After a keyboard selection, middle-click pastes that selection until the
@@ -48,8 +50,8 @@ log() {
     (( $(stat -c %s "$f") < 100000 )) || { tail -n 300 "$f" >"$f.tmp" && mv -f "$f.tmp" "$f"; }
 }
 
-# The best plain-text type a selection offers. Fails for images, file lists and
-# password-manager content. Args: [--primary]
+# The best plain-text type a selection offers. Fails when there is none (an
+# image) and for password-manager content. Args: [--primary]
 text_type() {
     local offered t
     offered=$(timeout 2 wl-paste "$@" --list-types 2>/dev/null) || return 1
