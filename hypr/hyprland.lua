@@ -337,10 +337,10 @@ for _, mods in ipairs({ "", "SHIFT + " }) do
         local pos, now = hl.get_cursor_pos() or { x = 0, y = 0 }, uptime_ms()
         local dx, dy = pos.x - press.x, pos.y - press.y
         if dx * dx + dy * dy >= 36 then
-            hl.exec_cmd(clipsync .. " commit " .. press.t .. " 150")
+            hl.exec_cmd(clipsync .. " commit " .. press.t)
         else
             if now - last_click < 600 then   -- double/triple-click
-                hl.exec_cmd(clipsync .. " commit " .. press.t .. " 350")
+                hl.exec_cmd(clipsync .. " commit " .. press.t)
             end
             last_click = now
         end

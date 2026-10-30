@@ -28,7 +28,7 @@
 # and a dropped one is retried when focus moves to another window.
 #
 #   clipsync start | stop | status         start runs from hyprland.lua at login
-#   clipsync commit PRESS_MS [DELAY_MS]    PRESS_MS = /proc/uptime in ms at the press
+#   clipsync commit PRESS_MS               PRESS_MS = /proc/uptime in ms at the press
 #   clipsync on-primary | on-clipboard     wl-paste --watch handlers
 #   clipsync retry                         re-attempts a dropped PRIMARY write
 #
@@ -74,9 +74,9 @@ same_text() { [[ $(timeout 1 wl-paste "${@:2}" --no-newline 2>/dev/null | sha1su
 
 # try_primary FILE: make FILE's text PRIMARY and check that it took.
 #   0  PRIMARY holds the text
-#   1  dropped: PRIMARY is empty (the Hyprland bug above)
-#   2  something else wrote PRIMARY meanwhile, which wins
-# A wl-copy that did not stick is killed; a dropped one would never exit.
+#   1  dropped: our wl-copy was never cancelled, yet PRIMARY is empty. That is
+#      the Hyprland bug above; a dropped wl-copy would never exit, so kill it.
+#   2  something else took or cleared PRIMARY, which cancelled our wl-copy
 # 8>&-: the long-lived wl-copy must not hold the retry lock.
 try_primary() {
     local file=$1 pid _
@@ -84,6 +84,7 @@ try_primary() {
     pid=$!
     for _ in {1..20}; do
         same_text "$file" --primary && return 0
+        kill -0 "$pid" 2>/dev/null || return 2
         sleep 0.02
     done
     kill "$pid" 2>/dev/null
@@ -124,9 +125,11 @@ retry() {
 # refill SINCE: an app dropped PRIMARY; point it back at the main clipboard.
 # SINCE is the last PRIMARY event time when the clear came in. If PRIMARY
 # changed hands after that, or holds anything now, an app's new selection wins
-# and the refill is dropped. Checked right before writing, after the slow read.
+# and the refill is dropped. Some apps clear PRIMARY and set a new selection
+# right after, so wait 0.1 s first, and check right before writing.
 refill() {
     local since=$1 event=0 f
+    sleep 0.1
     f=$(mktemp "$state/tmp.XXXXXX")
     if read_text "$f"; then
         read -r event _ 2>/dev/null <"$state/primary"
@@ -174,28 +177,26 @@ on_clipboard() {
 }
 
 # A mouse gesture ended. If PRIMARY changed hands during it, copy the new
-# selection into CLIPBOARD. A selection from before the press is left alone,
-# even if its text changed since: GTK changes a selection silently.
+# selection into CLIPBOARD at once, before later input (Ctrl+A, typing) can
+# change it. A selection from before the press is left alone, even if its text
+# changed since: GTK changes a selection silently.
 commit() {
-    local press=$1 delay=$2 me=$$
+    local press=$1 me=$$ event=0
     echo "$me" >"$state/commit"
-    # Let the app publish its selection. A later click supersedes this one.
-    sleep "$(( delay / 1000 )).$(printf %03d $(( delay % 1000 )))"
-    [[ $(<"$state/commit") == "$me" ]] || return 0
-    text_type --primary >/dev/null || return 0
-    # The watcher records a PRIMARY change a moment after it happens, so give it
-    # up to 0.5 s to show one from after the press.
-    local event=0
+    # The watcher records a PRIMARY change a moment after it happens (foot only
+    # sets PRIMARY on release), so give it up to 0.5 s to show one after the press.
     for _ in {1..10}; do
         read -r event _ 2>/dev/null <"$state/primary"
         (( event >= press )) && break
         sleep 0.05
     done
     (( event >= press )) || return 0
+    text_type --primary >/dev/null || return 0
     local f c
     f=$(mktemp "$state/tmp.XXXXXX"); c=$(mktemp "$state/tmp.XXXXXX")
+    # The last check: a later click (the third of a triple-click) supersedes this one.
     if timeout 2 wl-paste --primary --no-newline --type text >"$f" 2>/dev/null && [[ -s $f ]] &&
-        { ! read_text "$c" || ! cmp -s "$f" "$c"; }; then
+        { ! read_text "$c" || ! cmp -s "$f" "$c"; } && [[ $(<"$state/commit") == "$me" ]]; then
         wl-copy --type "$plain" <"$f" && log "commit $(stat -c %s "$f")B"
     fi
     rm -f "$f" "$c"
@@ -237,9 +238,9 @@ case ${1:-} in
 start) start ;;
 stop) stop ;;
 status) status ;;
-commit) commit "${2:?PRESS_MS}" "${3:-150}" ;;
+commit) commit "${2:?PRESS_MS}" ;;
 on-primary) on_primary ;;
 on-clipboard) on_clipboard ;;
 retry) retry ;;
-*) echo "usage: clipsync start|stop|status|commit PRESS_MS [DELAY_MS]|retry" >&2; exit 2 ;;
+*) echo "usage: clipsync start|stop|status|commit PRESS_MS|retry" >&2; exit 2 ;;
 esac
