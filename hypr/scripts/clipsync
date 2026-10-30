@@ -121,10 +121,19 @@ retry() {
     rm -f "$f"
 }
 
-# An app dropped PRIMARY: point it back at the main clipboard.
+# refill SINCE: an app dropped PRIMARY; point it back at the main clipboard.
+# SINCE is the last PRIMARY event time when the clear came in. If PRIMARY
+# changed hands after that, or holds anything now, an app's new selection wins
+# and the refill is dropped. Checked right before writing, after the slow read.
 refill() {
-    local f; f=$(mktemp "$state/tmp.XXXXXX")
-    read_text "$f" && put_primary "$f" && log refill
+    local since=$1 event=0 f
+    f=$(mktemp "$state/tmp.XXXXXX")
+    if read_text "$f"; then
+        read -r event _ 2>/dev/null <"$state/primary"
+        if (( event <= since )) && ! timeout 1 wl-paste --primary --list-types >/dev/null 2>&1; then
+            put_primary "$f" && log refill
+        fi
+    fi
     rm -f "$f"
 }
 
@@ -137,7 +146,9 @@ on_primary() {
     data|sensitive)
         now_ms >"$state/primary.tmp" && mv -f "$state/primary.tmp" "$state/primary" ;;
     nil|clear)
-        refill </dev/null >/dev/null 2>&1 & ;;
+        local since=0
+        read -r since _ 2>/dev/null <"$state/primary"
+        refill "$since" </dev/null >/dev/null 2>&1 & ;;
     esac
 }
 
