@@ -107,37 +107,43 @@ put_primary() {
     return "$rc"
 }
 
+# primary_free SINCE: PRIMARY is empty, and no PRIMARY event came in after
+# SINCE. Checked again right before writing, after the slow clipboard read: an
+# app that took PRIMARY meanwhile must keep its new selection.
+primary_free() {
+    local event=0
+    read -r event _ 2>/dev/null <"$state/primary"
+    (( event <= $1 )) && ! timeout 1 wl-paste --primary --list-types >/dev/null 2>&1
+}
+
 # Re-attempt a dropped PRIMARY write. Gives up (clearing the flag) once PRIMARY
 # holds anything, a newer write or an app's selection, or the clipboard has no text.
 retry() {
     exec 8>"$state/retry.lock"
     flock -n 8 || return 0   # one attempt at a time
     [[ -e $state/stale ]] || return 0
-    local f rc=0; f=$(mktemp "$state/tmp.XXXXXX")
-    if timeout 1 wl-paste --primary --list-types >/dev/null 2>&1 || ! read_text "$f"; then
-        rm -f "$state/stale"
-    else
+    local since=0 f rc=0
+    read -r since _ 2>/dev/null <"$state/primary"
+    f=$(mktemp "$state/tmp.XXXXXX")
+    if primary_free "$since" && read_text "$f" && primary_free "$since"; then
         try_primary "$f" || rc=$?
         (( rc == 1 )) || rm -f "$state/stale"
         (( rc == 0 )) && log "retry: PRIMARY set"
+    else
+        rm -f "$state/stale"
     fi
     rm -f "$f"
 }
 
 # refill SINCE: an app dropped PRIMARY; point it back at the main clipboard.
-# SINCE is the last PRIMARY event time when the clear came in. If PRIMARY
-# changed hands after that, or holds anything now, an app's new selection wins
-# and the refill is dropped. Some apps clear PRIMARY and set a new selection
-# right after, so wait 0.1 s first, and check right before writing.
+# SINCE is the last PRIMARY event time when the clear came in. Some apps clear
+# PRIMARY and set a new selection right after, so wait 0.1 s first.
 refill() {
-    local since=$1 event=0 f
+    local since=$1 f
     sleep 0.1
     f=$(mktemp "$state/tmp.XXXXXX")
-    if read_text "$f"; then
-        read -r event _ 2>/dev/null <"$state/primary"
-        if (( event <= since )) && ! timeout 1 wl-paste --primary --list-types >/dev/null 2>&1; then
-            put_primary "$f" && log refill
-        fi
+    if read_text "$f" && primary_free "$since"; then
+        put_primary "$f" && log refill
     fi
     rm -f "$f"
 }
