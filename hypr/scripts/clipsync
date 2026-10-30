@@ -13,9 +13,13 @@
 #   • Text only. Images, file lists and anything a password manager marks
 #     sensitive never reach PRIMARY; PRIMARY is cleared instead.
 #
-# Known gap: after a keyboard selection, middle-click pastes that selection
-# until the next copy. Taking PRIMARY back sooner would deselect the text in
-# GTK apps, which breaks "Ctrl+A, then type to replace".
+# Known gaps:
+#   • After a keyboard selection, middle-click pastes that selection until the
+#     next copy. Taking PRIMARY back sooner would deselect the text in GTK apps,
+#     which breaks "Ctrl+A, then type to replace".
+#   • A second highlight in the same GTK widget is not copied; press Ctrl+C.
+#     GTK changes that selection without a new PRIMARY event, and a silent
+#     change looks the same as an old keyboard selection, which must not be copied.
 #
 # Hyprland bug (0.56.2, still in main): a PRIMARY write is silently dropped
 # when the client under the pointer has no primary-selection support (ZapZap,
@@ -73,10 +77,10 @@ same_text() { [[ $(timeout 1 wl-paste "${@:2}" --no-newline 2>/dev/null | sha1su
 #   1  dropped: PRIMARY is empty (the Hyprland bug above)
 #   2  something else wrote PRIMARY meanwhile, which wins
 # A wl-copy that did not stick is killed; a dropped one would never exit.
-# 8>&- 9>&-: the long-lived wl-copy must not hold our locks.
+# 8>&-: the long-lived wl-copy must not hold the retry lock.
 try_primary() {
     local file=$1 pid _
-    setsid wl-copy --foreground --primary --type "$plain" <"$file" >/dev/null 2>&1 8>&- 9>&- &
+    setsid wl-copy --foreground --primary --type "$plain" <"$file" >/dev/null 2>&1 8>&- &
     pid=$!
     for _ in {1..20}; do
         same_text "$file" --primary && return 0
@@ -124,21 +128,16 @@ refill() {
     rm -f "$f"
 }
 
-# PRIMARY changed. Record when, and its text's hash, so `commit` can tell a
-# fresh selection from an old one. Our own mirror and refill writes land here too.
+# PRIMARY changed. Record when, so `commit` can tell a selection made during a
+# gesture from an older one. Our own mirror and refill writes land here too.
+# wl-paste runs these handlers one at a time, so this must return fast: refill
+# runs in the background, and the time is written with an atomic rename.
 on_primary() {
-    local now; now=$(now_ms)
     case ${CLIPBOARD_STATE:-data} in
-    data)
-        local sum; sum=$(sha1sum | cut -c1-40)
-        {
-            flock 9
-            local last=0
-            read -r last _ 2>/dev/null <"$state/primary"
-            (( now < last )) || echo "$now $sum" >"$state/primary"
-        } 9>"$state/lock"
-        ;;
-    nil|clear) refill ;;
+    data|sensitive)
+        now_ms >"$state/primary.tmp" && mv -f "$state/primary.tmp" "$state/primary" ;;
+    nil|clear)
+        refill </dev/null >/dev/null 2>&1 & ;;
     esac
 }
 
@@ -163,7 +162,9 @@ on_clipboard() {
     rm -f "$c" "$p"
 }
 
-# A mouse gesture ended. If it selected something new, copy that into CLIPBOARD.
+# A mouse gesture ended. If PRIMARY changed hands during it, copy the new
+# selection into CLIPBOARD. A selection from before the press is left alone,
+# even if its text changed since: GTK changes a selection silently.
 commit() {
     local press=$1 delay=$2 me=$$
     echo "$me" >"$state/commit"
@@ -171,25 +172,21 @@ commit() {
     sleep "$(( delay / 1000 )).$(printf %03d $(( delay % 1000 )))"
     [[ $(<"$state/commit") == "$me" ]] || return 0
     text_type --primary >/dev/null || return 0
+    # The watcher records a PRIMARY change a moment after it happens, so give it
+    # up to 0.5 s to show one from after the press.
+    local event=0
+    for _ in {1..10}; do
+        read -r event _ 2>/dev/null <"$state/primary"
+        (( event >= press )) && break
+        sleep 0.05
+    done
+    (( event >= press )) || return 0
     local f c
     f=$(mktemp "$state/tmp.XXXXXX"); c=$(mktemp "$state/tmp.XXXXXX")
-    {
-        flock 9
-        local event=0 seen='' sum
-        read -r event seen 2>/dev/null <"$state/primary"
-        if timeout 2 wl-paste --primary --no-newline --type text >"$f" 2>/dev/null && [[ -s $f ]]; then
-            sum=$(sha1sum <"$f" | cut -c1-40)
-            # A fresh selection: PRIMARY changed after the button went down, or its
-            # text changed with no event (GTK re-selecting in the same widget).
-            if (( event >= press )) || [[ $sum != "$seen" ]]; then
-                echo "$event $sum" >"$state/primary"
-                if ! read_text "$c" || ! cmp -s "$f" "$c"; then
-                    # 9>&-: wl-copy keeps running to serve the paste; it must not hold the lock
-                    wl-copy --type "$plain" <"$f" 9>&- && log "commit $(stat -c %s "$f")B"
-                fi
-            fi
-        fi
-    } 9>"$state/lock"
+    if timeout 2 wl-paste --primary --no-newline --type text >"$f" 2>/dev/null && [[ -s $f ]] &&
+        { ! read_text "$c" || ! cmp -s "$f" "$c"; }; then
+        wl-copy --type "$plain" <"$f" && log "commit $(stat -c %s "$f")B"
+    fi
     rm -f "$f" "$c"
 }
 
