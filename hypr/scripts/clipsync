@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+# clipsync: one shared clipboard. A mouse highlight copies, and middle-click
+# pastes the main clipboard (CLIPBOARD), the same thing Ctrl+V pastes.
+#
+#   • A mouse highlight (a drag of 6+ px, or a double/triple-click) is a copy.
+#     Left-button hooks in hyprland.lua run `clipsync commit` after those
+#     gestures, which copies the new PRIMARY selection into CLIPBOARD.
+#   • Keyboard selections (Ctrl+A, Shift+arrows) and plain clicks are not
+#     copies, so selecting text and pressing Ctrl+V to replace it still pastes
+#     what you copied.
+#   • PRIMARY mirrors CLIPBOARD, so middle-click pastes the main clipboard in
+#     any app that pastes PRIMARY. When an app drops PRIMARY, it is refilled.
+#   • Text only. If the clipboard has no plain-text form (an image), or a
+#     password manager marks it sensitive, PRIMARY is cleared instead. Files
+#     copied in a file manager reach PRIMARY as their plain-text form (paths),
+#     the same text Ctrl+V pastes into a terminal.
+#
+# Known gaps:
+#   • After a keyboard selection, middle-click pastes that selection until the
+#     next copy. Taking PRIMARY back sooner would deselect the text in GTK apps,
+#     which breaks "Ctrl+A, then type to replace".
+#   • A second highlight in the same GTK widget is not copied; press Ctrl+C.
+#     GTK changes that selection without a new PRIMARY event, and a silent
+#     change looks the same as an old keyboard selection, which must not be copied.
+#
+# Hyprland bug (0.56.2, still in main): a PRIMARY write is silently dropped
+# when the client under the pointer has no primary-selection support (ZapZap,
+# for one). PrimarySelection.cpp resets the selection without cancelling the
+# source, so the orphaned wl-copy never exits. put_primary checks every write,
+# and a dropped one is retried when focus moves to another window.
+#
+#   clipsync start | stop | status         start runs from hyprland.lua at login
+#   clipsync commit PRESS_MS               PRESS_MS = /proc/uptime in ms at the press
+#   clipsync on-primary | on-clipboard     wl-paste --watch handlers
+#   clipsync retry                         re-attempts a dropped PRIMARY write
+#
+# State and a content-free log live in $XDG_RUNTIME_DIR/clipsync/.
+set -uo pipefail
+
+state=${XDG_RUNTIME_DIR:-/run/user/$UID}/clipsync
+mkdir -p "$state"
+self=$(readlink -f "$0")
+plain='text/plain;charset=utf-8'
+
+now_ms() { local up; read -r up _ </proc/uptime; echo $(( 10#${up/./} * 10 )); }
+
+log() {
+    local f=$state/log
+    printf '%s %s\n' "$(date +%T.%3N)" "$*" >>"$f"
+    (( $(stat -c %s "$f") < 100000 )) || { tail -n 300 "$f" >"$f.tmp" && mv -f "$f.tmp" "$f"; }
+}
+
+# The best plain-text type a selection offers. Fails when there is none (an
+# image) and for password-manager content. Args: [--primary]
+text_type() {
+    local offered t
+    offered=$(timeout 2 wl-paste "$@" --list-types 2>/dev/null) || return 1
+    grep -qxF x-kde-passwordManagerHint <<<"$offered" && return 1
+    for t in "$plain" text/plain UTF8_STRING STRING TEXT; do
+        grep -qxF "$t" <<<"$offered" && { echo "$t"; return 0; }
+    done
+    return 1
+}
+
+# read_text FILE [--primary]: a selection's text into FILE. Fails if it has none.
+# The type check and the read are separate connections, so check again after
+# reading: a password manager may have replaced the selection in between.
+read_text() {
+    local file=$1 t; shift
+    t=$(text_type "$@") || return 1
+    timeout 2 wl-paste "$@" --no-newline --type "$t" >"$file" 2>/dev/null && [[ -s $file ]] &&
+        text_type "$@" >/dev/null
+}
+
+same_text() { [[ $(timeout 1 wl-paste "${@:2}" --no-newline 2>/dev/null | sha1sum) == "$(sha1sum <"$1")" ]]; }
+
+# try_primary FILE: make FILE's text PRIMARY and check that it took.
+#   0  PRIMARY holds the text
+#   1  dropped: our wl-copy was never cancelled, yet PRIMARY is empty. That is
+#      the Hyprland bug above; a dropped wl-copy would never exit, so kill it.
+#   2  something else took or cleared PRIMARY, which cancelled our wl-copy
+# 8>&-: the long-lived wl-copy must not hold the retry lock.
+try_primary() {
+    local file=$1 pid _
+    setsid wl-copy --foreground --primary --type "$plain" <"$file" >/dev/null 2>&1 8>&- &
+    pid=$!
+    for _ in {1..20}; do
+        same_text "$file" --primary && return 0
+        kill -0 "$pid" 2>/dev/null || return 2
+        sleep 0.02
+    done
+    kill "$pid" 2>/dev/null
+    timeout 1 wl-paste --primary --list-types >/dev/null 2>&1 && return 2
+    return 1
+}
+
+# put_primary FILE: try_primary. If Hyprland dropped the write, flag PRIMARY as
+# stale; hyprland.lua runs `clipsync retry` on the next focus change.
+put_primary() {
+    local rc=0
+    try_primary "$1" || rc=$?
+    case $rc in
+    0) rm -f "$state/stale" ;;
+    1) touch "$state/stale"
+       log "PRIMARY write dropped (pointer over a client without primary selection); retrying on focus change" ;;
+    esac
+    return "$rc"
+}
+
+# primary_free SINCE: PRIMARY is empty, and no PRIMARY event came in after
+# SINCE. Checked again right before writing, after the slow clipboard read: an
+# app that took PRIMARY meanwhile must keep its new selection.
+primary_free() {
+    local event=0
+    read -r event _ 2>/dev/null <"$state/primary"
+    (( event <= $1 )) && ! timeout 1 wl-paste --primary --list-types >/dev/null 2>&1
+}
+
+# Re-attempt a dropped PRIMARY write. Gives up (clearing the flag) once PRIMARY
+# holds anything, a newer write or an app's selection, or the clipboard has no text.
+retry() {
+    exec 8>"$state/retry.lock"
+    flock -n 8 || return 0   # one attempt at a time
+    [[ -e $state/stale ]] || return 0
+    local since=0 f rc=0
+    read -r since _ 2>/dev/null <"$state/primary"
+    f=$(mktemp "$state/tmp.XXXXXX")
+    if primary_free "$since" && read_text "$f" && primary_free "$since"; then
+        try_primary "$f" || rc=$?
+        (( rc == 1 )) || rm -f "$state/stale"
+        (( rc == 0 )) && log "retry: PRIMARY set"
+    else
+        rm -f "$state/stale"
+    fi
+    rm -f "$f"
+}
+
+# refill SINCE: an app dropped PRIMARY; point it back at the main clipboard.
+# SINCE is the last PRIMARY event time when the clear came in. Some apps clear
+# PRIMARY and set a new selection right after, so wait 0.1 s first.
+refill() {
+    local since=$1 f
+    sleep 0.1
+    f=$(mktemp "$state/tmp.XXXXXX")
+    if read_text "$f" && primary_free "$since"; then
+        put_primary "$f" && log refill
+    fi
+    rm -f "$f"
+}
+
+# PRIMARY changed. Record when, so `commit` can tell a selection made during a
+# gesture from an older one. Our own mirror and refill writes land here too.
+# wl-paste runs these handlers one at a time, so this must return fast: refill
+# runs in the background, and the time is written with an atomic rename.
+on_primary() {
+    case ${CLIPBOARD_STATE:-data} in
+    data|sensitive)
+        now_ms >"$state/primary.tmp" && mv -f "$state/primary.tmp" "$state/primary" ;;
+    nil|clear)
+        local since=0
+        read -r since _ 2>/dev/null <"$state/primary"
+        refill "$since" </dev/null >/dev/null 2>&1 & ;;
+    esac
+}
+
+# CLIPBOARD changed: mirror its text into PRIMARY.
+on_clipboard() {
+    exec </dev/null   # re-read below as plain text, whatever type wl-paste chose
+    case ${CLIPBOARD_STATE:-data} in
+    nil|clear) return ;;   # owner exited: keep PRIMARY
+    sensitive) wl-copy --primary --clear && log "clear: clipboard holds a secret"; return ;;
+    esac
+    local c p
+    c=$(mktemp "$state/tmp.XXXXXX"); p=$(mktemp "$state/tmp.XXXXXX")
+    if read_text "$c"; then
+        # Leave PRIMARY alone when it already holds this text, so an app keeps
+        # its highlight after its own selection was copied.
+        if ! read_text "$p" --primary || ! cmp -s "$c" "$p"; then
+            put_primary "$c" && log "mirror $(stat -c %s "$c")B"
+        fi
+    elif timeout 2 wl-paste --primary --list-types >/dev/null 2>&1; then
+        wl-copy --primary --clear && log "clear: clipboard holds no plain text, or a secret"
+    fi
+    rm -f "$c" "$p"
+}
+
+# A mouse gesture ended. If PRIMARY changed hands during it, copy the new
+# selection into CLIPBOARD at once, before later input (Ctrl+A, typing) can
+# change it. A selection from before the press is left alone, even if its text
+# changed since: GTK changes a selection silently.
+commit() {
+    local press=$1 me=$$ event=0
+    echo "$me" >"$state/commit"
+    # The watcher records a PRIMARY change a moment after it happens (foot only
+    # sets PRIMARY on release), so give it up to 0.5 s to show one after the press.
+    for _ in {1..10}; do
+        read -r event _ 2>/dev/null <"$state/primary"
+        (( event >= press )) && break
+        sleep 0.05
+    done
+    (( event >= press )) || return 0
+    text_type --primary >/dev/null || return 0
+    local f c
+    f=$(mktemp "$state/tmp.XXXXXX"); c=$(mktemp "$state/tmp.XXXXXX")
+    # The last check: a later click (the third of a triple-click) supersedes this one.
+    if timeout 2 wl-paste --primary --no-newline --type text >"$f" 2>/dev/null && [[ -s $f ]] &&
+        { ! read_text "$c" || ! cmp -s "$f" "$c"; } && [[ $(<"$state/commit") == "$me" ]]; then
+        wl-copy --type "$plain" <"$f" && log "commit $(stat -c %s "$f")B"
+    fi
+    rm -f "$f" "$c"
+}
+
+start() {
+    stop
+    # setsid detaches the watchers from whatever ran `start`. A script's & job
+    # is not a process-group leader, so setsid execs in place and $! is wl-paste.
+    setsid wl-paste --primary --type text --watch "$self" on-primary </dev/null >/dev/null 2>&1 &
+    echo $! >"$state/pid.primary"
+    setsid wl-paste --watch "$self" on-clipboard </dev/null >/dev/null 2>&1 &
+    echo $! >"$state/pid.clipboard"
+    log started
+}
+
+stop() {
+    local f pid
+    for f in "$state"/pid.*; do
+        [[ -e $f ]] || continue
+        pid=$(<"$f")
+        # kill only our own watcher, never a recycled PID
+        [[ $(tr '\0' ' ' 2>/dev/null </proc/"$pid"/cmdline) == *"$self on-"* ]] && kill "$pid"
+        rm -f "$f"
+    done
+}
+
+status() {
+    local f pid
+    for f in "$state"/pid.*; do
+        [[ -e $f ]] || continue
+        pid=$(<"$f")
+        if kill -0 "$pid" 2>/dev/null; then echo "${f##*.}: running, pid $pid"; else echo "${f##*.}: dead"; fi
+    done
+    tail -n 8 "$state/log" 2>/dev/null
+}
+
+case ${1:-} in
+start) start ;;
+stop) stop ;;
+status) status ;;
+commit) commit "${2:?PRESS_MS}" ;;
+on-primary) on_primary ;;
+on-clipboard) on_clipboard ;;
+retry) retry ;;
+*) echo "usage: clipsync start|stop|status|commit PRESS_MS|retry" >&2; exit 2 ;;
+esac

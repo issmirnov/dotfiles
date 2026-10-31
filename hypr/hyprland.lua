@@ -140,6 +140,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("hypridle")
     hl.exec_cmd("noisetorch")                            -- RNN noise suppression
     hl.exec_cmd("wl-paste --watch cliphist store")       -- clipboard history (fixed)
+    hl.exec_cmd("~/.dotfiles/hypr/scripts/clipsync start")  -- one shared clipboard (see the clipsync hooks below)
     hl.exec_cmd("nm-applet --indicator")                 -- network tray
     -- DISABLED 2026-08-28: bt-agent.service (NoInputNoOutput, Just Works) is the SOLE
     -- Bluetooth agent now. Running blueman-applet too registered a 2nd agent whose
@@ -310,6 +311,52 @@ hl.bind(mainMod .. " + SHIFT + P", hl.dsp.exec_cmd("alacritty -e zsh -c 'cliphis
 hl.bind("XF86Tools",                   hl.dsp.exec_cmd("grimblast --freeze copysave area ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
 hl.bind("SHIFT + XF86Tools",           hl.dsp.exec_cmd("grimblast copysave output ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
 hl.bind(mainMod .. " + XF86Tools",     hl.dsp.exec_cmd("grimblast copysave active ~/Pictures/$(date +'%Y-%m-%d-%H%M%S.png')"))
+
+-- One shared clipboard (~/.dotfiles/hypr/scripts/clipsync): a mouse highlight is a
+-- copy, and middle-click pastes the main clipboard. These hooks spot highlight
+-- gestures on the left button: a drag of 6+ px, or a double/triple-click, after
+-- which `clipsync commit` copies the new selection. Plain clicks don't count, so
+-- clicking into a field and pressing Ctrl+V still pastes what you copied.
+-- non_consuming passes every click through to the app. SHIFT is bound too, for
+-- Shift+drag selections in foot over tmux or Claude Code.
+local clipsync = "~/.dotfiles/hypr/scripts/clipsync"
+local function uptime_ms()   -- the clock clipsync reads
+    local f = io.open("/proc/uptime", "r")
+    if not f then return 0 end
+    local up = f:read("n")
+    f:close()
+    return math.floor((up or 0) * 1000 + 0.5)
+end
+local press, last_click = { x = 0, y = 0, t = 0 }, 0
+for _, mods in ipairs({ "", "SHIFT + " }) do
+    hl.bind(mods .. "mouse:272", function()
+        local pos = hl.get_cursor_pos() or { x = 0, y = 0 }
+        press = { x = pos.x, y = pos.y, t = uptime_ms() }
+    end, { non_consuming = true })
+    hl.bind(mods .. "mouse:272", function()
+        local pos, now = hl.get_cursor_pos() or { x = 0, y = 0 }, uptime_ms()
+        local dx, dy = pos.x - press.x, pos.y - press.y
+        if dx * dx + dy * dy >= 36 then
+            hl.exec_cmd(clipsync .. " commit " .. press.t)
+        else
+            if now - last_click < 600 then   -- double/triple-click
+                hl.exec_cmd(clipsync .. " commit " .. press.t)
+            end
+            last_click = now
+        end
+    end, { release = true, non_consuming = true })
+end
+-- Hyprland drops a PRIMARY write while the pointer is over a client without
+-- primary-selection support (ZapZap, for one); clipsync then leaves a flag, and
+-- the write is retried when focus moves to another window.
+local clipsync_stale = (os.getenv("XDG_RUNTIME_DIR") or "") .. "/clipsync/stale"
+hl.on("window.active", function()
+    local f = io.open(clipsync_stale, "r")
+    if f then
+        f:close()
+        hl.exec_cmd(clipsync .. " retry")
+    end
+end)
 
 -- move focus
 hl.bind(mainMod .. " + left",  hl.dsp.focus({ direction = "left" }))
