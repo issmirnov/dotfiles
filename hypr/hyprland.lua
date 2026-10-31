@@ -124,6 +124,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("telegram-desktop")
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
+    hl.exec_cmd("systemctl --user import-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user start codex-desktop.service")
     -- Claude scratchpad (SUPER+C): a drop-down terminal on special:scratch.
     -- Spawned on-demand by ~/.dotfiles/hypr/scripts/hypr-scratch (not at boot),
     -- so it's always created FRESH with the current float/centre/border window
