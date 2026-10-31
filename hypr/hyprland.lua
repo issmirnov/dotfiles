@@ -416,6 +416,10 @@ hl.window_rule({ name = "telegram-workspace", match = { class = "^(org\\.telegra
 hl.window_rule({ name = "discord-workspace", match = { class = "^(WebCord|discord)$" }, workspace = "name:discord" })
 -- OSRS: RuneLite runs under XWayland; class is the dashified Java main class net.runelite.client.RuneLite.
 hl.window_rule({ name = "osrs-workspace", match = { class = "^(net-runelite-client-RuneLite)$" }, workspace = "name:osrs" })
+-- RuneLite popups (2026-10-31): Java shows side-panel tooltips/menus as XWayland windows titled winN and
+-- typed DIALOG, so Hyprland let them take focus. One that opened under the cursor took focus, RuneLite hid
+-- it, and it reopened ~60 times a second (visible flicker). Keep focus on the game window instead.
+hl.window_rule({ name = "runelite-popups-nofocus", match = { class = "^(net-runelite-client-RuneLite)$", title = "^(win[0-9]+)$" }, no_focus = true, no_initial_focus = true })
 hl.window_rule({ name = "spotify-workspace", match = { class = "^(Spotify)$" }, workspace = "name:spotify" })
 hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, workspace = "name:signal" })
 -- Obsidian (Electron): the real runtime WM class is md.obsidian.Obsidian, NOT the
