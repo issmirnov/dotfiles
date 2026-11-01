@@ -158,8 +158,6 @@
     "superpowers@superpowers-marketplace": true,
     "episodic-memory@superpowers-marketplace": true,
     "skill-codex@skill-codex": true,
-    "swift-lsp@claude-plugins-official": true,
-    "revenuecat@claude-plugins-official": true,
     "diagram-design@diagram-design": true,
     "frontend-design@claude-plugins-official": true,
     "typesafe@typesafe-ai": true
