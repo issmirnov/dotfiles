@@ -91,5 +91,19 @@ echo '[{"name":"claude-vaniaspeedy","provider":"anthropic","priority":2,"isPrima
 nousage=$(pool_fetch)
 assert_eq "no usage yet: last good fleet" "5"    "$(jq length <<<"$nousage")"
 assert_eq "no usage yet: stale"           "true" "$(field claude-vaniaspeedy stale "$nousage")"
+# 5h limit disabled on every account (five_hour:null, weekly only): live, cached, 5h reads n/a
+cp "$DIR/fixtures/claude_ccflare_nosession.json" "$SRV/api/accounts"
+touch -d '2 minutes ago' "$TMP3/claude.json"
+nosess=$(pool_fetch)
+assert_eq "no 5h limit: live"              "false"        "$(field claude-vaniaspeedy stale "$nosess")"
+assert_eq "no 5h limit: primary lit"       "1"            "$(nprimary "$nosess")"
+assert_eq "no 5h limit: 5h reads n/a"      "CC sl n/a/50" "$(field claude-smirnovlabs text "$nosess")"
+assert_eq "no 5h limit: weekly drives worst" "50"         "$(field claude-smirnovlabs worst "$nosess")"
+assert_eq "no 5h limit: written to cache"  "2"            "$(anthropic_cached)"
+touch -d '2 minutes ago' "$TMP3/claude.json"
+detail=$(AIUSAGE_CACHE_DIR="$TMP3" CCFLARE_BASE="file://$SRV" CCFLARE_TOKEN_FILE="$SRV/token" \
+  BLOCK_INSTANCE=claude:claude-vaniaspeedy bash "$S" __detail)
+assert_eq "no 5h limit: popup weekly is live" "10"   "$(jq '.windows[] | select(.label=="7d") | .pct' <<<"$detail")"
+assert_eq "no 5h limit: popup 5h pct is null" "null" "$(jq '.windows[] | select(.label=="5h") | .pct' <<<"$detail")"
 rm -rf "$SRV" "$TMP3"
 finish

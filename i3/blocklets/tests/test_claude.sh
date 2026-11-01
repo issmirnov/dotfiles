@@ -36,4 +36,10 @@ hi=$(BLOCK_INSTANCE=claude bash "$S" __render < "$DIR/fixtures/claude_ccflare_no
 assert_eq           "high full"      "CC sl 95/20" "$(sed -n 1p <<<"$hi")"
 assert_not_contains "high no paren"  "95 ("        "$(sed -n 1p <<<"$hi")"
 assert_eq           "high color red" "#FF1744"     "$(sed -n 3p <<<"$hi")"
+
+# --- 5h limit disabled (five_hour:null): 5h reads n/a, weekly drives order + color ---
+na=$(BLOCK_INSTANCE=claude bash "$S" __render < "$DIR/fixtures/claude_ccflare_nosession.json")
+assert_eq "no 5h limit: fleet text"  "CC sl n/a/50  va n/a/10" "$(sed -n 1p <<<"$na")"
+assert_eq "no 5h limit: short"       "CC 50%"                  "$(sed -n 2p <<<"$na")"
+assert_eq "no 5h limit: green"       "#00C853"                 "$(sed -n 3p <<<"$na")"
 finish

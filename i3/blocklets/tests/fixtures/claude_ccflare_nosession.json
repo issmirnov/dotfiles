@@ -1,0 +1,15 @@
+[
+  { "name": "lena-chatgpt", "provider": "codex", "priority": 0, "isPrimary": false },
+  { "name": "claude-vaniaspeedy", "provider": "anthropic", "priority": 2, "isPrimary": true,
+    "paused": false, "pauseReason": null, "requiresReauth": false, "rateLimitedUntil": null,
+    "usageData": {
+      "five_hour": null,
+      "seven_day": { "utilization": 10, "resets_at": null },
+      "limits": [ { "kind": "weekly_all", "group": "weekly", "percent": 10, "is_active": true } ] } },
+  { "name": "claude-smirnovlabs", "provider": "anthropic", "priority": 11, "isPrimary": false,
+    "paused": false, "pauseReason": null, "requiresReauth": false, "rateLimitedUntil": null,
+    "usageData": {
+      "five_hour": null,
+      "seven_day": { "utilization": 50, "resets_at": null },
+      "limits": [ { "kind": "weekly_all", "group": "weekly", "percent": 50, "is_active": true } ] } }
+]
