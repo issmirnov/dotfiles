@@ -3,14 +3,12 @@ import QtQuick
 // One horizontal usage bar for the AI-usage popups: label · track+fill · pct%, with a
 // sub-line for the reset countdown (left) and weekly pace (right). Fill color tracks the
 // same green/amber/red thresholds the chip uses (pct_color in the ai_usage blocklet).
-// A null pct means the account has no such limit (e.g. its 5h limit is disabled): "n/a".
 Item {
     id: m
     property string label: ""
-    property var pct: 0             // number, or null = limit disabled
+    property real pct: 0
     property int reset: -1          // seconds until reset; < 0 = none
     property string pace: ""
-    readonly property bool na: pct === null || pct === undefined
 
     implicitHeight: topRow.height + (sub.height > 0 ? sub.height + 2 : 0)
 
@@ -57,7 +55,7 @@ Item {
                 anchors.left: parent.left
                 anchors.top: parent.top
                 anchors.bottom: parent.bottom
-                width: m.na ? 0 : Math.max(0, Math.min(1, m.pct / 100)) * parent.width
+                width: Math.max(0, Math.min(1, m.pct / 100)) * parent.width
                 radius: 4
                 color: m.threshColor(m.pct)
                 Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -69,8 +67,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             width: 36
             horizontalAlignment: Text.AlignRight
-            text: m.na ? "n/a" : Math.round(m.pct) + "%"
-            color: m.na ? Theme.subtext : m.threshColor(m.pct)
+            text: Math.round(m.pct) + "%"
+            color: m.threshColor(m.pct)
             font.pixelSize: 13
             font.bold: true
         }

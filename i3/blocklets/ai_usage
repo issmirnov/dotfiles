@@ -61,19 +61,18 @@ short_tag() {
 # account, worst-utilization account first, with a weekly pace token and (when a
 # window is >=50%) a reset countdown. Block color + short_text track the single
 # worst window across all accounts. An account whose 5h limit is disabled (five_hour null,
-# unlike an idle window's {utilization:0}) shows n/a for 5h and counts as 0.
-# Input: raw /api/accounts JSON (array).
+# unlike an idle window's {utilization:0}) shows only its weekly number ("va 14", not
+# "va 0/14") and counts 5h as 0. Input: raw /api/accounts JSON (array).
 render_claude() {
-  local json=$1 now name five sev sev_ts five_ts shown worst tag seg sres rem pace wts wres r gmax=-1
+  local json=$1 now name five sev sev_ts five_ts worst tag seg sres rem pace wts wres r gmax=-1
   local -a segs=()
   now=$(date +%s)
   while IFS=$'\t' read -r name five sev sev_ts five_ts; do
     [ -z "$name" ] && continue
     five=${five%.*}; sev=${sev%.*}; five=${five:-0}; sev=${sev:-0}
     tag=$(short_tag "$name")
-    shown=$five; [ "$five" = "n/a" ] && five=0
+    if [ "$five" = "none" ]; then five=0; seg="$tag ${sev}"; else seg="$tag ${five}/${sev}"; fi
     worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
-    seg="$tag ${shown}/${sev}"
     if [ -n "$sev_ts" ] && [ "$sev_ts" != "null" ]; then
       sres=$(date -d "$sev_ts" +%s 2>/dev/null)
       if [ -n "$sres" ]; then
@@ -95,7 +94,7 @@ render_claude() {
       | sort_by( [ (.usageData.five_hour.utilization // 0), (.usageData.seven_day.utilization // 0) ] | max )
       | reverse | .[]
       | [ .name,
-          (if .usageData.five_hour == null then "n/a" else (.usageData.five_hour.utilization // 0) end),
+          (if .usageData.five_hour == null then "none" else (.usageData.five_hour.utilization // 0) end),
           (.usageData.seven_day.utilization // 0),
           (.usageData.seven_day.resets_at // ""),
           (.usageData.five_hour.resets_at // "") ] | @tsv
@@ -170,8 +169,8 @@ reset_secs() {
 }
 
 # Popup detail JSON for ONE Anthropic account: its 5h + weekly windows. Input: ccflare JSON.
-# Shape: {title, windows:[{label,pct,reset_s,pace}, ...]}; the 5h pct is null when the
-# account's 5h limit is disabled (UsageMeter.qml shows n/a).
+# Shape: {title, windows:[{label,pct,reset_s,pace}, ...]}; no 5h window when the account's
+# 5h limit is disabled.
 detail_claude() {
   local json=$1 name five sev five_ts sev_ts tag fs ws pace
   # NOTE: emit "null" (not "") for missing timestamps below. Tab is IFS-whitespace, so a
@@ -182,13 +181,13 @@ detail_claude() {
       | sort_by( [ (.usageData.five_hour.utilization // 0), (.usageData.seven_day.utilization // 0) ] | max )
       | reverse | .[0]
       | [ .name,
-          (if .usageData.five_hour == null then "n/a" else (.usageData.five_hour.utilization // 0) end),
+          (if .usageData.five_hour == null then "none" else (.usageData.five_hour.utilization // 0) end),
           (.usageData.seven_day.utilization // 0),
           (.usageData.five_hour.resets_at // "null"),
           (.usageData.seven_day.resets_at // "null") ] | @tsv' <<<"$json" 2>/dev/null)
   [ -z "$name" ] && return 1
   five=${five%.*}; sev=${sev%.*}; five=${five:-0}; sev=${sev:-0}
-  [ "$five" = "n/a" ] && five=null
+  [ "$five" = "none" ] && five=null
   tag=$(short_tag "$name")
   fs=$(reset_secs "$five_ts"); ws=$(reset_secs "$sev_ts")
   pace=""; [ "$ws" -ge 0 ] && pace=$(pace_sym "$sev" "$ws" 604800)
@@ -196,8 +195,8 @@ detail_claude() {
      --argjson five "$five" --argjson fs "$fs" \
      --argjson wk "$sev" --argjson ws "$ws" --arg pace "$pace" '
      {title:$title,
-      windows:[ {label:"5h", pct:$five, reset_s:$fs, pace:""},
-                {label:"7d", pct:$wk,   reset_s:$ws, pace:$pace} ]}'
+      windows:([ {label:"5h", pct:$five, reset_s:$fs, pace:""},
+                 {label:"7d", pct:$wk,   reset_s:$ws, pace:$pace} ] | map(select(.pct != null)))}'
 }
 
 # Popup detail JSON for codex: whatever usage windows the API exposes, labeled by window
