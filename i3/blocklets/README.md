@@ -58,10 +58,11 @@ Claude's numbers come from better-ccflare, which polls Anthropic itself, so the 
 cache TTL is only 60s; Codex's is 120s. Both floors hold regardless of the configured
 `interval`.
 
-An account whose 5h limit is disabled gets `five_hour: null` and shows `n/a` for 5h
-(`CC va n/a/10`, and in the popup). An idle account that still has the limit gets a zero
-window and shows `0`. A fetch counts as valid when any Anthropic account has a 5h or
-weekly number, so a fleet with no 5h limits still refreshes.
+An account whose 5h limit is disabled gets `five_hour: null`. Its chip shows only the
+weekly number (`CC va 14` instead of `CC va 0/14`), and its popup only the weekly row. An
+idle account that still has the limit gets a zero window and keeps `0/14`. A fetch counts
+as valid when any Anthropic account has a 5h or weekly number, so a fleet with no 5h
+limits still refreshes.
 
 ### `__pool`: the ccflare fleet for Quickshell
 
