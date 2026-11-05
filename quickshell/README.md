@@ -103,13 +103,16 @@ Each pill shows an icon per window on that workspace, resolved from the window
 
 1. `overrideIcon` — an explicit `file://` path matched by class substring, for apps
    whose class isn't a valid icon-theme name: RuneLite, Telegram (per-account-hash
-   class), Signal, ZapZap/WhatsApp, Obsidian, VS Code, Cursor, Zoom.
-2. else `Quickshell.hasThemeIcon(class)` → the theme icon.
+   class), Signal, ZapZap/WhatsApp, Obsidian, VS Code, Cursor, Orca, Zoom.
+2. else the icon named by the window's desktop entry (`DesktopEntries.heuristicLookup(class)`),
+   or the class itself when no entry matches, if `Quickshell.hasThemeIcon()` resolves it.
 3. else a neutral dot placeholder (never a broken-image icon).
 
-> ⚠️ `DesktopEntries.heuristicLookup` is a **no-op in this Quickshell build** — the
-> class must itself equal an icon name or you get the dot. That's why the override
-> map exists. Add new entries in the `overrideIcon` block.
+> ⚠️ Desktop entries load asynchronously after `qs` starts, and `heuristicLookup`
+> returns null until they do. The `entry` binding reads
+> `DesktopEntries.applications.values`, so it re-runs once they arrive. Without that
+> read, pills built at startup keep a dot until something rebuilds them. Add an
+> `overrideIcon` entry when the lookup misses or picks the wrong app.
 
 ## Related: the workspace create/rename/move keybinds
 

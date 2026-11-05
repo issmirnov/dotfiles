@@ -108,8 +108,7 @@ Flow {
                         required property var modelData
                         readonly property string cls: modelData.lastIpcObject ? (modelData.lastIpcObject.class || "") : ""
                         // Explicit icons for windows whose class isn't itself a valid icon-theme
-                        // name. heuristicLookup is a no-op in this Quickshell build, so the class
-                        // must equal an icon name or the pill falls back to the neutral dot.
+                        // name and whose desktop entry heuristicLookup (below) misses or gets wrong.
                         // Substring match keeps this robust to per-app class quirks (hashes, case).
                         readonly property string overrideIcon: {
                             const c = cls.toLowerCase();
@@ -131,6 +130,8 @@ Flow {
                                 return "file:///usr/share/pixmaps/vscode.png";
                             if (c.indexOf("cursor") !== -1)               // Cursor editor
                                 return "file:///usr/share/pixmaps/co.anysphere.cursor.png";
+                            if (c.indexOf("orca") === 0)                  // Orca IDE (class 'orca', but stably-orca-bin ships the icon as 'stably-orca'; a bare 'orca' icon is the GNOME screen reader's)
+                                return "file:///usr/share/icons/hicolor/256x256/apps/stably-orca.png";
                             if (c.indexOf("zoom") !== -1)                 // Zoom (icon file: Zoom, capital)
                                 return "file:///usr/share/pixmaps/Zoom.png";
                             if (c.indexOf("nemo") !== -1)                 // Nemo file manager (Adwaita theme has no 'nemo' icon; .desktop uses system-file-manager)
@@ -139,7 +140,13 @@ Flow {
                                 return "file:///usr/share/icons/hicolor/scalable/apps/foot.svg";
                             return "";
                         }
-                        readonly property var entry: cls ? DesktopEntries.heuristicLookup(cls) : null
+                        // Desktop entries load asynchronously after qs starts, and heuristicLookup
+                        // returns null until they do. Reading the list length makes this binding
+                        // re-run once they arrive, so pills built at startup still get their icons.
+                        readonly property var entry: {
+                            const loaded = DesktopEntries.applications.values.length > 0;
+                            return cls && loaded ? DesktopEntries.heuristicLookup(cls) : null;
+                        }
                         readonly property string iconName: entry && entry.icon ? entry.icon : cls
                         readonly property bool haveIcon: overrideIcon !== "" || (iconName !== "" && Quickshell.hasThemeIcon(iconName))
                         width: Theme.iconSize
