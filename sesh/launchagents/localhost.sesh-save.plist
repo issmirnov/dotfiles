@@ -5,9 +5,13 @@
   <key>Label</key>
   <string>localhost.sesh-save</string>
 
+  <!-- launchd expands neither ~ nor $HOME, so a shell resolves this user's
+       paths and owns the log redirect (the state dir may not exist yet). -->
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/vania/.dotfiles/sesh/sesh-save</string>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>mkdir -p "$HOME/.local/state/sesh" &amp;&amp; exec "$HOME/.dotfiles/sesh/sesh-save" 2&gt;&gt;"$HOME/.local/state/sesh/save.err.log"</string>
   </array>
 
   <!-- Snapshot the live session set every 2 min. Deliberately NO RunAtLoad: the
@@ -18,8 +22,5 @@
 
   <key>ProcessType</key>
   <string>Background</string>
-
-  <key>StandardErrorPath</key>
-  <string>/Users/vania/.local/state/sesh/save.err.log</string>
 </dict>
 </plist>
