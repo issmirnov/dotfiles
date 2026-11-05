@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 #
 # Insprired by https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/extract
-alias i=install
+alias i=installl
 
-install() {
+installl() {
 	local target
 
 	if (( $# == 0 )); then
