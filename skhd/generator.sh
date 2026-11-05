@@ -23,5 +23,10 @@ if [ "$host" = "carbon" ] || [ "$host" = "jodium" ];then
     cat $ROOT/sip >> $ROOT/skhdrc.generated
 fi
 
-# Pick up new changes
-skhd --reload
+# Pick up new changes. Macs without skhd, or with it stopped, keep only the
+# generated file; that must not fail the dotbot install.
+if command -v skhd >/dev/null 2>&1; then
+    skhd --reload || echo "skhd is not running; it reads skhdrc at next start"
+else
+    echo "skhd not installed; skipping reload"
+fi

@@ -5,9 +5,13 @@
   <key>Label</key>
   <string>localhost.sesh-restore</string>
 
+  <!-- launchd expands neither ~ nor $HOME, so a shell resolves this user's
+       paths and owns the log redirect (the state dir may not exist yet). -->
   <key>ProgramArguments</key>
   <array>
-    <string>/Users/vania/.dotfiles/sesh/sesh-restore</string>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>mkdir -p "$HOME/.local/state/sesh" &amp;&amp; exec "$HOME/.dotfiles/sesh/sesh-restore" &gt;&gt;"$HOME/.local/state/sesh/restore.log" 2&gt;&amp;1</string>
   </array>
 
   <!-- Rebuild the last snapshot at login (reboot / shutdown / crash recovery).
@@ -17,10 +21,5 @@
 
   <key>ProcessType</key>
   <string>Background</string>
-
-  <key>StandardOutPath</key>
-  <string>/Users/vania/.local/state/sesh/restore.log</string>
-  <key>StandardErrorPath</key>
-  <string>/Users/vania/.local/state/sesh/restore.log</string>
 </dict>
 </plist>
