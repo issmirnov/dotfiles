@@ -129,7 +129,8 @@ rofi flow:
 Key gotcha those scripts encode: on this Lua Hyprland you dispatch via
 `hyprctl eval 'hl.dispatch(hl.dsp.…)'` (not `hyprctl dispatch …`), and a **named**
 target must be `name:foo` — a bare non-existent name errors `Invalid workspace` and
-moves nothing. `hl.dsp.workspace.rename` takes `{ workspace = <id>, name = "…" }`;
+moves nothing. `hl.dsp.workspace.rename` takes `{ workspace = <id | "name:<address>">, name = "…" }`
+(0.57: named workspaces have no id, and `name:` matches the creation-time `address`);
 `hl.dsp.window.move` takes `{ workspace = <N | "name:x">, follow = <bool> }`.
 
 ## Running / reloading

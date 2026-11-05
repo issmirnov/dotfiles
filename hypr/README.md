@@ -254,7 +254,10 @@ Wired up by `local menu = ".../scripts/hypr-switch"` in `hyprland.lua`, bound to
   (label + per-row icon) for piping into a throwaway `fuzzel`.
 
 ### `hypr-rename` — SUPER+SHIFT+A
-Rename the **current** workspace via a rofi prompt (`hl.dsp.workspace.rename`).
+Rename the **current** workspace via a rofi prompt. A word name moves its windows
+onto a fresh `name:<x>` workspace and follows; a numeric name relabels in place.
+Since Hyprland 0.57, a `name:` selector matches the name the workspace started
+with. After an in-place rename, `name:<new>` finds nothing.
 
 ### `hypr-move` — SUPER+SHIFT+S
 Move the **focused window** to a chosen/typed workspace (existing ones are
