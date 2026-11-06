@@ -117,7 +117,11 @@ hl.on("hyprland.start", function()
     -- (reboot, logout or crash), each in foot on its saved workspace, silently.
     -- sesh-save.timer starts saving again once this restore finishes.
     -- Log: ~/.local/state/sesh/restore.log. Preview: SESH_DRYRUN=1 revive
-    hl.exec_cmd("~/.dotfiles/sesh/sesh-restore")
+    -- hypr-cua's shared MCP socket starts first in the same command, so the restored
+    -- sessions find it. Restarting the socket makes the next server read this session's
+    -- Wayland variables (units from the hypr-computer-use-mcp checkout's contrib/systemd).
+    -- If that part fails, the sessions are still restored and start their own stdio servers.
+    hl.exec_cmd("systemctl --user import-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user stop hypr-cua.service; systemctl --user restart hypr-cua.socket; exec ~/.dotfiles/sesh/sesh-restore")
     -- night shift: hyprsunset (native); temps/times live in hyprsunset.conf (day 4500K / night 3200K).
     -- NOTE: hyprsunset switches on fixed wall-clock times, not astronomical sunset like wlsunset did.
     hl.exec_cmd("hyprsunset")
