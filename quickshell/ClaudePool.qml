@@ -4,7 +4,7 @@ import QtQuick
 
 // The better-ccflare Claude fleet: one UsageChip per Anthropic account, left→right in
 // ccflare priority order (lower number first). The account ccflare sends the next request
-// to (isPrimary) is filled; blocked standbys dim with 🔑/⏸/⏳. One `ai_usage __pool` call
+// to (`primary`) is filled; blocked standbys dim with 🔑/⏸/⏳/🪫. One `ai_usage __pool` call
 // per poll returns the whole fleet, so order, primary and usage share one snapshot.
 Row {
     id: pool

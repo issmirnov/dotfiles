@@ -47,6 +47,33 @@ assert_eq "paused primary stays primary" "true"        "$(field claude-vaniaspee
 assert_eq "paused primary not blocked"   ""            "$(field claude-vaniaspeedy blocked "$pp")"
 assert_eq "paused primary has no glyph"  "CC va 75/29" "$(field claude-vaniaspeedy text "$pp")"
 
+# --- usage-capped primary: ccflare's router skips a usage_exhausted account, but its
+# /api/accounts still flags it isPrimary, so the next routable account is the primary ---
+cap() { jq --arg n "$1" '(.[] | select(.name==$n)) |= (.rateLimitStatus="usage_exhausted (560m)" | .usageData.seven_day.utilization=100)'; }
+cp=$(cap claude-vaniaspeedy < "$F" | BLOCK_INSTANCE=claude bash "$S" __poolrender)
+assert_eq "capped primary demoted"        "false"                         "$(field claude-vaniaspeedy primary "$cp")"
+assert_eq "capped primary blocked"        "exhausted"                     "$(field claude-vaniaspeedy blocked "$cp")"
+assert_eq "capped primary glyph"          "CC va 🪫 75/100"                "$(field claude-vaniaspeedy text "$cp")"
+assert_eq "capped primary status"         "usage exhausted · priority 2"  "$(field claude-vaniaspeedy status "$cp")"
+assert_eq "capped primary red"            "#FF1744"                       "$(field claude-vaniaspeedy color "$cp")"
+assert_eq "next routable account is lit"  "true"                          "$(field claude-omega primary "$cp")"
+assert_eq "next routable account status"  "primary · priority 20"         "$(field claude-omega status "$cp")"
+assert_eq "capped primary: exactly one primary" "1"                       "$(nprimary "$cp")"
+cs=$(cap claude-omega < "$F" | BLOCK_INSTANCE=claude bash "$S" __poolrender)
+assert_eq "capped standby blocked"        "exhausted"                     "$(field claude-omega blocked "$cs")"
+assert_eq "capped standby glyph"          "CC om 🪫 10/100"                "$(field claude-omega text "$cs")"
+assert_eq "capped standby: primary kept"  "true"                          "$(field claude-vaniaspeedy primary "$cs")"
+cpp=$(cap claude-smirnovlabs < "$F" | BLOCK_INSTANCE=claude bash "$S" __poolrender)
+assert_eq "paused beats exhausted"        "paused"                        "$(field claude-smirnovlabs blocked "$cpp")"
+none=$(cap claude-vaniaspeedy < "$F" | cap claude-omega | BLOCK_INSTANCE=claude bash "$S" __poolrender)
+assert_eq "capped primary, nothing routable: nothing lit" "0"             "$(nprimary "$none")"
+cst=$(cap claude-vaniaspeedy < "$F" | BLOCK_INSTANCE=claude bash "$S" __poolrender 1)
+assert_eq "capped primary, stale: nothing lit" "0"                        "$(nprimary "$cst")"
+ex=$(jq '(.[] | select(.name=="claude-vaniaspeedy")) |= (.rateLimitStatus="extra_usage (560m)")' "$F" \
+  | BLOCK_INSTANCE=claude bash "$S" __poolrender)
+assert_eq "extra_usage still routes: stays primary" "true"                "$(field claude-vaniaspeedy primary "$ex")"
+assert_eq "extra_usage: not blocked"      ""                              "$(field claude-vaniaspeedy blocked "$ex")"
+
 # --- stale (expired cache, ccflare down): nothing lit, gray, glyphs kept ---
 st=$(BLOCK_INSTANCE=claude bash "$S" __poolrender 1 < "$F")
 assert_eq "stale: nothing primary" "0"                                "$(nprimary "$st")"
