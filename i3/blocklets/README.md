@@ -72,12 +72,20 @@ ccflare `priority` (lower first, ties by name); each object carries:
 
 | Field | Meaning |
 |-------|---------|
-| `primary` | ccflare's `isPrimary`: the account the next request goes to |
-| `blocked` | `reauth` / `paused` / `limited`, first match, mirroring ccflare's availability check; never set on the primary |
-| `text`, `color` | the per-account chip text (🔑 / ⏸ / ⏳ after the tag when blocked) and its pct color |
+| `primary` | the account the next request goes to: ccflare's `isPrimary`, or the next routable account when that one is usage-capped (see below) |
+| `blocked` | `reauth` / `paused` / `limited` / `exhausted`, first match, mirroring ccflare's availability check; never set on the primary |
+| `text`, `color` | the per-account chip text (🔑 / ⏸ / ⏳ / 🪫 after the tag when blocked) and its pct color |
 | `worst` | max of the 5h and 7d utilization; drives the primary chip's fill |
 | `status` | popup line, e.g. `primary · priority 1`, `paused (manual) · priority 11` |
 | `stale` | the cache had expired and the fetch failed: `primary` forced off, color gray |
+
+`exhausted` means ccflare's `rateLimitStatus` starts with `usage_exhausted`: a usage window
+is at 100% until it resets. ccflare's router drops those accounts before it picks one.
+`/api/accounts` computes `isPrimary` without that check (v3.5.105 to v3.6.4). When the
+top-priority account hits its cap, ccflare still flags it `isPrimary`. Requests go to the
+next routable account, so `__pool` marks that account primary. The upstream fix is
+[tombii/better-ccflare#545](https://github.com/tombii/better-ccflare/pull/545). Once
+ccflare ships it, `isPrimary` never lands on a capped account and this override stays idle.
 
 `ai_usage __poolrender [1]` renders JSON from stdin (`1` = stale); the tests use it.
 

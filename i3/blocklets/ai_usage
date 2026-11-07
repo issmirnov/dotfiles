@@ -220,31 +220,44 @@ detail_codex() {
 }
 
 # The claude fleet as JSON for quickshell's ClaudePool.qml: one object per Anthropic account,
-# sorted by ccflare priority (lower = preferred), ties by name. `primary` is ccflare's
-# isPrimary (where the next request goes). `blocked` mirrors ccflare's availability check,
-# first match wins: requiresReauth -> reauth, paused -> paused, rateLimitedUntil (epoch ms)
-# still ahead -> limited. The primary is never blocked: ccflare flags a paused account
-# primary when it will auto-unpause it. `text` = the per-account chip text with the glyph
-# after the tag. $2=1 marks the data stale (expired cache, ccflare unreachable): nothing
-# primary, gray, "ccflare unreachable"; blocked/glyphs keep the cached state.
+# sorted by ccflare priority (lower = preferred), ties by name. `primary` is where the next
+# request goes: ccflare's isPrimary, unless that account is usage-capped (below). `blocked`
+# mirrors ccflare's availability check, first match wins: requiresReauth -> reauth,
+# paused -> paused, rateLimitedUntil (epoch ms) still ahead -> limited, rateLimitStatus
+# usage_exhausted -> exhausted. The primary is never blocked: ccflare flags a paused account
+# primary when it will auto-unpause it. A usage-capped isPrimary is the exception: ccflare's
+# router drops usage_exhausted accounts before its strategy picks, but /api/accounts asks the
+# strategy alone (through v3.6.4; tombii/better-ccflare#545 fixes that upstream), so a capped
+# top account keeps isPrimary while the next routable account takes the traffic. That account
+# is marked primary instead. rateLimitStatus says usage_exhausted from the same check the
+# router uses ("extra_usage" still routes).
+# `text` = the per-account chip text with the glyph after the tag. $2=1 marks the data stale
+# (expired cache, ccflare unreachable): nothing primary, gray, "ccflare unreachable";
+# blocked/glyphs keep the cached state.
 # Input: raw /api/accounts JSON. Output: one JSON array line ([] when there's nothing).
 render_pool() {
   local json=$1 stale=${2:-0} now_ms pos=0 rows="" name prio isprim reauth paused reason rl_until
-  local five sev tag worst blocked glyph primary status full pre text color stale_b=false
+  local five sev rls capped promote=0 tag worst blocked glyph primary status full pre text color
+  local stale_b=false
   now_ms=$(( $(date +%s) * 1000 ))
   [ "$stale" = 1 ] && stale_b=true
   # NOTE: "null" (not "") for absent fields — a `read` over @tsv collapses empty middle fields.
-  while IFS=$'\t' read -r name prio isprim reauth paused reason rl_until five sev; do
+  while IFS=$'\t' read -r name prio isprim reauth paused reason rl_until five sev rls; do
     [ -z "$name" ] && continue
     pos=$(( pos + 1 ))
     tag=$(short_tag "$name")
     five=${five%.*}; sev=${sev%.*}
     worst=$five; [ "$sev" -gt "$worst" ] && worst=$sev
+    capped=false; [[ "$rls" == usage_exhausted* ]] && capped=true
+    # rows run in priority order: the first routable row after a capped isPrimary gets the traffic
+    if [ "$isprim" = "true" ] && [ "$capped" = "true" ]; then isprim=false; promote=1; fi
     blocked=""; glyph=""
     if [ "$isprim" != "true" ]; then
       if   [ "$reauth" = "true" ]; then blocked=reauth; glyph="🔑"
       elif [ "$paused" = "true" ]; then blocked=paused; glyph="⏸"
       elif [ "$rl_until" != "null" ] && [ "${rl_until%.*}" -gt "$now_ms" ]; then blocked=limited; glyph="⏳"
+      elif [ "$capped" = "true" ]; then blocked=exhausted; glyph="🪫"
+      elif [ "$promote" = 1 ]; then isprim=true; promote=0
       fi
     fi
     primary=false; [ "$isprim" = "true" ] && [ "$stale" != 1 ] && primary=true
@@ -255,6 +268,7 @@ render_pool() {
         reauth)  status="needs re-auth" ;;
         paused)  status="paused"; [ "$reason" != "null" ] && status="paused ($reason)" ;;
         limited) status="rate-limited until $(date -d "@$(( ${rl_until%.*} / 1000 ))" '+%a %H:%M')" ;;
+        exhausted) status="usage exhausted" ;;
         *)       status="standby #$pos" ;;
       esac
     fi
@@ -276,7 +290,8 @@ render_pool() {
           ((.pauseReason // "") | if . == "" then "null" else . end),
           (.rateLimitedUntil // "null"),
           (.usageData.five_hour.utilization // 0),
-          (.usageData.seven_day.utilization // 0) ] | @tsv
+          (.usageData.seven_day.utilization // 0),
+          (.rateLimitStatus // "null") ] | @tsv
     ' <<<"$json" 2>/dev/null)
   jq -cs . <<<"$rows"
 }
