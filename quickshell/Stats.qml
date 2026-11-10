@@ -63,28 +63,6 @@ Row {
         }
     }
 
-    // ---- cpu ----
-    StatChip {
-        id: cpuChip
-        section: "cpu"
-        accent: Theme.cpuCol
-        heat: stats.cpuHeat                      // green→red by CPU load
-        pulse: Sys.cpuPct >= 85                   // breathe a glow when it's pegged
-        label: "CPU " + Math.round(Sys.cpuPct) + "%"
-        history: Sys.cpuHist
-        sparkMin: 0
-        sparkMax: 100
-        contentComponent: Component {
-            Column {
-                spacing: 4
-                Repeater {
-                    model: cpuChip.model.procs || []
-                    KV { k: modelData.name; v: (modelData.pct).toFixed(1) + "%" }
-                }
-            }
-        }
-    }
-
     // ---- mem ----
     StatChip {
         id: memChip
@@ -155,6 +133,28 @@ Row {
                         k: modelData.label
                         v: modelData.c + "°C" + (modelData.fan !== undefined ? "   fan " + modelData.fan + "%" : "")
                     }
+                }
+            }
+        }
+    }
+
+    // ---- cpu ----
+    StatChip {
+        id: cpuChip
+        section: "cpu"
+        accent: Theme.cpuCol
+        heat: stats.cpuHeat                      // green→red by CPU load
+        pulse: Sys.cpuPct >= 85                   // breathe a glow when it's pegged
+        label: "CPU " + Math.round(Sys.cpuPct) + "%"
+        history: Sys.cpuHist
+        sparkMin: 0
+        sparkMax: 100
+        contentComponent: Component {
+            Column {
+                spacing: 4
+                Repeater {
+                    model: cpuChip.model.procs || []
+                    KV { k: modelData.name; v: (modelData.pct).toFixed(1) + "%" }
                 }
             }
         }
