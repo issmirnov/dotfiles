@@ -1,14 +1,17 @@
 #!/usr/bin/env bash
-# worldclock — i3blocks segment: live time in Zagreb, Prague, Kyiv.
-# Zagreb & Prague share CET (always equal); Kyiv is EET (+1h). Cities whose
-# current HH:MM match are collapsed under a joined label. Pure date/TZ — no
-# network, no secrets, always exits 0. Test seam: WORLDCLOCK_NOW=<epoch> pins now.
+# worldclock — i3blocks segment: live time in London, Zagreb, Prague, Amsterdam, Kyiv.
+# Zagreb, Prague & Amsterdam share CET (always equal); London is GMT (-1h) and
+# Kyiv is EET (+1h). Cities whose current HH:MM match are collapsed under a
+# joined label. Pure date/TZ — no network, no secrets, always exits 0.
+# Test seam: WORLDCLOCK_NOW=<epoch> pins now.
 set -u
 
 # label|tz, ordered west-to-east by offset
 CITIES=(
+  "LON|Europe/London"
   "ZAG|Europe/Zagreb"
   "PRG|Europe/Prague"
+  "AMS|Europe/Amsterdam"
   "KYV|Europe/Kyiv"
 )
 

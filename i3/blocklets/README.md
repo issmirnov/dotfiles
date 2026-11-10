@@ -123,20 +123,22 @@ the host's many docker / veth / bridge interfaces:
 
 SSID and signal come from `nmcli` (falling back to `iw`).
 
-## `worldclock` — Zagreb / Prague / Kyiv
+## `worldclock` — London / Zagreb / Prague / Amsterdam / Kyiv
 
-Single block (`[worldclock]`, `interval=30`). Live time in three cities, collapsing those
+Single block (`[worldclock]`, `interval=30`). Live time in five cities, collapsing those
 that currently share a clock:
 
 ```
-ZAG·PRG 21:03  KYV 22:03
+LON 20:03  ZAG·PRG·AMS 21:03  KYV 22:03
 ```
 
-Zagreb and Prague are both Central European Time and always show the same clock; Kyiv is one
-hour ahead (Eastern European Time). The grouping is computed from the *actual* rendered
-times, so it's DST-aware and self-correcting — if two cities' clocks ever diverged they'd
-split into separate labels automatically. `full_text` shows the labelled groups; `short_text`
-drops the labels (`21:03 22:03`).
+Zagreb, Prague and Amsterdam all use Central European Time, so they always show the same
+clock. London is one hour behind (GMT/BST). Kyiv is one hour ahead (Eastern European Time).
+The UK, the EU and Ukraine change their clocks at the same instant, so both gaps hold all
+year. The script groups cities by the times it *actually* renders, so the grouping follows
+DST. If two cities' clocks ever diverge, they split into separate labels. `full_text` shows
+the labelled groups; `short_text` drops the labels (`20:03 21:03 22:03`). The Quickshell bar
+shows this block in the center of its bottom row.
 
 Pure `date`/`TZ` — no network, no secrets, always exits 0. The `WORLDCLOCK_NOW=<epoch>` seam
 pins "now" so the summer/winter tests assert exact strings across a DST boundary.

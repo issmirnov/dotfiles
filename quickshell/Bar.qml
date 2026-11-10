@@ -40,7 +40,7 @@ PanelWindow {
             anchors { top: parent.top; left: parent.left; right: parent.right }
             height: Theme.deckHeight
 
-            // center — local date/time + a few timezones (ZAG·PRG·KYV)
+            // center — local date/time (the world clock sits on the bottom deck)
             Clock {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
@@ -84,9 +84,9 @@ PanelWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.gap * 2
-                Blocklet {
+                Blocklet {                       // LON · ZAG·PRG·AMS · KYV (shellDir-relative, like claude_peak)
                     flat: true
-                    exec: "/home/vania/.dotfiles/i3/blocklets/worldclock"
+                    exec: Quickshell.shellDir + "/../i3/blocklets/worldclock"
                     interval: 30000
                 }
                 Blocklet {                       // happening now (mint; hides when nothing is on)
