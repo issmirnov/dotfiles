@@ -45,4 +45,6 @@
     ~/.claude/settings.json: claude/settings.json
 
 - shell:
+  - command: if command -v codex >/dev/null 2>&1; then python3 codex/install-statusline.py; fi
+    description: Configure Codex status line
   - [printf "\n" | vim +PlugInstall +PlugUpdate +qall, Installing vim plugins]

@@ -67,6 +67,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run status line tests
         run: python3 -m unittest -v tests.test_statusline
+      - name: Test Codex config preservation and installation
+        run: python3 -m unittest -v tests.test_codex_statusline
 
   # tmux-resurrect boot restore: the post-save hook that records each Claude pane's
   # session ID, the restore entries in tmux.conf (run through resurrect's own

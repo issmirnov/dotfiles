@@ -45,6 +45,9 @@ There's an [ansible role](https://galaxy.ansible.com/issmirnov/dotfiles/) for th
 
 ## Points of Interest
 
+- The [codex](codex/) folder configures a shared status line with hostname,
+  directory, branch, model, context, and usage headroom. Its installer preserves
+  the rest of each machine's local Codex configuration.
 - The post commit hook in the [git](git/) directory is very interesting. It
   checks for changes, and depending on which rules are matched will run certain
   commands. Ie, if the zsh folder contains changes we will source zshrc for
