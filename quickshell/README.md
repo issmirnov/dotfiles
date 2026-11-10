@@ -31,7 +31,7 @@ See `../hypr/hyprland.lua` for the compositor side.
 | File | Role |
 |------|------|
 | `shell.qml` | Entry. One `Bar` per monitor; a 5 s timer calls `Hyprland.refreshToplevels()` (keeps window classes / icons fresh — `lastIpcObject.class` isn't reactive); a 1 min timer runs `lib/cal-notify`. |
-| `Bar.qml` | One floating, rounded `PanelWindow` per monitor. Pure layout: left = `Workspaces`, center = `Clock` + worldclock + calendar, right = Claude peak hours + AI-usage + `Audio` + `Stats` + `IdleToggle` + `SysTray`. |
+| `Bar.qml` | One floating, rounded `PanelWindow` per monitor, two decks tall. Pure layout: `Workspaces` wraps across the left of both decks. Top deck: `Clock` in the center, `Brightness` + `Audio` + `Stats` + `IdleToggle` + `Dnd` on the right. Bottom deck: worldclock + calendar in the center, Claude peak hours + AI usage + `SysTray` on the right. |
 | `Workspaces.qml` | **Per-monitor workspace pills** — sort, click, and app icons (the focus of this doc). |
 | `Theme.qml` | Singleton palette + metrics; `variant` flips `"pastel"`/`"vivid"`. |
 | `Clock.qml` | Center date/time (`SystemClock`). |
