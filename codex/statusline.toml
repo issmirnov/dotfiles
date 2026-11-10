@@ -1,0 +1,3 @@
+[tui]
+status_line = ["hostname", "current-dir", "git-branch", "model-with-reasoning", "context-remaining", "five-hour-limit", "weekly-limit"]
+status_line_use_colors = true
