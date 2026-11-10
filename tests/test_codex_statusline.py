@@ -103,6 +103,25 @@ trust_level = "trusted"
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(tomllib.loads((custom / "config.toml").read_text())["tui"], SETTINGS)
 
+    def test_dotbot_command_skips_without_codex(self):
+        command = next(line.split("command: ", 1)[1] for line in
+                       (ROOT / "default.conf.yaml").read_text().splitlines()
+                       if "command:" in line and "codex/install-statusline.py" in line)
+        binaries = self.directory / "bin"
+        binaries.mkdir()
+        (binaries / "python3").symlink_to(sys.executable)
+        custom = self.directory / "custom"
+        environment = {**os.environ, "PATH": str(binaries), "CODEX_HOME": str(custom)}
+        skipped = subprocess.run(command, shell=True, cwd=ROOT, env=environment,
+                                 capture_output=True, text=True)
+        self.assertEqual(skipped.returncode, 0, skipped.stderr)
+        self.assertFalse(custom.exists())
+        (binaries / "codex").symlink_to("/bin/true")
+        installed = subprocess.run(command, shell=True, cwd=ROOT, env=environment,
+                                   capture_output=True, text=True)
+        self.assertEqual(installed.returncode, 0, installed.stderr)
+        self.assertEqual(tomllib.loads((custom / "config.toml").read_text())["tui"], SETTINGS)
+
 
 if __name__ == "__main__":
     unittest.main()
