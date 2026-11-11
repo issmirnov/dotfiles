@@ -18,11 +18,18 @@
 # Note: ZSH seems to read ~/.profile as well, if ~/.zshrc is not present.
 
 ####################################################
+# Oh My Zsh: when an update is due, print a reminder instead of asking.
+# The [Y/n] prompt reads one key, so it eats the first character of a
+# command typed into a new shell, such as the resume command Orca types
+# into a restored pane. Update with `omz update`. This must come before
+# zgen.zsh: zgen loads Oh My Zsh from its cached init, and the update
+# check runs during that load.
+zstyle ':omz:update' mode reminder
+
+####################################################
 # Load github.com/tarjoilija/zgen and initialize it.
 source "${HOME}/.dotfiles/zsh/zgen/zgen.zsh"
 ZGEN_RESET_ON_CHANGE=(${HOME}/.zshrc ${HOME}/.zshrc.local ${HOME}/.dotfiles/zsh/zshrc )
-
-export DISABLE_AUTO_UPDATE="true" # disable OMZ auto update prompt
 
 # create zgen init script if it doesn't exist
 if ! zgen saved; then
