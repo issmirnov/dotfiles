@@ -321,7 +321,7 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
-  "autoCompactWindow": 250000,
+  "autoCompactWindow": 500000,
   "promptCacheTtl": "1h",
   "tui": "fullscreen",
   "voice": {

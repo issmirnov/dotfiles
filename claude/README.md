@@ -21,7 +21,7 @@ The user-level Claude Code config. Notable knobs in use:
   The env var is the modern lever; the top-level field is a fallback. Setting both means you don't need to remember which one wins after a Claude Code release. Allowed values escalate roughly `low → medium → high → xhigh → max`.
 - **`env.ENABLE_TOOL_SEARCH: "true"`** — defers some tool schemas behind `ToolSearch` to keep the system prompt smaller; tools are loaded on demand.
 - **`alwaysThinkingEnabled: true`** — extended thinking always on.
-- **`autoCompactWindow: 250000`** compacts the main conversation at 250K tokens instead of near the 1M limit. Every call re-reads the whole context from cache, so a long thread's cost grows with the square of its length.
+- **`autoCompactWindow: 500000`** compacts the main conversation at 500K tokens instead of near the 1M limit. Every call re-reads the whole context from cache, so a long thread's cost grows with the square of its length. On a measured 1,000-call session, 300K was the cheapest point. 500K compacts half as often there (3 times instead of 6) for about 30% more, which suits long marathon sessions.
 - **`promptCacheTtl: "1h"`** keeps the main conversation's prompt cache for an hour instead of five minutes. Cache writes cost 2x the input price instead of 1.25x. In exchange, a 5 to 60 minute wait on bot reviews or subagents no longer rewrites the whole context. Subagents keep the 5-minute default, since they rarely pause.
 - **`skipDangerousModePermissionPrompt: true`** — pairs with the `cc = claude --dangerously-skip-permissions` shell alias so the bypass-permissions warning doesn't prompt every launch.
 - **`verbose: true`** — fuller transcript output.
