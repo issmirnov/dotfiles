@@ -2,7 +2,9 @@
   "env": {
     "ENABLE_TOOL_SEARCH": "true",
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5[1m]"
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5[1m]",
+    "EPISODIC_MEMORY_API_MODEL": "claude-haiku-5-5",
+    "EPISODIC_MEMORY_API_MODEL_FALLBACK": "claude-sonnet-5-5"
   },
   "permissions": {
     "allow": [
