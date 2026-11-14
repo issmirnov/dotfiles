@@ -1,27 +1,21 @@
 #!/usr/bin/env bash
-# clipsync: one shared clipboard. A mouse highlight copies, and middle-click
-# pastes the main clipboard (CLIPBOARD), the same thing Ctrl+V pastes.
+# clipsync: middle-click pastes your last copy. Copying stays explicit: Ctrl+C
+# fills the main clipboard (CLIPBOARD), and a highlight never touches it.
 #
-#   • A mouse highlight (a drag of 6+ px, or a double/triple-click) is a copy.
-#     Left-button hooks in hyprland.lua run `clipsync commit` after those
-#     gestures, which copies the new PRIMARY selection into CLIPBOARD.
-#   • Keyboard selections (Ctrl+A, Shift+arrows) and plain clicks are not
-#     copies, so selecting text and pressing Ctrl+V to replace it still pastes
-#     what you copied.
-#   • PRIMARY mirrors CLIPBOARD, so middle-click pastes the main clipboard in
-#     any app that pastes PRIMARY. When an app drops PRIMARY, it is refilled.
+#   • PRIMARY mirrors CLIPBOARD, so after a copy, middle-click pastes it in any
+#     app that pastes PRIMARY. When an app drops PRIMARY, it is refilled.
+#   • A highlight still sets PRIMARY, as usual on Linux, so middle-click pastes
+#     that highlight until your next copy. Taking PRIMARY back would deselect
+#     the text in GTK apps. Turning app PRIMARY off (misc:middle_click_paste)
+#     doesn't help either: Chrome keeps pasting its own last highlight.
 #   • Text only. If the clipboard has no plain-text form (an image), or a
 #     password manager marks it sensitive, PRIMARY is cleared instead. Files
 #     copied in a file manager reach PRIMARY as their plain-text form (paths),
 #     the same text Ctrl+V pastes into a terminal.
 #
-# Known gaps:
-#   • After a keyboard selection, middle-click pastes that selection until the
-#     next copy. Taking PRIMARY back sooner would deselect the text in GTK apps,
-#     which breaks "Ctrl+A, then type to replace".
-#   • A second highlight in the same GTK widget is not copied; press Ctrl+C.
-#     GTK changes that selection without a new PRIMARY event, and a silent
-#     change looks the same as an old keyboard selection, which must not be copied.
+# Highlights never copy. Copy-on-highlight (dotfiles #75, a `clipsync commit`
+# hook in hyprland.lua) replaced the clipboard every time you highlighted
+# while reading in Chrome.
 #
 # Hyprland bug (0.56.2, still in main): a PRIMARY write is silently dropped
 # when the client under the pointer has no primary-selection support (ZapZap,
@@ -30,7 +24,6 @@
 # and a dropped one is retried when focus moves to another window.
 #
 #   clipsync start | stop | status         start runs from hyprland.lua at login
-#   clipsync commit PRESS_MS               PRESS_MS = /proc/uptime in ms at the press
 #   clipsync on-primary | on-clipboard     wl-paste --watch handlers
 #   clipsync retry                         re-attempts a dropped PRIMARY write
 #
@@ -148,8 +141,8 @@ refill() {
     rm -f "$f"
 }
 
-# PRIMARY changed. Record when, so `commit` can tell a selection made during a
-# gesture from an older one. Our own mirror and refill writes land here too.
+# PRIMARY changed. Record when, so a pending refill or retry can tell that an
+# app took PRIMARY after the clear. Our own mirror and refill writes land here too.
 # wl-paste runs these handlers one at a time, so this must return fast: refill
 # runs in the background, and the time is written with an atomic rename.
 on_primary() {
@@ -182,32 +175,6 @@ on_clipboard() {
         wl-copy --primary --clear && log "clear: clipboard holds no plain text, or a secret"
     fi
     rm -f "$c" "$p"
-}
-
-# A mouse gesture ended. If PRIMARY changed hands during it, copy the new
-# selection into CLIPBOARD at once, before later input (Ctrl+A, typing) can
-# change it. A selection from before the press is left alone, even if its text
-# changed since: GTK changes a selection silently.
-commit() {
-    local press=$1 me=$$ event=0
-    echo "$me" >"$state/commit"
-    # The watcher records a PRIMARY change a moment after it happens (foot only
-    # sets PRIMARY on release), so give it up to 0.5 s to show one after the press.
-    for _ in {1..10}; do
-        read -r event _ 2>/dev/null <"$state/primary"
-        (( event >= press )) && break
-        sleep 0.05
-    done
-    (( event >= press )) || return 0
-    text_type --primary >/dev/null || return 0
-    local f c
-    f=$(mktemp "$state/tmp.XXXXXX"); c=$(mktemp "$state/tmp.XXXXXX")
-    # The last check: a later click (the third of a triple-click) supersedes this one.
-    if timeout 2 wl-paste --primary --no-newline --type text >"$f" 2>/dev/null && [[ -s $f ]] &&
-        { ! read_text "$c" || ! cmp -s "$f" "$c"; } && [[ $(<"$state/commit") == "$me" ]]; then
-        wl-copy --type "$plain" <"$f" && log "commit $(stat -c %s "$f")B"
-    fi
-    rm -f "$f" "$c"
 }
 
 start() {
@@ -246,9 +213,8 @@ case ${1:-} in
 start) start ;;
 stop) stop ;;
 status) status ;;
-commit) commit "${2:?PRESS_MS}" ;;
 on-primary) on_primary ;;
 on-clipboard) on_clipboard ;;
 retry) retry ;;
-*) echo "usage: clipsync start|stop|status|commit PRESS_MS|retry" >&2; exit 2 ;;
+*) echo "usage: clipsync start|stop|status|retry" >&2; exit 2 ;;
 esac

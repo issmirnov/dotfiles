@@ -1,6 +1,6 @@
 #!/bin/sh
 # Middle-click paste from the system clipboard, for tmux's MouseDown2Pane in foot
-# (one shared clipboard, see ~/.dotfiles/hypr/scripts/clipsync).
+# (your last copy, see ~/.dotfiles/hypr/scripts/clipsync).
 #
 #   paste-clipboard CLIENT PANE
 #
