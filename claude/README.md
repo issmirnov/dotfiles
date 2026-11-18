@@ -39,6 +39,10 @@ The script saves the launch directory at a session's first render (`workspace.pr
 
 The script caches git results for 10 seconds. Temp files are per session, so concurrent sessions don't overwrite each other's state. Tests: `python3 -m unittest -v tests.test_statusline`.
 
+## Shell options for Claude sessions
+
+`zsh/config/zz-claude-code.zsh` turns off `nomatch` and `aliases` in shells that have `CLAUDECODE` set, which Claude Code sets for the shells it starts. An unmatched glob then reaches the command as typed. Commands run as written, not through the interactive aliases such as `rm -i`, `cp -i` and `mv -i`. In 21 days of Claude sessions, these two causes made about 180 of 1,779 Bash calls fail. `noclobber` stays on. Commands you type with `!` in a session also run without aliases.
+
 ## Workspace-trust quirk (gotcha)
 
 Claude Code does **not** persist `hasTrustDialogAccepted: true` for `$HOME` through the normal "Yes, I trust this folder" UI flow when launched with `--dangerously-skip-permissions`. The dialog re-prompts on every launch.
