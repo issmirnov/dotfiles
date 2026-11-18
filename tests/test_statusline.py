@@ -95,6 +95,20 @@ class TwoLines(unittest.TestCase):
             self.assertNotIn(segment, plain[0])
 
 
+class Effort(unittest.TestCase):
+    """Claude Code sends the session's level as effort.level. render() pins
+    CLAUDE_CODE_EFFORT_LEVEL=max, so these show the payload wins over it."""
+
+    def test_payload_level_beats_the_env_variable(self):
+        _, plain = render({**ws("/home/u/proj"), "effort": {"level": "xhigh"}})
+        self.assertIn("⚡xhigh", plain[1])
+        self.assertNotIn("max", plain[1])
+
+    def test_level_below_xhigh_is_flagged(self):
+        _, plain = render({**ws("/home/u/proj"), "effort": {"level": "high"}})
+        self.assertIn("⚠ high", plain[1])
+
+
 class LineOne(unittest.TestCase):
     WT = "/home/u/proj/.claude/worktrees/feat"
     WT_INFO = {"name": "feat", "path": WT, "original_cwd": "/home/u/proj"}
