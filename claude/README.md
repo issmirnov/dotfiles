@@ -14,11 +14,9 @@ Edit the files here — `~/.claude/settings.json` is just a pointer.
 The user-level Claude Code config. Notable knobs in use:
 
 - **Model** — `opus[1m]` (Opus with the 1M-token context window).
-- **Effort tuning** — _two_ knobs are intentionally set in tandem:
-  - `effortLevel: "xhigh"` — top-level effort hint.
-  - `env.CLAUDE_CODE_EFFORT_LEVEL: "max"` — runtime override via env var.
-
-  The env var is the modern lever; the top-level field is a fallback. Setting both means you don't need to remember which one wins after a Claude Code release. Allowed values escalate roughly `low → medium → high → xhigh → max`.
+- **`modelSettings`** saves `xhigh` as Opus 5.5's effort level, so every session starts there. Opus 5.5 and newer models ignore a top-level `effortLevel` in this file, which now covers only older models. Running `/effort xhigh` writes the same entry. `max` can't be saved, so type `/effort max` in a session that needs it.
+- **`env.CLAUDE_CODE_SUBAGENT_EFFORT: "high"`** runs every subagent that has no `effort` of its own at `high`, whatever level the session uses. An agent's `effort` frontmatter and a level Claude passes for one run still win. The variable is in the Claude Code client but not in its docs. If a release drops it, a subagent on the session's model follows the session, and other subagents use their model's default (`medium` on the 5.5 models).
+- Leave `CLAUDE_CODE_EFFORT_LEVEL` unset. It overrides every other level, subagents included, so no subagent could run lower than the session.
 - **`env.ENABLE_TOOL_SEARCH: "true"`** — defers some tool schemas behind `ToolSearch` to keep the system prompt smaller; tools are loaded on demand.
 - **`alwaysThinkingEnabled: true`** — extended thinking always on.
 - **`autoCompactWindow: 500000`** compacts the main conversation at 500K tokens instead of near the 1M limit. Every call re-reads the whole context from cache, so a long thread's cost grows with the square of its length. On a measured 1,000-call session, 300K was the cheapest point. 500K compacts half as often there (3 times instead of 6) for about 30% more, which suits long marathon sessions.

@@ -1,7 +1,7 @@
 {
   "env": {
     "ENABLE_TOOL_SEARCH": "true",
-    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "CLAUDE_CODE_SUBAGENT_EFFORT": "high",
     "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5[1m]",
     "EPISODIC_MEMORY_API_MODEL": "claude-haiku-5-5",
     "EPISODIC_MEMORY_API_MODEL_FALLBACK": "claude-sonnet-5-5"
@@ -323,6 +323,11 @@
   },
   "alwaysThinkingEnabled": true,
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-opus-5-5": {
+      "effortLevel": "xhigh"
+    }
+  },
   "autoCompactWindow": 500000,
   "promptCacheTtl": "1h",
   "tui": "fullscreen",

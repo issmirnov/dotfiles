@@ -172,7 +172,7 @@ fi
 
 # Effort level — prefer JSON input, fall back to env var, then persisted setting.
 # Highlight in BOLD_RED with ⚠ when not at the top tier (max/xhigh).
-EFFORT=$(echo "$input" | jq -r '.effort_level // .effortLevel // .model.effort_level // empty')
+EFFORT=$(echo "$input" | jq -r '.effort.level // .effort_level // .effortLevel // .model.effort_level // empty')
 [ -z "$EFFORT" ] && EFFORT="${CLAUDE_CODE_EFFORT_LEVEL:-}"
 if [ -z "$EFFORT" ] && [ -f "$HOME/.claude/settings.json" ]; then
     EFFORT=$(jq -r '.effortLevel // empty' "$HOME/.claude/settings.json" 2>/dev/null)
