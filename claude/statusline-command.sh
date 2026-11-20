@@ -17,7 +17,22 @@ REAL_DIR=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // ""')
 
 MODEL=$(echo "$input" | jq -r '.model.display_name // ""')
 SESSION_ID=$(echo "$input" | jq -r '.session_id // ""')
-SESSION_NAME=$(echo "$input" | jq -r '.session_name // ""')
+
+# The name other sessions use to message this one (ListAgents, SendMessage).
+# Each session picks its own and records it in the session registry,
+# <config dir>/sessions/<pid>.json. stdin has session_name only after /rename.
+SESSION_NAME=""
+SESSIONS_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions"
+if [ -n "$SESSION_ID" ] && [ -d "$SESSIONS_DIR" ]; then
+    SESSION_NAME=$(grep -lF -- "$SESSION_ID" "$SESSIONS_DIR"/*.json 2>/dev/null |
+        while IFS= read -r f; do
+            jq -r --arg sid "$SESSION_ID" 'select(.sessionId == $sid) | .name // empty' "$f" 2>/dev/null
+        done | head -1)
+fi
+[ -z "$SESSION_NAME" ] && SESSION_NAME=$(echo "$input" | jq -r '.session_name // ""')
+# Line 1 goes through printf %b: drop backslashes and control characters
+SESSION_NAME=${SESSION_NAME//[[:cntrl:]\\]/}
+
 OUTPUT_STYLE=$(echo "$input" | jq -r '.output_style.name // ""')
 COST_USD=$(echo "$input" | jq -r '.cost.total_cost_usd // empty')
 
