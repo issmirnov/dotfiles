@@ -259,7 +259,8 @@
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline-command.sh",
-    "padding": 0
+    "padding": 0,
+    "refreshInterval": 30
   },
   "enabledPlugins": {
     "gopls-lsp@claude-plugins-official": true,

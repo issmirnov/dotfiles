@@ -26,7 +26,7 @@ The user-level Claude Code config. Notable knobs in use:
 - **`hooks.Notification`** — fires `notify-send` (Linux desktop notifications) when Claude wants attention.
 - **`enabledPlugins`** — plugins from the marketplaces below: `superpowers`, `presentation-tools`, `skill-codex`, `nonstop`, `git-recon`, `visual-explainer`, `gopls-lsp`, `document-skills`.
 - **`extraKnownMarketplaces`** — registers GitHub-hosted plugin marketplaces beyond the defaults.
-- **`statusLine`** — points to `statusline-command.sh` (see below).
+- **`statusLine`** — points to `statusline-command.sh` (see below). `refreshInterval: 30` also re-runs it every 30 seconds, so idle sessions keep a current status line.
 
 ## `statusline-command.sh`
 
