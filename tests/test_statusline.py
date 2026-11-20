@@ -37,7 +37,17 @@ def cleanup(sid):
         f.unlink()
 
 
-def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost", sid=None):
+def registry(config_dir, *entries):
+    """Write session registry files as Claude Code keeps them,
+    <config dir>/sessions/<pid>.json. A str entry is written as is."""
+    sessions = pathlib.Path(config_dir, "sessions")
+    sessions.mkdir(parents=True)
+    for pid, entry in enumerate(entries, start=4242):
+        text = entry if isinstance(entry, str) else json.dumps({"pid": pid, **entry})
+        (sessions / f"{pid}.json").write_text(text)
+
+
+def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost", sid=None, extra_env=None):
     """Run the script on payload. Returns (raw_lines, plain_lines).
 
     With no sid, each call is a fresh session and its /tmp state is removed.
@@ -58,6 +68,8 @@ def render(payload, home="/home/u", columns=200, ssh=None, hostname="testhost", 
         env["COLUMNS"] = str(columns)
     if ssh is not None:
         env["SSH_CONNECTION"] = ssh
+    if extra_env:
+        env.update(extra_env)
     try:
         out = subprocess.run(
             [BASH, str(SCRIPT)], input=json.dumps(data), env=env,
@@ -169,6 +181,62 @@ class LineOne(unittest.TestCase):
     def test_ssh_host_is_bold_yellow(self):
         raw, _ = render(ws("/home/u/proj"), ssh="10.0.0.2 50000 10.0.0.1 22")
         self.assertTrue(raw[0].startswith("\x1b[1;33mtesthost\x1b[0m "), repr(raw[0]))
+
+
+class SessionName(unittest.TestCase):
+    """The bracket on line 1 holds the name other sessions use to message
+    this one. Claude Code sends session_name only after /rename. The name a
+    session picks for itself is only in its registry entry."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.home = tmp.name
+        self.sid = f"test-{uuid.uuid4().hex}"
+        self.addCleanup(cleanup, self.sid)
+
+    def line1(self, *entries, session_name=None, extra_env=None):
+        if entries:
+            registry(pathlib.Path(self.home, ".claude"), *entries)
+        payload = ws("/srv/proj")
+        if session_name is not None:
+            payload["session_name"] = session_name
+        raw, plain = render(payload, home=self.home, sid=self.sid, extra_env=extra_env)
+        return raw[0], plain[0]
+
+    def test_registry_name_is_shown(self):
+        _, line = self.line1({"sessionId": self.sid, "name": "proj-3f"})
+        self.assertEqual(line, "testhost /srv/proj [proj-3f]")
+
+    def test_registry_name_beats_session_name(self):
+        # /rename writes both, so they match unless the registry write failed.
+        # Other sessions message the registry name.
+        _, line = self.line1({"sessionId": self.sid, "name": "proj-3f"}, session_name="Fix it")
+        self.assertEqual(line, "testhost /srv/proj [proj-3f]")
+
+    def test_entry_without_a_name_falls_back_to_session_name(self):
+        _, line = self.line1({"sessionId": self.sid, "name": None}, session_name="Fix it")
+        self.assertEqual(line, "testhost /srv/proj [Fix it]")
+
+    def test_another_sessions_entry_does_not_match(self):
+        _, line = self.line1({"sessionId": "someone-else", "hostSessionId": self.sid, "name": "not-me"})
+        self.assertEqual(line, "testhost /srv/proj")
+
+    def test_half_written_entry_falls_back_to_session_name(self):
+        half = '{"pid": 4242, "sessionId": "%s", "name": "pro' % self.sid
+        _, line = self.line1(half, session_name="Fix it")
+        self.assertEqual(line, "testhost /srv/proj [Fix it]")
+
+    def test_backslashes_and_control_characters_are_dropped(self):
+        raw, line = self.line1({"sessionId": self.sid, "name": "a\x1b[31mb\\nc"})
+        self.assertEqual(line, "testhost /srv/proj [a[31mbnc]")
+        self.assertNotIn("\x1b[31mb", raw)
+
+    def test_claude_config_dir_moves_the_registry(self):
+        with tempfile.TemporaryDirectory() as cfg:
+            registry(cfg, {"sessionId": self.sid, "name": "proj-3f"})
+            _, line = self.line1(extra_env={"CLAUDE_CONFIG_DIR": cfg})
+        self.assertEqual(line, "testhost /srv/proj [proj-3f]")
 
 
 class LaunchDirSticks(unittest.TestCase):

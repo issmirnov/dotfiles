@@ -37,6 +37,8 @@ Custom status line renderer. Claude Code runs it on each update and shows each p
 
 The script saves the launch directory at a session's first render (`workspace.project_dir`, or `worktree.original_cwd` in a worktree session) to a per-session file in `/tmp`. The payload loses it later: EnterWorktree points `project_dir` at the worktree, and `worktree.original_cwd` is wherever Claude was when it entered. If line 1 is wider than the window (`$COLUMNS`), the launch path shortens fish-style, for example `~/P/1/a/shotcraft-videos`.
 
+The bracket at the end of line 1 holds the name other sessions use to message this one (ListAgents, SendMessage). Each session picks its own name and saves it in `~/.claude/sessions/<pid>.json`, or under `$CLAUDE_CONFIG_DIR` if set. `/rename` updates that entry too. The payload has `session_name` only after `/rename`, so the script reads the entry whose `sessionId` matches and falls back to `session_name`. It drops backslashes and control characters from the name, because line 1 goes through `printf %b`.
+
 The script caches git results for 10 seconds. Temp files are per session, so concurrent sessions don't overwrite each other's state. Tests: `python3 -m unittest -v tests.test_statusline`.
 
 ## Shell options for Claude sessions
