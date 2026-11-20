@@ -4,6 +4,14 @@
 # git hook to run a command after `git pull` or `git checkout` if a specified file was changed
 # Run `chmod +x post-checkout` to make it executable then put it into `.git/hooks/`.
 
+# post-checkout gets a third argument: 1 for a branch checkout, 0 for a file
+# checkout such as `git checkout -- <file>`. A file checkout leaves HEAD where
+# it was, so HEAD@{1}..HEAD below would replay the last HEAD move's commands.
+# post-merge and post-commit get no third argument.
+if [[ ${3:-} == 0 ]]; then
+    exit 0
+fi
+
 # Check HEAD to see if we are in a rebase, and avoid running the hook if so.
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [[ $BRANCH == "HEAD" ]];then

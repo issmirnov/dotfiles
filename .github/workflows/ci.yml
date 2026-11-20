@@ -84,3 +84,14 @@ jobs:
         run: bash tmux/tests/resurrect-claude-ids.test.sh
       - name: Run resurrect-save tests
         run: bash tmux/tests/resurrect-save.test.sh
+
+  # git/hooks/post-checkout, which post-merge and post-commit link to: a pull or
+  # a branch switch that changes a watched file runs its command, and a file
+  # checkout (`git checkout -- <file>`) runs nothing. Runs real git in a scratch
+  # repo with a fake hyprctl.
+  test-git-hooks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run git hook tests
+        run: python3 -m unittest -v tests.test_git_hooks
