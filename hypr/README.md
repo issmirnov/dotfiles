@@ -201,6 +201,25 @@ Then `update-desktop-database ~/.local/share/applications`. Verify with
 - **Keep the `1.4` here identical to `hyprland.lua`'s `fileManager`** or the two launch
   paths diverge again.
 
+## ZapZap starts with a DevTools port
+
+ZapZap (WhatsApp, Qt WebEngine) starts with
+`QTWEBENGINE_REMOTE_DEBUGGING=127.0.0.1:9333`, so the Orca bot can read WhatsApp Web
+through the page. Two launch paths set it, and they must match:
+
+- `scripts/hypr-switch`: the `zapzap` entry in `apps=(…)` (SUPER+Space).
+- `../xdg/applications/com.rtosta.zapzap.desktop`: linked into
+  `~/.local/share/applications` by `ubuntu.conf.yaml`. It has the system entry's
+  desktop-file ID, so it shadows it for fuzzel's "All apps…" list and for
+  `whatsapp:` links opened through xdg-open.
+
+Bind to `127.0.0.1` only. The port gives full control of the logged-in WhatsApp
+session. ZapZap is single-instance, so a running copy keeps whatever environment it
+started with. Check it with
+`tr '\0' '\n' </proc/$(pgrep -x zapzap)/environ | grep QTWEBENGINE_REMOTE_DEBUGGING`.
+ZapZap's own "start with system" setting writes `~/.config/autostart/com.rtosta.zapzap.desktop`
+without the variable. Nothing on this box runs XDG autostart entries, so leave it off.
+
 ## Scripts
 
 ### `hypr-switch` — SUPER+Space switcher / launcher  ⭐

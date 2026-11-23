@@ -20,6 +20,7 @@
     ~/.config/hypr: hypr
     ~/.config/terminator/config: terminator/config
     ~/.config/user-dirs.conf: xdg/user-dirs.conf
+    ~/.local/share/applications/com.rtosta.zapzap.desktop: xdg/applications/com.rtosta.zapzap.desktop # ZapZap with WhatsApp Web's DevTools port on 127.0.0.1:9333
     ~/.config/waybar: waybar
     ~/.fonts/Font-Awesome-7-Brands-Regular-400.otf: fonts/Font-Awesome-7-Brands-Regular-400.otf
     ~/.fonts/Font-Awesome-7-Free-Regular-400.otf: fonts/Font-Awesome-7-Free-Regular-400.otf
