@@ -44,7 +44,11 @@ apps=(
   $'bolt\tBolt\tbolt'
   $'runelite\tOSRS\trunelite'
   $'obsidian\tObsidian\tobsidian'
-  $'zapzap\tWhatsApp (ZapZap)\tzapzap'
+  # ZapZap opens WhatsApp Web's DevTools port on loopback only, so the Orca bot
+  # can read the page. Keep this identical to the Exec line in
+  # xdg/applications/com.rtosta.zapzap.desktop (the fuzzel "All apps" and
+  # whatsapp: link path).
+  $'env QTWEBENGINE_REMOTE_DEBUGGING=127.0.0.1:9333 zapzap\tWhatsApp (ZapZap)\tzapzap'
 )
 
 # ── build parallel actions[] / labels[] ─────────────────────────────────────

@@ -1,0 +1,21 @@
+[Desktop Entry]
+# User override of /usr/share/applications/com.rtosta.zapzap.desktop, linked
+# into ~/.local/share/applications by ubuntu.conf.yaml. Same desktop-file ID, so
+# fuzzel's app list and xdg-open (whatsapp: links) use this copy. Only Exec
+# differs: it opens WhatsApp Web's DevTools port on loopback for the Orca bot.
+# Keep it identical to the zapzap entry in hypr/scripts/hypr-switch.
+Version=1.0
+Name=ZapZap
+Comment[pt_BR]=WhatsApp Desktop para Linux
+Comment=WhatsApp Desktop for Linux
+Exec=env QTWEBENGINE_REMOTE_DEBUGGING=127.0.0.1:9333 zapzap %u
+Icon=com.rtosta.zapzap
+Type=Application
+Categories=Chat;Network;InstantMessaging;Qt;
+Keywords=WhatsApp;Chat;ZapZap;
+StartupWMClass=zapzap
+MimeType=x-scheme-handler/whatsapp
+Terminal=false
+SingleMainWindow=true
+X-GNOME-UsesNotifications=true
+X-GNOME-SingleWindow=true

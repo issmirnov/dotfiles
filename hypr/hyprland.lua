@@ -403,8 +403,10 @@ hl.window_rule({ name = "signal-workspace", match = { class = "^(signal)$" }, wo
 -- stale desktop value, so it never matched and Obsidian leaked onto the active ws.
 -- Match either case ([oO]) + trailing segments so both forms route correctly.
 hl.window_rule({ name = "obsidian-workspace", match = { class = "^(md\\.[oO]bsidian.*)$" }, workspace = "name:obsidian" })
--- ZapZap: native WhatsApp desktop client (Qt); stable WM class "ZapZap".
-hl.window_rule({ name = "whatsapp-workspace", match = { class = "^(ZapZap)$" }, workspace = "name:whatsapp" })
+-- ZapZap: native WhatsApp desktop client (Qt). ZapZap 7.5 reports its class as the
+-- desktop-file ID com.rtosta.zapzap, so the old "^(ZapZap)$" rule no longer matched and
+-- ZapZap opened on the active workspace. Match the current class and the old one.
+hl.window_rule({ name = "whatsapp-workspace", match = { class = "^(com\\.rtosta\\.zapzap|ZapZap)$" }, workspace = "name:whatsapp" })
 
 -- Claude scratchpad terminal (special:scratch, SUPER+C). One rule does it all:
 --   • workspace  -> routes the window onto the special workspace (so hypr-scratch
