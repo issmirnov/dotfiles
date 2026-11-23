@@ -49,6 +49,7 @@ apps=(
   # xdg/applications/com.rtosta.zapzap.desktop (the fuzzel "All apps" and
   # whatsapp: link path).
   $'env QTWEBENGINE_REMOTE_DEBUGGING=127.0.0.1:9333 zapzap\tWhatsApp (ZapZap)\tzapzap'
+  $'stably-orca\tOrca\torca'
 )
 
 # ── build parallel actions[] / labels[] ─────────────────────────────────────
