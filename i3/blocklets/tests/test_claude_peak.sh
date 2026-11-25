@@ -40,6 +40,11 @@ assert_eq "monday peak"     "⚡ peak 6h0m" "$(nth 1 "$(peak_at '2026-11-02 13:0
 t=$(date -u -d '2026-10-29 17:11:00' +%s)
 assert_eq "host TZ does not leak" "$(CLAUDE_PEAK_NOW=$t bash "$S")" "$(TZ=Asia/Tokyo CLAUDE_PEAK_NOW=$t bash "$S")"
 
+# A bad seam value hides the chip and still exits 0. 13:00 UTC is Monday 05:00 PST.
+t=$(date -u -d '2026-11-30 13:00:00' +%s)
+assert_eq "fractional now hides the chip" "" "$(CLAUDE_PEAK_NOW=$t.5 bash "$S" 2>/dev/null)"
+CLAUDE_PEAK_NOW=$t.5 bash "$S" >/dev/null 2>&1; assert_eq "fractional now exits 0" "0" "$?"
+
 # Without the seam it reads the clock and still exits 0.
 bash "$S" >/dev/null; assert_eq "live run exits 0" "0" "$?"
 finish

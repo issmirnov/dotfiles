@@ -82,6 +82,11 @@ class Contract(unittest.TestCase):
         code, out = run("not-a-time")
         self.assertEqual((code, out), (2, ""))
 
+    def test_fractional_now_is_an_error(self):
+        # date(1) takes @<epoch>.5, but bash's integer tests do not.
+        code, out = run(f"{at(2026, 11, 30, 5, 0, 0)}.5")
+        self.assertEqual((code, out), (2, ""))
+
     def test_unknown_argument_is_an_error(self):
         code, out = run(at(2026, 11, 30, 6, 0, 0), args=("--nope",))
         self.assertEqual((code, out), (2, ""))

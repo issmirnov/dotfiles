@@ -30,6 +30,7 @@ esac
 pt() { TZ=$PEAK_TZ date "$@"; }   # date(1) in Pacific time
 
 now=${CLAUDE_PEAK_NOW:-$(date +%s)}
+[[ $now =~ ^[0-9]+$ ]] || { echo "claude-peak: not a whole epoch: $now" >&2; exit 2; }
 today=$(pt -d "@$now" +%F) || exit 2
 noon=$(pt -d "$today 12:00" +%s) || exit 2
 
