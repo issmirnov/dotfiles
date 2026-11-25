@@ -85,6 +85,19 @@ jobs:
       - name: Run resurrect-save tests
         run: bash tmux/tests/resurrect-save.test.sh
 
+  # bin/claude-peak and the bar chip that runs it (i3/blocklets/claude_peak). The
+  # tests pin the clock with CLAUDE_PEAK_NOW. They check exit codes, printed times
+  # and chip text at the window's edges and across both DST changes. They need
+  # only bash, GNU date and tzdata, which the runner image has.
+  test-claude-peak:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run claude-peak command tests
+        run: python3 -m unittest -v tests.test_claude_peak
+      - name: Run bar chip tests
+        run: bash i3/blocklets/tests/test_claude_peak.sh
+
   # git/hooks/post-checkout, which post-merge and post-commit link to: a pull or
   # a branch switch that changes a watched file runs its command, and a file
   # checkout (`git checkout -- <file>`) runs nothing. Runs real git in a scratch

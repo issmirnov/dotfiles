@@ -33,6 +33,7 @@
     ~/bin/dotbin: bin # symlink whole bin folder, recursive fpath should pick up all files
     ~/.local/bin/xeneon-lock: bin/xeneon-lock # i3 xss-lock locker wrapper (pins XSECURELOCK_FONT so the auth prompt renders)
     ~/.local/bin/hexane-nightlight: bin/hexane-nightlight # sun-tracked night backlight dim (ddcutil)
+    ~/.local/bin/claude-peak: bin/claude-peak # exits 0 in Claude peak hours and prints when that changes; also drives the bar chip
     # self-contained sesh/ — link its entry points into bin/ (already on PATH via ~/bin/dotbin)
     ~/.dotfiles/bin/sesh: sesh/sesh
     ~/.dotfiles/bin/sesh-save: sesh/sesh-save
