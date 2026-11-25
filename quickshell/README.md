@@ -31,11 +31,11 @@ See `../hypr/hyprland.lua` for the compositor side.
 | File | Role |
 |------|------|
 | `shell.qml` | Entry. One `Bar` per monitor; a 5 s timer calls `Hyprland.refreshToplevels()` (keeps window classes / icons fresh — `lastIpcObject.class` isn't reactive); a 1 min timer runs `lib/cal-notify`. |
-| `Bar.qml` | One floating, rounded `PanelWindow` per monitor, two decks tall. Pure layout: `Workspaces` wraps across the left of both decks. Top deck: `Clock` in the center, `Brightness` + `Audio` + `Stats` + `IdleToggle` + `Dnd` on the right. Bottom deck: worldclock + calendar in the center, Claude peak hours + AI usage + `SysTray` on the right. |
+| `Bar.qml` | One floating, rounded `PanelWindow` per monitor, two decks tall. Pure layout: `Workspaces` wraps across the left of both decks. Top deck: `Clock` in the center, `Brightness` + `Audio` + `Stats` + `IdleToggle` + `Dnd` on the right. Bottom deck: worldclock + calendar in the center, AI usage + `SysTray` on the right. |
 | `Workspaces.qml` | **Per-monitor workspace pills** — sort, click, and app icons (the focus of this doc). |
 | `Theme.qml` | Singleton palette + metrics; `variant` flips `"pastel"`/`"vivid"`. |
 | `Clock.qml` | Center date/time (`SystemClock`). |
-| `Blocklet.qml` | Generic i3blocks-script runner; reuses `../i3/blocklets/*` verbatim (worldclock, claude_peak). |
+| `Blocklet.qml` | Generic i3blocks-script runner; reuses `../i3/blocklets/*` verbatim (worldclock). |
 | `ClaudePool.qml` | The better-ccflare Claude fleet: one `UsageChip` per Anthropic account from `ai_usage __pool`, in ccflare priority order; the account ccflare routes to next is filled, blocked ones dim. |
 | `UsageChip.qml` | A Claude/Codex usage chip with a 5h + weekly meter popup; runs its own `ai_usage` instance, or is fed a row by `ClaudePool`. |
 | `Audio.qml` | PipeWire volume; left-click opens a draggable slider `PopupWindow`. |

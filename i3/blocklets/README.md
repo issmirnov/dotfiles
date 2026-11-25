@@ -147,8 +147,7 @@ pins "now" so the summer/winter tests assert exact strings across a DST boundary
 
 Claude's weekday peak hours: Monday to Friday, 05:00–11:00 `America/Los_Angeles`, the
 window that [claude-peak-time.pages.dev](https://claude-peak-time.pages.dev/) shows. The
-Quickshell bar shows it as a chip left of the Claude usage chips. `i3blocks.conf` has no
-block for it.
+Quickshell bar no longer shows it, and `i3blocks.conf` has no block for it.
 
 | When (Pacific, Mon–Fri) | Renders | Color |
 |-------------------------|---------|-------|
