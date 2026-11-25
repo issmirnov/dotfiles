@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# claude-peak: is it Claude peak hours now, and when does that change?
+#   peak      exits 0, prints "peak until 2026-11-30T11:00:00-08:00"
+#   off-peak  exits 1, prints "off-peak, next peak 2026-12-01T05:00:00-08:00"
+#   error     exits 2, like grep -q
+# So an Orca precheck of `! claude-peak` skips scheduled runs during peak. The time is
+# ISO 8601 with its UTC offset, which `orca automations create --by` accepts as is.
+#
+# `claude-peak --i3blocks` prints the bar chip instead (i3/blocklets/claude_peak):
+#   peak                 -> "⚡ peak 49m"   amber, counts down to the end
+#   up to 1h before peak -> "peak in 45m"  no color line (the bar's dim default)
+#   any other time       -> empty (hides the block)
+# Pure date/TZ: no network, no secrets. Test seam: CLAUDE_PEAK_NOW=<epoch> pins now.
+set -u
+
+# The peak window. This is its only definition; the bar chip reads it through this script.
+PEAK_TZ=America/Los_Angeles
+PEAK_DAYS=12345        # ISO weekdays: 1=Mon .. 7=Sun
+PEAK_START=05:00       # Pacific, inclusive
+PEAK_END=11:00         # Pacific, exclusive
+
+WARN_S=3600            # chip: heads-up this long before the start
+PEAK_COLOR='#f0c489'   # chip: pastel amber (Theme.usageWarn)
+
+case ${1:-} in
+  '' | --i3blocks) ;;
+  *) echo "usage: claude-peak [--i3blocks]" >&2; exit 2 ;;
+esac
+
+pt() { TZ=$PEAK_TZ date "$@"; }   # date(1) in Pacific time
+
+now=${CLAUDE_PEAK_NOW:-$(date +%s)}
+today=$(pt -d "@$now" +%F) || exit 2
+noon=$(pt -d "$today 12:00" +%s) || exit 2
+
+# The current or next window: the first peak day from today on whose end is still ahead.
+# Noon plus whole days lands on the right date across a DST change.
+for n in 0 1 2 3 4 5 6 7; do
+  read -r dow day < <(pt -d "@$(( noon + n * 86400 ))" '+%u %F')
+  [[ $PEAK_DAYS == *"$dow"* ]] || continue
+  start=$(pt -d "$day $PEAK_START" +%s); end=$(pt -d "$day $PEAK_END" +%s)
+  [ "$now" -lt "$end" ] && break
+done
+
+if [ "${1:-}" = --i3blocks ]; then
+  fmt() {   # seconds -> 1h49m / 49m / <1m (same as quickshell/lib/cal-next)
+    local s=$1
+    if   [ "$s" -ge 3600 ]; then printf '%dh%dm' $(( s / 3600 )) $(( (s % 3600) / 60 ))
+    elif [ "$s" -lt 60 ];   then printf '<1m'
+    else printf '%dm' $(( s / 60 )); fi
+  }
+  if [ "$now" -ge "$start" ]; then
+    left=$(fmt $(( end - now )))
+    printf '⚡ peak %s\npeak %s\n%s\n' "$left" "$left" "$PEAK_COLOR"
+  elif [ $(( start - now )) -le "$WARN_S" ]; then
+    left=$(fmt $(( start - now )))
+    printf 'peak in %s\npeak in %s\n' "$left" "$left"
+  else
+    printf '\n\n'   # off-peak: empty full_text hides the block
+  fi
+  exit 0
+fi
+
+if [ "$now" -ge "$start" ]; then
+  echo "peak until $(pt -d "@$end" -Iseconds)"
+  exit 0
+fi
+echo "off-peak, next peak $(pt -d "@$start" -Iseconds)"
+exit 1

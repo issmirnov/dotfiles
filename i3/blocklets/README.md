@@ -161,8 +161,23 @@ ccflare's `peakHours.active`: ccflare hard-codes 13:00–19:00 UTC, one hour lat
 Since 2026-05-06 the peak-hour cut no longer applies to Claude Code on Pro and Max
 ([Anthropic](https://www.anthropic.com/news/higher-limits-spacex)).
 
-Pure `date`/`TZ`: no network, no secrets, always exits 0. The `CLAUDE_PEAK_NOW=<epoch>` seam
-pins "now" so the tests cover both window edges in PDT and PST.
+`bin/claude-peak` holds the only definition of the window. This blocklet runs
+`claude-peak --i3blocks` and always exits 0. Without the flag, `claude-peak` answers agents and Orca automations, and
+`default.conf.yaml` links it as `~/.local/bin/claude-peak`:
+
+```sh
+$ claude-peak    # during peak: exit 0
+peak until 2026-11-30T11:00:00-08:00
+$ claude-peak    # off peak: exit 1 (2 on an error, like grep -q)
+off-peak, next peak 2026-12-01T05:00:00-08:00
+```
+
+An Orca precheck of `! claude-peak` skips scheduled runs during peak. The printed time works
+as `orca automations create --by <time>`.
+
+Pure `date`/`TZ`: no network, no secrets. The `CLAUDE_PEAK_NOW=<epoch>` seam pins "now" so
+the tests cover both window edges in PDT and PST: `tests/test_claude_peak.sh` for the chip,
+`../../tests/test_claude_peak.py` for the command.
 
 ## Tests
 
