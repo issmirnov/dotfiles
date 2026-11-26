@@ -24,6 +24,8 @@ The user-level Claude Code config. Notable knobs in use:
 - **`skipDangerousModePermissionPrompt: true`** — pairs with the `cc = claude --dangerously-skip-permissions` shell alias so the bypass-permissions warning doesn't prompt every launch.
 - **`verbose: true`** — fuller transcript output.
 - **`hooks.Notification`** — fires `notify-send` (Linux desktop notifications) when Claude wants attention.
+- **The first `hooks.SessionStart` entry** raises the Claude process's OOM score (`/proc/<pid>/oom_score_adj`) to 700 when a session starts. Claude runs hooks with `/bin/sh -c`, so `$PPID` is the claude process. Tool processes it starts later inherit 700. Orca's server keeps its lower score, so when memory runs out the kernel kills agents before Orca. The hook only raises the score, because lowering it needs root. It reads its stdin, prints nothing and exits 0. It does nothing where `/proc/$PPID/oom_score_adj` is missing, such as on macOS. MCP servers that start before the hook keep their old score. Codex runs the same command from `~/.codex/hooks.json` (see `codex/README.md`). Tests: `python3 -m unittest -v tests.test_claude_oom_hook`.
+- The entries that call `~/.orca/agent-hooks/claude-hook.sh` belong to Orca, which rewrites them in place. Leave them as they are.
 - **`enabledPlugins`** — plugins from the marketplaces below: `superpowers`, `presentation-tools`, `skill-codex`, `nonstop`, `git-recon`, `visual-explainer`, `gopls-lsp`, `document-skills`.
 - **`extraKnownMarketplaces`** — registers GitHub-hosted plugin marketplaces beyond the defaults.
 - **`statusLine`** — points to `statusline-command.sh` (see below). `refreshInterval: 30` also re-runs it every 30 seconds, so idle sessions keep a current status line.

@@ -70,6 +70,16 @@ jobs:
       - name: Test Codex config preservation and installation
         run: python3 -m unittest -v tests.test_codex_statusline
 
+  # The SessionStart hook in claude/settings.json that raises the agent's OOM
+  # score to 700: it raises a lower score, never lowers a higher one, reads all
+  # of stdin and prints nothing.
+  test-claude-oom-hook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run OOM hook tests
+        run: python3 -m unittest -v tests.test_claude_oom_hook
+
   # tmux-resurrect boot restore: the post-save hook that records each Claude pane's
   # session ID, the restore entries in tmux.conf (run through resurrect's own
   # matching code), the unit's enable script, and resurrect-save (the minute timer's

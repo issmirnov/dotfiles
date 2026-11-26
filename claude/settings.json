@@ -74,6 +74,15 @@
     ],
     "SessionStart": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=/proc/$PPID/oom_score_adj; if [ -w \"$f\" ] && read -r s < \"$f\" && [ \"$s\" -lt 700 ]; then echo 700 > \"$f\"; fi 2>/dev/null; cat > /dev/null 2>&1; exit 0",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "hooks": []
       },
       {
