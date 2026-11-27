@@ -50,7 +50,7 @@ mkstat(){ mkdir -p "$TMP/proc/$1"
 
 # clean_env : unset everything the Linux tests export, so the next test starts clean.
 clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOTIFY SESH_STAGGER SESH_VERIFY_WAIT \
-                   SESH_MON_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPR_REQUIRE_SIG HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
+                   SESH_MON_WAIT SESH_HYPR_WAIT SESH_CAP HYPR_SIMULATE HYPR_LAND_WS HYPR_LAND_MON HYPR_REQUIRE_SIG HYPRLAND_INSTANCE_SIGNATURE 2>/dev/null
              export SESH_HYPRCTL=false; }
 
 # mkhypr : a fake hyprctl at $TMP/fake/hyprctl. It serves $TMP/hypr/<query>.json for
@@ -63,6 +63,9 @@ clean_env(){ unset SESH_PROC SESH_UNAME SESH_DRYRUN SESH_SKIP_BOOTGUARD SESH_NOT
 # lands on $HYPR_LAND_WS, or else on the rule's workspace.
 # A workspace it creates sits on $HYPR_LAND_MON (default DP-2).
 # HYPR_REQUIRE_SIG=1 makes the window queries fail unless HYPRLAND_INSTANCE_SIGNATURE=SIG1.
+# A number N in $TMP/hypr/instances.late makes the next N `instances` queries list nothing,
+# as at login before Hyprland registers its instance.
+# An executable $TMP/hypr/on-<query> runs once, just before that query's reply.
 mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
   printf '[{"instance":"SIG1","time":1,"pid":100,"wl_socket":"wayland-1"}]\n' > "$TMP/hypr/instances.json"
   printf '[{"id":0,"name":"DP-1","x":0},{"id":2,"name":"DP-2","x":3840}]\n' > "$TMP/hypr/monitors.json"
@@ -73,11 +76,15 @@ mkhypr(){ mkdir -p "$TMP/hypr" "$TMP/proc"
 #!/bin/bash
 H="$(cd "$(dirname "$0")/.." && pwd)"
 case "$1" in
-  instances) cat "$H/hypr/instances.json" ;;
+  instances)
+    late="$(cat "$H/hypr/instances.late" 2>/dev/null)"
+    if [ "${late:-0}" -gt 0 ] 2>/dev/null; then echo $((late - 1)) > "$H/hypr/instances.late"; echo '[]'; exit 0; fi
+    cat "$H/hypr/instances.json" ;;
   clients|monitors|workspaces|activeworkspace)
     # HYPR_REQUIRE_SIG=1: answer only a caller aimed at the live instance (SIG1), as
     # real hyprctl fails (exit 4) when the signature names a dead instance.
     if [ -n "${HYPR_REQUIRE_SIG:-}" ] && [ "${HYPRLAND_INSTANCE_SIGNATURE:-}" != "SIG1" ]; then exit 4; fi
+    if [ -x "$H/hypr/on-$1" ]; then "$H/hypr/on-$1"; rm -f "$H/hypr/on-$1"; fi
     cat "$H/hypr/$1.json" ;;
   eval)
     printf '%s\n' "$2" >> "$H/hypr/eval.log"
@@ -99,7 +106,7 @@ EOF
   chmod +x "$TMP/fake/hyprctl"
   export SESH_HYPRCTL="$TMP/fake/hyprctl" SESH_PROC="$TMP/proc" SESH_UNAME=Linux; }
 
-# mkcapture : mkhypr plus eight windows and the processes under them.
+# mkcapture : mkhypr plus thirteen windows and the processes under them.
 #   300 foot  argo/DP-1     <- 301 zsh <- 302 sesh-local <- 303 claude
 #   310 foot  3/DP-2        <- 311 zsh <- 312 claude
 #   320 scratchpad          <- 321 zsh <- 322 claude
@@ -109,6 +116,13 @@ EOF
 #   360 systemd             <- 361 claude              (no window)
 #   370 foot  a\b/DP-1       <- 371 claude              (a backslash in the workspace name)
 #   380 foot  special:sesh-stage <- 381 claude          (a window a failed move left on the stage)
+# and the shapes seen live on 2026-11-27, plus other apps and terminals:
+#   390 orca-ide 9/DP-1 (class orca) <- 391 orca-agents <- 392 zsh <- 393 claude      (an Orca terminal)
+#                                    <- 394 orca-provider-e <- 395 zsh <- 396 claude  (an Orca agent session)
+#   397 foot  9/DP-1, started from 392's shell <- 398 zsh <- 399 claude    (a foot window opened from Orca)
+#   400 code  8/DP-2 (an editor)    <- 401 zsh <- 402 claude                (an editor's terminal)
+#   410 foot  4/DP-1                <- 411 zsh <- 412 codex <- 413 zsh <- 414 claude  (another agent's PTY)
+#   420 alacritty 5/DP-2            <- 421 zsh <- 422 claude                (another terminal emulator)
 mkcapture(){ mkhypr
   cat > "$TMP/hypr/clients.json" <<'EOF'
 [{"address":"0xa1","pid":300,"class":"foot","workspace":{"id":-5,"name":"argo"},"monitor":0,"at":[10,40]},
@@ -118,7 +132,12 @@ mkcapture(){ mkhypr
  {"address":"0xa5","pid":330,"class":"foot","workspace":{"id":-6,"name":"erp"},"monitor":0,"at":[1900,0]},
  {"address":"0xa6","pid":340,"class":"foot","workspace":{"id":-99,"name":"special:stash"},"monitor":2,"at":[0,0]},
  {"address":"0xa7","pid":370,"class":"foot","workspace":{"id":-7,"name":"a\\b"},"monitor":0,"at":[0,0]},
- {"address":"0xa8","pid":380,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]}]
+ {"address":"0xa8","pid":380,"class":"foot","workspace":{"id":-97,"name":"special:sesh-stage"},"monitor":2,"at":[0,0]},
+ {"address":"0xb0","pid":390,"class":"orca","workspace":{"id":9,"name":"9"},"monitor":0,"at":[0,0]},
+ {"address":"0xb7","pid":397,"class":"foot","workspace":{"id":9,"name":"9"},"monitor":0,"at":[900,0]},
+ {"address":"0xc0","pid":400,"class":"code","workspace":{"id":8,"name":"8"},"monitor":2,"at":[3840,0]},
+ {"address":"0xc1","pid":410,"class":"foot","workspace":{"id":4,"name":"4"},"monitor":0,"at":[0,0]},
+ {"address":"0xc2","pid":420,"class":"Alacritty","workspace":{"id":5,"name":"5"},"monitor":2,"at":[3840,40]}]
 EOF
   mkstat 300 foot 1 1;      mkstat 301 zsh 300 2; mkstat 302 sesh-local 301 3; mkstat 303 claude 302 4
   mkstat 310 foot 1 1;      mkstat 311 zsh 310 2; mkstat 312 claude 311 5
@@ -129,6 +148,13 @@ EOF
   mkstat 360 systemd 1 1;   mkstat 361 claude 360 10
   mkstat 370 foot 1 1;      mkstat 371 claude 370 11
   mkstat 380 foot 1 1;      mkstat 381 claude 380 12
+  mkstat 390 orca-ide 1 1
+  mkstat 391 orca-agents 390 2;     mkstat 392 zsh 391 3; mkstat 393 claude 392 13
+  mkstat 394 orca-provider-e 390 2; mkstat 395 zsh 394 3; mkstat 396 claude 395 14
+  mkstat 397 foot 392 4;    mkstat 398 zsh 397 5; mkstat 399 claude 398 15
+  mkstat 400 code 1 1;      mkstat 401 zsh 400 2; mkstat 402 claude 401 16
+  mkstat 410 foot 1 1;      mkstat 411 zsh 410 2; mkstat 412 codex 411 3; mkstat 413 zsh 412 4; mkstat 414 claude 413 17
+  mkstat 420 alacritty 1 1; mkstat 421 zsh 420 2; mkstat 422 claude 421 18
 }
 
 # mkreg <pid> <id> <cwd> <procStart> [kind] [updatedAt-ms] : a fake registry entry.
@@ -144,7 +170,7 @@ snap(){ cat "$TMP/.local/state/sesh/snapshot.json" 2>/dev/null; }
 # mkrestore : mkhypr, a fake notify-send, transcripts and cwds for three sessions, and a
 # snapshot that an OLD Hyprland instance wrote (ids 1 and 3 on argo/DP-1, id 2 on 3/DP-2).
 mkrestore(){ mkhypr
-  export HYPRLAND_INSTANCE_SIGNATURE=SIG1 SESH_STAGGER=0 SESH_VERIFY_WAIT=0 SESH_NOTIFY="$TMP/fake/notify"
+  export HYPRLAND_INSTANCE_SIGNATURE=SIG1 SESH_STAGGER=0 SESH_VERIFY_WAIT=0 SESH_HYPR_WAIT=1 SESH_NOTIFY="$TMP/fake/notify"
   printf '#!/bin/bash\necho "$@" >> "%s/fake/notify.log"\n' "$TMP" > "$TMP/fake/notify"; chmod +x "$TMP/fake/notify"
   mkdir -p "$TMP/w/argo" "$TMP/w/three" "$TMP/w/argo3"
   # Each transcript starts in its session's cwd, where sesh-local --sid resumes it.
@@ -516,6 +542,16 @@ t_capture_cases(){ newtmp; export HOME="$TMP"; mkcapture
   assert_has "a backslash in a workspace name survives"        '"371":{"ws":"a\\b"' "$out"
   clean_env
 }
+t_capture_terminal_only(){ newtmp; export HOME="$TMP"; mkcapture
+  out="$(run_fn _capture_windows 393 396 399 402 414 422)"
+  assert_has "an Orca terminal session is skipped"             '"393":{"skip":"app"}' "$out"
+  assert_has "an Orca agent session is skipped"                '"396":{"skip":"app"}' "$out"
+  assert_has "a foot window opened from an Orca shell is kept" '"399":{"ws":"9","monitor":"DP-1","at":[900,0],"address":"0xb7"}' "$out"
+  assert_has "an editor's terminal is skipped"                 '"402":{"skip":"app"}' "$out"
+  assert_has "claude under another agent's PTY is skipped"     '"414":{"skip":"nested"}' "$out"
+  assert_has "another terminal emulator is kept"               '"422":{"ws":"5","monitor":"DP-2"' "$out"
+  clean_env
+}
 t_capture_fail_closed(){ newtmp; export HOME="$TMP"; mkcapture
   printf 'not json\n' > "$TMP/hypr/clients.json"
   run_fn _capture_windows 303 >/dev/null; rc=$?
@@ -575,6 +611,39 @@ t_save_gate(){ newtmp; export HOME="$TMP"; mksave
   assert_has "no live instance: no write" "held" "$(snap)"
   printf '[{"instance":"SIG1"},{"instance":"B"}]\n' > "$TMP/hypr/instances.json"; bash "$SESHSAVE"
   assert_has "two live instances: no write" "held" "$(snap)"
+  clean_env
+}
+t_save_terminal_only(){ newtmp; export HOME="$TMP"; mksave
+  mkreg 393 "cccccccc-0000-0000-0000-000000000393" "/w/orca" 13 interactive
+  mkreg 396 "dddddddd-0000-0000-0000-000000000396" "/w/orca" 14 interactive
+  mkreg 399 "eeeeeeee-0000-0000-0000-000000000399" "/w/foot" 15 interactive
+  mkreg 402 "ffffffff-0000-0000-0000-000000000402" "/w/code" 16 interactive
+  mkreg 414 "12121212-0000-0000-0000-000000000414" "/w/pty"  17 interactive
+  mkreg 422 "34343434-0000-0000-0000-000000000422" "/w/alac" 18 interactive
+  bash "$SESHSAVE"
+  out="$(snap)"
+  assert_hasnt "save drops an Orca terminal session"         "cccccccc" "$out"
+  assert_hasnt "save drops an Orca agent session"            "dddddddd" "$out"
+  assert_hasnt "save drops an editor's terminal session"     "ffffffff" "$out"
+  assert_hasnt "save drops a session under another agent"    "12121212" "$out"
+  assert_has   "save keeps a foot window opened from Orca"   "eeeeeeee" "$out"
+  assert_has   "save keeps another terminal emulator"        "34343434" "$out"
+  assert_has   "save keeps foot sessions"                    "bbbbbbbb" "$out"
+  clean_env
+}
+t_save_first_run_no_clobber(){ newtmp; export HOME="$TMP"; mksave
+  # No snapshot when the gate runs, so it lets this save write. A snapshot put back by hand
+  # lands while the save is still reading Hyprland. The save must not replace it.
+  S="$TMP/.local/state/sesh"
+  printf '{"saved_at":"put-back","instance":"OLD","local":[{"id":"good"}],"remote":[]}\n' > "$TMP/putback.json"
+  printf '#!/bin/bash\ncp "%s/putback.json" "%s/snapshot.json"\n' "$TMP" "$S" > "$TMP/hypr/on-clients"
+  chmod +x "$TMP/hypr/on-clients"
+  err="$(bash "$SESHSAVE" 2>&1 >/dev/null)"
+  assert_has    "a snapshot that appears mid-save is kept"  '"good"'    "$(snap)"
+  assert_hasnt  "the new set does not replace it"           "aaaaaaaa"  "$(snap)"
+  assert_has    "the skipped write says why on stderr"      "left as is" "$err"
+  assert_nofile "no temp file is left behind"               "$S/snapshot.json.tmp"
+  assert_nofile "no history entry for the skipped write"    "$S/history"
   clean_env
 }
 t_save_first_run(){ newtmp; export HOME="$TMP"; mksave
@@ -823,13 +892,39 @@ t_restore_linux_staged(){ newtmp; export HOME="$TMP"; mkrestore
 }
 t_restore_linux_stale_sig(){ newtmp; export HOME="$TMP"; mkrestore
   # A shell that outlived a compositor restart still names the dead instance (OLDSIG).
-  HYPRLAND_INSTANCE_SIGNATURE=OLDSIG HYPR_REQUIRE_SIG=1 HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1
-  assert_has "a stale signature adopts the single live instance" "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
-  assert_has "the restore then reaches the live compositor" 'exec_cmd("[workspace name:argo silent] foot ' "$(evals)"
-  rm -f "$TMP/.local/state/sesh/restored" "$TMP/hypr/eval.log"
+  # Restore waits for that instance, which never comes, and does not guess at SIG1.
+  HYPRLAND_INSTANCE_SIGNATURE=OLDSIG HYPR_REQUIRE_SIG=1 HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1; rc=$?
+  if [ "$rc" = 1 ]; then ok "a stale signature exits 1"; else no "a stale signature should exit 1 (got $rc)"; fi
+  assert_nofile "a stale signature opens nothing" "$TMP/hypr/eval.log"
+  assert_nofile "a stale signature writes no marker" "$TMP/.local/state/sesh/restored"
   printf '[]\n' > "$TMP/hypr/instances.json"
   HYPRLAND_INSTANCE_SIGNATURE=OLDSIG bash "$SESHRESTORE" >/dev/null 2>&1
   assert_nofile "no live instance: no marker" "$TMP/.local/state/sesh/restored"
+  clean_env
+}
+t_restore_linux_waits_for_instance(){ newtmp; export HOME="$TMP"; mkrestore
+  # The Oct 30 boot: Hyprland ran restore before `hyprctl instances` listed the new instance.
+  printf '3\n' > "$TMP/hypr/instances.late"
+  SESH_HYPR_WAIT=10 HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1; rc=$?
+  if [ "$rc" = 0 ]; then ok "a late instance still restores (exit 0)"; else no "a late instance should restore with exit 0 (got $rc)"; fi
+  assert_has "restore waits, then opens the windows" 'exec_cmd("[workspace name:argo silent] foot ' "$(evals)"
+  assert_has "the marker holds this instance"        "SIG1" "$(cat "$TMP/.local/state/sesh/restored" 2>/dev/null)"
+  assert_has "the restore finishes"                  "restored 3 of 3" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  clean_env
+}
+t_restore_linux_instance_timeout(){ newtmp; export HOME="$TMP"; mkrestore
+  printf '[]\n' > "$TMP/hypr/instances.json"   # this instance never shows up
+  HYPR_SIMULATE=1 bash "$SESHRESTORE" >/dev/null 2>&1; rc=$?
+  log="$(cat "$TMP/.local/state/sesh/restore.log" 2>/dev/null)"
+  if [ "$rc" = 1 ]; then ok "a timeout exits 1"; else no "a timeout should exit 1 (got $rc)"; fi
+  assert_nofile "a timeout opens nothing"            "$TMP/hypr/eval.log"
+  assert_nofile "a timeout writes no marker"         "$TMP/.local/state/sesh/restored"
+  assert_nofile "a timeout leaves no lock"           "$TMP/.local/state/sesh/restore.lock"
+  assert_has    "the timeout is logged"              "did not list this Hyprland instance (SIG1) within 1 s; not restoring" "$log"
+  assert_has    "the timeout notifies"               "restore gave up" "$(cat "$TMP/fake/notify.log" 2>/dev/null)"
+  out="$(SESH_DRYRUN=1 bash "$SESHRESTORE" 2>&1)"; rc=$?
+  if [ "$rc" = 1 ]; then ok "a dry run times out the same way"; else no "a dry run should also exit 1 (got $rc)"; fi
+  assert_hasnt  "a timed-out dry run plans no windows" "would open" "$out"
   clean_env
 }
 t_restore_linux_cap_running(){ newtmp; export HOME="$TMP"; mkrestore
@@ -930,11 +1025,11 @@ RUN="t_aititle t_userfallback t_hosts_env t_hosts_file t_hosts_default t_hosts_s
      t_restore_jq_contract t_restore_opens_per_host t_restore_legacy_uses_sesh_host"
 RUN="$RUN t_lib_via_symlink t_lib_via_symlink_bsd_readlink"
 RUN="$RUN t_proc_stat_parse t_alive_procstart t_want_session"
-RUN="$RUN t_capture_cases t_capture_fail_closed t_capture_darwin"
-RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_gate t_save_first_run t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
+RUN="$RUN t_capture_cases t_capture_terminal_only t_capture_fail_closed t_capture_darwin"
+RUN="$RUN t_save_linux_placement t_save_skips_dead_and_kinds t_save_terminal_only t_save_gate t_save_first_run t_save_first_run_no_clobber t_save_fail_closed t_save_history t_save_darwin_unchanged t_save_odd_updatedat t_save_stale_signature t_save_drops_stage"
 RUN="$RUN t_local_sid t_local_real_run t_local_rc_cd"
 RUN="$RUN t_spawn_placed_rules t_move_lua"
-RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd t_restore_linux_internal_error"
+RUN="$RUN t_restore_linux_dry t_restore_linux_cap_order t_restore_linux_skips t_restore_linux_full t_restore_linux_monitor_fix t_restore_linux_marker_paths t_restore_linux_lock t_restore_linux_not_started t_restore_linux_staged t_restore_linux_stale_sig t_restore_linux_waits_for_instance t_restore_linux_instance_timeout t_restore_linux_cap_running t_restore_linux_stranded t_restore_linux_existing_ws t_restore_linux_unplugged t_restore_linux_junk_tunables t_restore_linux_transcript_cwd t_restore_linux_internal_error"
 # SESH_TEST_ONLY="t_a t_b" runs just those tests (the red step of a TDD cycle).
 [ -n "${SESH_TEST_ONLY:-}" ] && RUN="$SESH_TEST_ONLY"
 for t in $RUN; do
