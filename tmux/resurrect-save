@@ -16,10 +16,17 @@
 # not saved: that is a boot before the restore, a failed restore, or everything closed,
 # and its save would replace the restore point with an empty one. One save runs at a time.
 #
-# Seams for tests: RZ_TMUX (tmux binary), RZ_BUSCTL (busctl binary), RZ_LOCK (lock file).
+# --at-shutdown waits for logind's PrepareForShutdown signal with `busctl wait`, which
+# systemd has from 257 (Arch, Ubuntu 26.04). systemd 255 (Ubuntu 24.04) has no wait verb,
+# so there it reads the signals from `gdbus monitor`. With neither, it saves nothing at
+# shutdown; the timer still saves every 60 s.
+#
+# Seams for tests: RZ_TMUX (tmux binary), RZ_BUSCTL (busctl binary), RZ_GDBUS (gdbus
+# binary), RZ_LOCK (lock file).
 set -u
 TMUX_BIN="${RZ_TMUX:-tmux}"
 BUSCTL="${RZ_BUSCTL:-busctl}"
+GDBUS="${RZ_GDBUS:-gdbus}"
 LOCK="${RZ_LOCK:-${XDG_RUNTIME_DIR:-/tmp}/tmux-resurrect-save.lock}"
 
 # _save : one resurrect save, if the server has a session and resurrect is loaded.
@@ -44,17 +51,37 @@ _preparing(){
 }
 
 if [ "${1:-}" = --at-shutdown ]; then
-  # Older busctl has no wait verb. Exit 0 then: a failing unit would restart forever.
-  if ! "$BUSCTL" --help 2>/dev/null | grep -q '^ *wait '; then
-    echo "busctl has no wait verb; tmux will not be saved at shutdown" >&2
-    exit 0
+  if "$BUSCTL" --help 2>/dev/null | grep -q '^ *wait '; then
+    while :; do
+      "$BUSCTL" --system wait /org/freedesktop/login1 org.freedesktop.login1.Manager \
+        PrepareForShutdown >/dev/null 2>&1
+      rc=$?
+      if _preparing; then _save; exit 0; fi
+      [ "$rc" -eq 0 ] || exit "$rc"
+    done
   fi
-  while :; do
-    "$BUSCTL" --system wait /org/freedesktop/login1 org.freedesktop.login1.Manager \
-      PrepareForShutdown >/dev/null 2>&1
-    rc=$?
-    if _preparing; then _save; exit 0; fi
-    [ "$rc" -eq 0 ] || exit "$rc"
-  done
+  if command -v "$GDBUS" >/dev/null 2>&1; then
+    # The monitor prints one line per signal. --dest: only the signals logind sends.
+    # logind sends a PrepareForShutdownWithMetadata twin with each PrepareForShutdown.
+    # Only the plain signal counts, so one shutdown makes one check.
+    coproc MON { exec "$GDBUS" monitor --system --dest org.freedesktop.login1 \
+      --object-path /org/freedesktop/login1 2>/dev/null; }
+    # bash closes and unsets MON once the monitor exits, so read from a copy of its fd.
+    # bash leaves a coproc running when the script exits, so the trap kills it.
+    mon=$MON_PID
+    exec 3<&"${MON[0]}"
+    trap 'kill "$mon" 2>/dev/null' EXIT
+    while IFS= read -r line <&3; do
+      case $line in
+        *'.PrepareForShutdown (true,)'*) if _preparing; then _save; exit 0; fi ;;
+      esac
+    done
+    # The monitor ended: the bus went away, or it never connected. Fail, so that
+    # Restart=on-failure starts a new one.
+    exit 1
+  fi
+  # Exit 0: a restart would find the same tools and fail the same way.
+  echo "neither busctl wait nor gdbus is available; tmux will not be saved at shutdown" >&2
+  exit 0
 fi
 _save
