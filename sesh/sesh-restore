@@ -14,7 +14,9 @@
 #   By hand via `revive`. Preview: SESH_DRYRUN=1 revive
 #   Tunables: SESH_CAP (default 12 on macOS, 20 on Linux). Linux only: SESH_STAGGER
 #   (seconds between windows, default 1.5) and SESH_VERIFY_WAIT (whole seconds to wait
-#   for the windows to start, default 15).
+#   for the windows to start, default 15), SESH_HYPR_WAIT (whole seconds to wait for
+#   `hyprctl instances` to list this Hyprland instance, default 30; on timeout restore
+#   opens nothing, notifies and exits 1).
 #   SESH_MON_WAIT (0.2 s polls for monitors, default 50) and SESH_NOTIFY (notifier, default notify-send).
 #   On Linux, running sessions do not count toward SESH_CAP, and a junk SESH_CAP falls back to 20.
 #   Log: ~/.local/state/sesh/restore.log
@@ -119,23 +121,25 @@ _restore_done(){
 # silently on its saved workspace, then fix placement and notify once.
 restore_linux(){
   local id="" cwd="" ws="" mon="" f="" pid="" sel="" want="" have="" existing="" spawned="" fixed="" rids="" dir="" stage=""
-  local cap_json="" actual="" addr="" wsmon="" msg="" extra="" all=0 i=0 staged="" live="" running="" deadline=0 vwait=15
+  local cap_json="" actual="" addr="" wsmon="" msg="" extra="" all=0 i=0 staged="" running="" deadline=0 vwait=15 hwait=30
   local n=0 total=0 started=0 over=0 s_running=0 s_transcript=0 s_cwd=0 s_bad=0 s_remote=0
   if [ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]; then
     log "linux: HYPRLAND_INSTANCE_SIGNATURE is unset; run this inside a Hyprland session"; return 0
   fi
-  # A shell that outlived a compositor restart still names the dead instance. Use the
-  # signature only if it is live, else adopt the single live instance, else give up, so a
-  # stale value never lands in `restored` (where it would hold off every save).
-  live="$("$HYPRCTL" instances -j 2>/dev/null | jq -r '.[]?.instance' 2>/dev/null)"
-  if ! printf '%s\n' "$live" | grep -Fxq -- "$HYPRLAND_INSTANCE_SIGNATURE"; then
-    if [ "$(printf '%s\n' "$live" | grep -c .)" = 1 ]; then
-      log "linux: HYPRLAND_INSTANCE_SIGNATURE names a dead instance; using the live one"
-      export HYPRLAND_INSTANCE_SIGNATURE="$live"
-    else
-      log "linux: no live Hyprland instance matches HYPRLAND_INSTANCE_SIGNATURE; not restoring"; return 0
+  # At login Hyprland can run this before `hyprctl instances` lists the new instance (the
+  # Oct 30 boot failed that way), so wait up to SESH_HYPR_WAIT seconds for it. Only that
+  # instance will do: a stale signature, from a shell that outlived a compositor restart,
+  # times out too, so it never lands in `restored`.
+  case "${SESH_HYPR_WAIT:-30}" in ''|*[!0-9]*) hwait=30 ;; *) hwait=$((10#${SESH_HYPR_WAIT:-30})) ;; esac
+  deadline=$((SECONDS + hwait))
+  until "$HYPRCTL" instances -j 2>/dev/null | jq -e --arg s "$HYPRLAND_INSTANCE_SIGNATURE" 'any(.[]?; .instance == $s)' >/dev/null 2>&1; do
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      log "linux: hyprctl instances did not list this Hyprland instance ($HYPRLAND_INSTANCE_SIGNATURE) within $hwait s; not restoring. sesh-save stays paused until a restore finishes: run revive in this session"
+      "${SESH_NOTIFY:-notify-send}" "sesh" "restore gave up: Hyprland did not list this instance within $hwait s. Run revive." >/dev/null 2>&1 || true
+      return 1
     fi
-  fi
+    sleep 0.2
+  done
   _take_lock || { log "another restore holds $LOCK; exiting"; return 0; }
   trap _restore_done EXIT
 
@@ -260,7 +264,7 @@ restore_linux(){
   return 0
 }
 
-if [ "$SESH_OS" = linux ]; then restore_linux; exit 0; fi
+if [ "$SESH_OS" = linux ]; then restore_linux; exit $?; fi
 # An expansion error inside restore_linux aborts the whole `if` above, its exit included, and
 # bash goes on with the next line. Stop here instead of falling into the macOS loop.
 [ "$SESH_OS" = linux ] && { log "linux: restore stopped on an internal error"; exit 1; }

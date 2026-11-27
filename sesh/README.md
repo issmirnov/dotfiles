@@ -167,11 +167,11 @@ On a Hyprland desktop, `sesh` saves the Claude sessions open in terminal windows
 
 How it works:
 
-1. `sesh-save.timer` runs `sesh-save` every 60 s. For each live interactive Claude session, `sesh-save` walks parent PIDs up to a PID that `hyprctl clients` lists. That window gives the workspace, monitor and position.
-2. At Hyprland start, `hyprland.lua` runs `sesh-restore`. It sets aside the sessions that are running, then opens the newest `SESH_CAP` of the rest (default 20), 1.5 s apart, through `[workspace <ws> silent]` exec rules. Then it moves any workspace it created to the saved monitor and sends one notification. A workspace name with a space, [, ] or ; cannot sit in an exec rule, so that window opens on the hidden special:sesh-stage and restore moves it into place by address. If a window is still on the stage after that, because its session started late or not at all, restore finds the session from the `--sid` in the window's command line and moves the window to its saved workspace. A window it cannot match moves to the active workspace.
-3. A gate protects the snapshot. `sesh-save` writes only when exactly one Hyprland instance is live and one of these holds: there is no snapshot yet, that instance wrote the snapshot, or that instance finished its restore. So a save right after login or a crash cannot replace your sessions with an empty set.
+1. `sesh-save.timer` runs `sesh-save` every 60 s. For each live interactive Claude session, `sesh-save` walks parent PIDs up to a PID that `hyprctl clients` lists. That window gives the workspace, monitor and position. `sesh-save` keeps the session only when that window belongs to a terminal emulator (foot, Alacritty, Ghostty, kitty, xterm and a few others, matched by process name) and every process between it and claude is a shell or a sesh launcher. That leaves out Orca's sessions, whose processes sit under Orca's own window, and claude started inside another agent's PTY. Orca and those agents bring their own sessions back, so a restore of them starts a second copy of each.
+2. At Hyprland start, `hyprland.lua` runs `sesh-restore`. It first waits up to `SESH_HYPR_WAIT` seconds (default 30) for `hyprctl instances` to list the instance named by `HYPRLAND_INSTANCE_SIGNATURE`, because at login Hyprland can start it before that. If the instance does not show up, restore logs it, sends a notification, opens nothing and exits 1. Otherwise it sets aside the sessions that are running, then opens the newest `SESH_CAP` of the rest (default 20), 1.5 s apart, through `[workspace <ws> silent]` exec rules. Then it moves any workspace it created to the saved monitor and sends one notification. A workspace name with a space, [, ] or ; cannot sit in an exec rule, so that window opens on the hidden special:sesh-stage and restore moves it into place by address. If a window is still on the stage after that, because its session started late or not at all, restore finds the session from the `--sid` in the window's command line and moves the window to its saved workspace. A window it cannot match moves to the active workspace.
+3. A gate protects the snapshot. `sesh-save` writes only when exactly one Hyprland instance is live and one of these holds: there is no snapshot yet, that instance wrote the snapshot, or that instance finished its restore. So a save right after login or a crash cannot replace your sessions with an empty set. When the gate passes only because there is no snapshot, the write cannot replace one that appears while the save runs (say, one you move back by hand).
 
-Not restored here: the SUPER+C scratchpad, claude inside tmux, headless sessions and remote (mosh) windows. tmux panes come back at boot through `tmux-resurrect.service`, and each Claude pane resumes its own session by ID (see `tmux/tmux.conf`). `tmux-resurrect-save.timer` saves them every 60 s, and `tmux-resurrect-shutdown.service` saves them once more at shutdown or reboot.
+Not restored here: the SUPER+C scratchpad, claude inside tmux, headless sessions and remote (mosh) windows. Also left out: Orca's sessions, terminals inside editors and other apps, and claude under another agent's PTY. tmux panes come back at boot through `tmux-resurrect.service`, and each Claude pane resumes its own session by ID (see `tmux/tmux.conf`). `tmux-resurrect-save.timer` saves them every 60 s, and `tmux-resurrect-shutdown.service` saves them once more at shutdown or reboot.
 
 Install on a Hyprland box:
 
@@ -190,7 +190,7 @@ Recover sessions that died without a reboot, for example after earlyoom killed a
 1. Pick a file in `~/.local/state/sesh/history/`, which keeps the last 20 distinct snapshots.
 2. Run `SESH_SNAPSHOT=<that file> revive`. Restore skips sessions that are running, so only the missing ones open.
 
-If saves stop after a Hyprland restart, the restore for that instance never ran. Run `revive` once.
+If saves stop after a Hyprland restart, the restore for that instance never ran, or it gave up waiting for the instance (the `restore gave up` notification). Run `revive` once.
 
 If the notification says `still staged N`, a window could not be moved off the hidden stage. Show the stage with `hyprctl eval 'hl.dispatch(hl.dsp.workspace.toggle_special("sesh-stage"))'` and move the window by hand.
 
@@ -265,6 +265,7 @@ SESH_DRYRUN=1 sesh myproj   # prints the action instead of taking it
 | | `SESH_STAGGER` | Linux: seconds between restored windows (default 1.5) |
 | | `SESH_VERIFY_WAIT` | Linux: whole seconds restore waits for windows to start (default 15) |
 | | `SESH_MON_WAIT` | Linux: 0.2 s polls restore waits for the saved monitors (default 50) |
+| | `SESH_HYPR_WAIT` | Linux: whole seconds restore waits for `hyprctl instances` to list its instance (default 30) |
 | | `SESH_SNAPSHOT` | Restore from this file instead of `snapshot.json` |
 | | `SESH_SKIP_BOOTGUARD` | Skip the save gate (manual runs and tests) |
 | | `SESH_HYPRCTL`, `SESH_PROC`, `SESH_NOTIFY`, `SESH_UNAME` | Test seams: `hyprctl` binary, `/proc` root, notifier, OS |

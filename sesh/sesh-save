@@ -2,7 +2,10 @@
 # sesh-save — snapshot the current LIVE session set to ~/.local/state/sesh/snapshot.json.
 #
 # Sources (both authoritative, PID-checked — no heuristics):
-#   local  = Claude Code sessions in ~/.claude/sessions/*.json with a live PID
+#   local  = Claude Code sessions in ~/.claude/sessions/*.json with a live PID. On Linux,
+#            only those whose process runs in a terminal emulator's window under shells
+#            alone; Orca's sessions, other agents' PTYs, tmux and headless ones are
+#            skipped (lib/os.sh _capture_windows).
 #   remote = hexane tmux sessions with a live presence marker (written by sesh-remote)
 #
 # Run on an interval so the last snapshot before shutdown ~= what you had open;
@@ -107,7 +110,19 @@ if [ "$SESH_OS" = linux ] && [ -r "$SNAP" ]; then
   norm='del(.saved_at) | .local |= map(del(.updated))'
   [ "$(jq -cS "$norm" "$SNAP" 2>/dev/null)" = "$(printf '%s' "$new" | jq -cS "$norm" 2>/dev/null)" ] && changed=0
 fi
-if printf '%s\n' "$new" > "$SNAP.tmp" && mv "$SNAP.tmp" "$SNAP"; then
+# Write through a temp file. When the gate passed only because there was no snapshot, a
+# hard link puts the file in place: unlike mv it fails if a snapshot appeared meanwhile
+# (one put back by hand, say), so this save never replaces it.
+written=""
+if printf '%s\n' "$new" > "$SNAP.tmp"; then
+  if [ -n "${SESH_GATE_NEW:-}" ]; then
+    if ln "$SNAP.tmp" "$SNAP" 2>/dev/null; then written=1; else echo "sesh-save: a snapshot appeared during this save; left as is" >&2; fi
+    rm -f "$SNAP.tmp"
+  else
+    mv "$SNAP.tmp" "$SNAP" && written=1
+  fi
+fi
+if [ -n "$written" ]; then
   if [ "$SESH_OS" = linux ] && [ "$changed" = 1 ]; then
     mkdir -p "$HIST"
     cp "$SNAP" "$HIST/$(date -u +%Y%m%dT%H%M%SZ).$$.json"

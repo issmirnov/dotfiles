@@ -73,15 +73,40 @@ _want_session(){
 }
 
 # ---- window capture ------------------------------------------------------------------
+# _terminal_comm <comm> : is this process a terminal emulator? Matched on the kernel's
+# comm (at most 15 characters), which a window's app-id or class cannot change.
+_terminal_comm(){
+  case "$1" in
+    foot|footclient|alacritty|kitty|ghostty|wezterm-gui|xterm|konsole|gnome-terminal-|xfce4-terminal|tilix|st|urxvt|urxvtd) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# _launcher_comm <comm> : may this process sit between a terminal and claude? Only shells
+# and sesh's own launchers. Anything else (Orca's PTY hosts, another agent) means claude
+# runs under that program, which owns the session and would restore it itself.
+_launcher_comm(){
+  case "$1" in
+    sh|bash|zsh|dash|fish|ksh|mksh|nu|sesh|sesh-local) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # _capture_windows <pid>... : print a JSON object keyed by each claude PID:
 #   {"ws":"argo","monitor":"DP-1","at":[x,y],"address":"0x…"}  a placed window
 #   {}                                       a window PID several windows share (foot server mode)
-#   {"skip":"tmux"|"headless"|"scratchpad"}  not a restorable window
+#   {"skip":"tmux"|"headless"|"scratchpad"|"nested"|"app"}  not a restorable window
 # Each claude PID walks up its parents to the first PID that hyprctl lists as a window.
-# A tmux ancestor ends the walk (tmux-resurrect owns those panes). macOS and other OSes
-# print {}. On Linux a failed Hyprland query or jq step returns non-zero, so callers fail closed.
+# The session counts only when that window belongs to a terminal emulator and every PID
+# on the way is a shell or a sesh launcher. Otherwise it is skipped as:
+#   app      the window is not a terminal's: Orca (whose PTY hosts run under its window), an editor
+#   nested   a terminal window, but another program sits in between: another agent's PTY
+#   tmux     a tmux ancestor (tmux-resurrect owns those panes)
+#   headless no window at all
+# macOS and other OSes print {}. On Linux a failed Hyprland query or jq step returns
+# non-zero, so callers fail closed.
 _capture_windows(){
-  local clients="" monitors="" wins="" winpids="" out='{}' pid="" p="" hops=0 st="" val=""
+  local clients="" monitors="" wins="" winpids="" out='{}' pid="" p="" hops=0 st="" comm="" val="" nested=""
   [ "$SESH_OS" = linux ] || { printf '{}'; return 0; }
   [ $# -gt 0 ] || { printf '{}'; return 0; }
   clients="$("$HYPRCTL" clients -j 2>/dev/null)" || return 1
@@ -99,14 +124,19 @@ _capture_windows(){
       | from_entries' 2>/dev/null)" || return 1
   winpids="$(printf '%s' "$wins" | jq -r 'keys[]')" || return 1
   for pid in "$@"; do
-    p="$pid"; hops=0; val='{"skip":"headless"}'
+    p="$pid"; hops=0; val='{"skip":"headless"}'; nested=""
     while [ "$hops" -lt 64 ]; do
+      st="$(_proc_stat "$p")" || break
+      comm="${st#* * }"
       if printf '%s\n' "$winpids" | grep -Fxq -- "$p"; then
-        val="$(printf '%s' "$wins" | jq -c --arg p "$p" '.[$p]')" || return 1
+        if ! _terminal_comm "$comm"; then val='{"skip":"app"}'
+        elif [ -n "$nested" ]; then val='{"skip":"nested"}'
+        else val="$(printf '%s' "$wins" | jq -c --arg p "$p" '.[$p]')" || return 1
+        fi
         break
       fi
-      st="$(_proc_stat "$p")" || break
-      case "${st#* * }" in tmux*) val='{"skip":"tmux"}'; break ;; esac
+      case "$comm" in tmux*) val='{"skip":"tmux"}'; break ;; esac
+      if [ "$p" != "$pid" ] && ! _launcher_comm "$comm"; then nested=1; fi
       p="${st%% *}"
       [ "$p" -gt 1 ] 2>/dev/null || break
       hops=$((hops + 1))
@@ -121,17 +151,20 @@ _capture_windows(){
 #   macOS : not in the first 180 s after boot (the original guard).
 #   Linux : exactly one live Hyprland instance, and one of: no snapshot yet, a snapshot
 #           this instance wrote, or a finished restore in this instance (the `restored`
-#           file). Sets SESH_INSTANCE and exports HYPRLAND_INSTANCE_SIGNATURE.
+#           file). Sets SESH_INSTANCE and exports HYPRLAND_INSTANCE_SIGNATURE. When it
+#           passes only because there is no snapshot, it sets SESH_GATE_NEW=1, and the
+#           caller must not replace a snapshot that appears before it writes.
 # The caller sets SNAP and STATE.
 _save_gate(){
   local inst="" boot=""
+  SESH_GATE_NEW=""
   case "$SESH_OS" in
     linux)
       inst="$("$HYPRCTL" instances -j 2>/dev/null | jq -r 'if type == "array" and length == 1 then .[0].instance else empty end' 2>/dev/null)"
       if [ -z "$inst" ]; then [ -n "${SESH_SKIP_BOOTGUARD:-}" ]; return; fi
       SESH_INSTANCE="$inst"; export HYPRLAND_INSTANCE_SIGNATURE="$inst"
       [ -n "${SESH_SKIP_BOOTGUARD:-}" ] && return 0
-      [ -e "$SNAP" ] || return 0
+      [ -e "$SNAP" ] || { SESH_GATE_NEW=1; return 0; }
       [ "$(jq -r '.instance // empty' "$SNAP" 2>/dev/null)" = "$inst" ] && return 0
       [ "$(cat "$STATE/restored" 2>/dev/null)" = "$inst" ] ;;
     darwin)
