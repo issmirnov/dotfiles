@@ -125,9 +125,11 @@ hl.on("hyprland.start", function()
     -- night shift: hyprsunset (native); temps/times live in hyprsunset.conf (day 4500K / night 3200K).
     -- NOTE: hyprsunset switches on fixed wall-clock times, not astronomical sunset like wlsunset did.
     hl.exec_cmd("hyprsunset")
-    hl.exec_cmd("telegram-desktop")
+    hl.exec_cmd("Telegram")  -- telegram-desktop 7.x installs /usr/bin/Telegram; "telegram-desktop" no longer exists (fixed 2026-11-27)
     hl.exec_cmd("slack")
     hl.exec_cmd("webcord")
+    -- Orca IDE; its agent daemon (orca-agents) starts with it. Added 2026-11-27.
+    hl.exec_cmd("stably-orca")
     hl.exec_cmd("systemctl --user import-environment DISPLAY WAYLAND_DISPLAY HYPRLAND_INSTANCE_SIGNATURE XDG_CURRENT_DESKTOP; systemctl --user start codex-desktop.service")
     -- Claude scratchpad (SUPER+C): a drop-down terminal on special:scratch.
     -- Spawned on-demand by ~/.dotfiles/hypr/scripts/hypr-scratch (not at boot),
